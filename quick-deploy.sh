@@ -81,11 +81,13 @@ echo "  ✓ src/routes/game/\$gameid.tsx patched"
 sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' src/components/GameCard.tsx
 echo "  ✓ src/components/GameCard.tsx patched"
 
-echo "📦 Installing Radon Games dependencies..."
-pnpm install
+echo "📦 Installing Radon Games dependencies (this may take a few minutes)..."
+# Limit memory usage and network concurrency for low-memory VMs
+NODE_OPTIONS="--max-old-space-size=1024" pnpm install --no-frozen-lockfile --network-concurrency=1
 
 echo "🔨 Building Radon Games..."
-pnpm run build
+# Limit memory usage during build
+NODE_OPTIONS="--max-old-space-size=1024" pnpm run build
 
 echo "✅ Radon Games built successfully"
 cd ..
