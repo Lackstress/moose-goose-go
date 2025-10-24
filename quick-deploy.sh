@@ -49,24 +49,46 @@ fi
 if [ ! -d "radon-games" ]; then
     echo "📥 Cloning Radon Games repository..."
     git clone https://github.com/Radon-Games/Radon-Games.git radon-games
-    cd radon-games
-    echo "📦 Installing Radon Games dependencies..."
-    pnpm install
-    echo "🔨 Building Radon Games..."
-    pnpm run build
-    echo "✅ Radon Games built successfully"
-    cd ..
 else
     echo "🔄 Updating Radon Games..."
     cd radon-games
+    git reset --hard HEAD
     git pull
-    echo "📦 Installing/updating dependencies..."
-    pnpm install
-    echo "🔨 Rebuilding Radon Games..."
-    pnpm run build
-    echo "✅ Radon Games updated and rebuilt"
     cd ..
 fi
+
+cd radon-games
+
+echo "� Applying configuration patches for /radon-g3mes path..."
+
+# Patch vite.config.ts - add base path
+if ! grep -q 'base: "/radon-g3mes/"' vite.config.ts; then
+    sed -i '/export default defineConfig({/a\  base: "/radon-g3mes/",' vite.config.ts
+    echo "  ✓ vite.config.ts patched"
+fi
+
+# Patch src/main.tsx - add basepath to router
+if ! grep -q 'basepath: "/radon-g3mes"' src/main.tsx; then
+    sed -i 's/const router = createRouter({ routeTree, defaultPreload: "viewport" });/const router = createRouter({ routeTree, defaultPreload: "viewport", basepath: "\/radon-g3mes" });/g' src/main.tsx
+    echo "  ✓ src/main.tsx patched"
+fi
+
+# Patch src/routes/game/$gameid.tsx - change CDN path for game iframes
+sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' 'src/routes/game/$gameid.tsx'
+echo "  ✓ src/routes/game/\$gameid.tsx patched"
+
+# Patch src/components/GameCard.tsx - change CDN path for images
+sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' src/components/GameCard.tsx
+echo "  ✓ src/components/GameCard.tsx patched"
+
+echo "📦 Installing Radon Games dependencies..."
+pnpm install
+
+echo "🔨 Building Radon Games..."
+pnpm run build
+
+echo "✅ Radon Games built successfully"
+cd ..
 
 # Verify Radon Games build
 if [ ! -d "radon-games/dist" ]; then
