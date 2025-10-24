@@ -26,6 +26,30 @@ if [ ! -d "duckmath" ]; then
 else
     cd duckmath && git pull && cd ..
 fi
+
+# Clone and build Radon Games
+echo "⚡ Cloning and building Radon Games..."
+if [ ! -d "radon-games" ]; then
+    # Install pnpm if not already installed
+    if ! command -v pnpm &> /dev/null; then
+        sudo npm install -g pnpm
+    fi
+    git clone https://github.com/Radon-Games/Radon-Games.git radon-games
+    cd radon-games
+    pnpm install
+    pnpm run build
+    cd ..
+else
+    cd radon-games
+    git pull
+    if ! command -v pnpm &> /dev/null; then
+        sudo npm install -g pnpm
+    fi
+    pnpm install
+    pnpm run build
+    cd ..
+fi
+
 cd games
 
 # Install and start

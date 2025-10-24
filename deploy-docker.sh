@@ -38,6 +38,27 @@ if [ ! -d "duckmath" ]; then
 else
     cd duckmath && git pull && cd ..
 fi
+
+# Clone and build Radon Games
+echo "⚡ Cloning and building Radon Games..."
+if ! command -v pnpm &> /dev/null; then
+    echo "📦 Installing pnpm..."
+    sudo npm install -g pnpm
+fi
+if [ ! -d "radon-games" ]; then
+    git clone https://github.com/Radon-Games/Radon-Games.git radon-games
+    cd radon-games
+    pnpm install
+    pnpm run build
+    cd ..
+else
+    cd radon-games
+    git pull
+    pnpm install
+    pnpm run build
+    cd ..
+fi
+
 cd games
 
 # Create .env for Docker

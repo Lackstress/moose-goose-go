@@ -260,6 +260,28 @@
           </div>
           <button onclick="accessDuckMath()" class="access-btn">Access DuckMath →</button>
         </div>
+
+        <!-- Radon Games -->
+        <div class="source-card">
+          <div class="source-icon">⚡</div>
+          <div class="source-title">Radon Portal</div>
+          <div class="source-description">
+            Modern gaming platform with built-in web proxy, tab cloaking, and a rapidly growing selection of premium unblocked games!
+          </div>
+          <div class="game-count">50+ Games & Tools</div>
+          <div class="features-grid" style="margin-bottom: 1.5rem;">
+            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
+              ✓ Web Proxy
+            </div>
+            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
+              ✓ Tab Cloak
+            </div>
+            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
+              ✓ Modern UI
+            </div>
+          </div>
+          <button onclick="accessRadonGames()" class="access-btn">Access Radon →</button>
+        </div>
       </div>
     </div>
   </main>
@@ -305,6 +327,17 @@
       // DuckMath is now served from same port on /duckmath path
       window.location.href = '/duckmath';
       showNotification(`Opening DuckMath! 🦆`, 'success');
+    }
+
+    function accessRadonGames() {
+      if (!currentUser) {
+        document.getElementById('authCheck').classList.add('show');
+        return;
+      }
+
+      // Radon Games served from /radon-g3mes (obfuscated path)
+      window.location.href = '/radon-g3mes';
+      showNotification(`Opening Radon Games! ⚡`, 'success');
     }
 
     document.addEventListener('DOMContentLoaded', () => {

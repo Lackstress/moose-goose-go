@@ -153,6 +153,40 @@ app.get('/duckmath/assets/js/index.js', (req, res) => {
 // DuckMath assets and other files
 app.use('/duckmath', express.static(path.join(__dirname, '..', 'duckmath')));
 
+// Radon Games - serve from radon-games/dist folder
+app.get('/radon-g3mes', (req, res) => {
+  const fs = require('fs');
+  const distPath = path.join(__dirname, '..', 'radon-games', 'dist', 'index.html');
+  
+  // Check if radon-games is built
+  if (!fs.existsSync(distPath)) {
+    return res.status(404).send(`
+      <html>
+        <head><title>Radon Games Not Installed</title></head>
+        <body style="font-family: Arial; padding: 50px; text-align: center;">
+          <h1>🎮 Radon Games Not Available</h1>
+          <p>Radon Games are not installed on this server.</p>
+          <p><a href="/ghub">← Back to Game Hub</a></p>
+        </body>
+      </html>
+    `);
+  }
+  
+  let html = fs.readFileSync(distPath, 'utf8');
+  
+  // Rewrite asset paths to include /radon-g3mes prefix
+  html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
+  html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
+  html = html.replaceAll('href="/', 'href="/radon-g3mes/');
+  html = html.replaceAll('src="/', 'src="/radon-g3mes/');
+  
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
+
+// Radon Games assets - serve from dist folder
+app.use('/radon-g3mes', express.static(path.join(__dirname, '..', 'radon-games', 'dist')));
+
 // Static files for games
 app.use(express.static(path.join(__dirname, 'public')));
 
