@@ -64,6 +64,16 @@ sudo apt install -y certbot python3-certbot-nginx
 echo -e "${GREEN}📦 Step 5/8: Installing PM2...${NC}"
 sudo npm install -g pm2
 
+# Clone DuckMath
+echo -e "${GREEN}📦 Step 5.5/8: Cloning DuckMath games...${NC}"
+cd ..
+if [ ! -d "duckmath" ]; then
+    git clone https://github.com/duckmath/duckmath.github.io.git duckmath
+else
+    cd duckmath && git pull && cd ..
+fi
+cd $(basename "$PWD")
+
 # Install project dependencies
 echo -e "${GREEN}📦 Step 6/8: Installing project dependencies...${NC}"
 npm install

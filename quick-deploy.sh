@@ -18,6 +18,16 @@ else
     cd games && git pull
 fi
 
+# Clone DuckMath in parent directory
+echo "📦 Cloning DuckMath games..."
+cd ..
+if [ ! -d "duckmath" ]; then
+    git clone https://github.com/duckmath/duckmath.github.io.git duckmath
+else
+    cd duckmath && git pull && cd ..
+fi
+cd games
+
 # Install and start
 npm install
 sudo npm install -g pm2

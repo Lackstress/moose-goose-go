@@ -30,6 +30,16 @@ if ! command -v docker-compose &> /dev/null; then
     sudo chmod +x /usr/local/bin/docker-compose
 fi
 
+# Clone DuckMath
+echo "📦 Cloning DuckMath games..."
+cd ..
+if [ ! -d "duckmath" ]; then
+    git clone https://github.com/duckmath/duckmath.github.io.git duckmath
+else
+    cd duckmath && git pull && cd ..
+fi
+cd games
+
 # Create .env for Docker
 cat > .env << EOL
 DOMAIN=$DOMAIN

@@ -43,6 +43,21 @@ app.get('/ghub', (req, res) => {
 app.get('/duckmath', (req, res) => {
   const fs = require('fs');
   const filePath = path.join(__dirname, '..', 'duckmath', 'index.html');
+  
+  // Check if duckmath exists
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send(`
+      <html>
+        <head><title>DuckMath Not Installed</title></head>
+        <body style="font-family: Arial; padding: 50px; text-align: center;">
+          <h1>🦆 DuckMath Not Available</h1>
+          <p>DuckMath games are not installed on this server.</p>
+          <p><a href="/ghub">← Back to Game Hub</a></p>
+        </body>
+      </html>
+    `);
+  }
+  
   let html = fs.readFileSync(filePath, 'utf8');
   
   // Rewrite specific asset paths to include /duckmath prefix
@@ -59,6 +74,12 @@ app.get('/duckmath', (req, res) => {
 app.get('/duckmath/', (req, res) => {
   const fs = require('fs');
   const filePath = path.join(__dirname, '..', 'duckmath', 'index.html');
+  
+  // Check if duckmath exists
+  if (!fs.existsSync(filePath)) {
+    return res.redirect('/duckmath');
+  }
+  
   let html = fs.readFileSync(filePath, 'utf8');
   
   // Rewrite specific asset paths to include /duckmath prefix
@@ -76,6 +97,12 @@ app.get('/duckmath/', (req, res) => {
 app.get('/duckmath/g4m3s', (req, res) => {
   const fs = require('fs');
   const filePath = path.join(__dirname, '..', 'duckmath', 'g4m3s', 'index.html');
+  
+  // Check if duckmath exists
+  if (!fs.existsSync(filePath)) {
+    return res.redirect('/duckmath');
+  }
+  
   let html = fs.readFileSync(filePath, 'utf8');
   
   // Rewrite specific asset paths to include /duckmath prefix
@@ -107,6 +134,12 @@ app.get('/blog/*', (req, res) => {
 app.get('/duckmath/assets/js/index.js', (req, res) => {
   const fs = require('fs');
   const filePath = path.join(__dirname, '..', 'duckmath', 'assets', 'js', 'index.js');
+  
+  // Check if duckmath exists
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('// DuckMath not installed');
+  }
+  
   let js = fs.readFileSync(filePath, 'utf8');
   
   // Rewrite navigation links to stay within /duckmath context
