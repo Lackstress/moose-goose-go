@@ -175,10 +175,13 @@ app.get('/radon-g3mes', (req, res) => {
   let html = fs.readFileSync(distPath, 'utf8');
   
   // Rewrite asset paths to include /radon-g3mes prefix
+  // First handle /assets/ paths
   html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
   html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
-  html = html.replaceAll('href="/', 'href="/radon-g3mes/');
-  html = html.replaceAll('src="/', 'src="/radon-g3mes/');
+  
+  // Then handle other root paths, but exclude already-prefixed paths and external URLs
+  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/)/g, 'href="/radon-g3mes/');
+  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/)/g, 'src="/radon-g3mes/');
   
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
@@ -186,6 +189,27 @@ app.get('/radon-g3mes', (req, res) => {
 
 // Radon Games assets - serve from dist folder
 app.use('/radon-g3mes', express.static(path.join(__dirname, '..', 'radon-games', 'dist')));
+
+// Radon Games catch-all for client-side routing (must be after static files)
+app.get('/radon-g3mes/*', (req, res) => {
+  const fs = require('fs');
+  const distPath = path.join(__dirname, '..', 'radon-games', 'dist', 'index.html');
+  
+  if (!fs.existsSync(distPath)) {
+    return res.status(404).send('Radon Games not available');
+  }
+  
+  let html = fs.readFileSync(distPath, 'utf8');
+  
+  // Rewrite asset paths
+  html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
+  html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
+  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/)/g, 'href="/radon-g3mes/');
+  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/)/g, 'src="/radon-g3mes/');
+  
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
 
 // Static files for games
 app.use(express.static(path.join(__dirname, 'public')));
