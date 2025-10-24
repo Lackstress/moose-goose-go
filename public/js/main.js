@@ -217,8 +217,14 @@ async function updateCoins(amount, gameId, type = 'bet') {
 function updateUI() {
   const authSection = document.getElementById('authSection');
   const userInfo = document.getElementById('userInfo');
+  const authCheck = document.getElementById('authCheck');
 
   if (currentUser) {
+    // Hide the auth check modal when user is logged in
+    if (authCheck) {
+      authCheck.classList.remove('show');
+    }
+
     authSection.innerHTML = `
       <div class="user-panel">
         <div class="user-info">

@@ -1,4 +1,14 @@
 node_modules/
 .env
+.env.local
+.env.production
 .DS_Store
 *.log
+*.db
+*.sqlite
+*.sqlite3
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+certbot/
+.pm2/

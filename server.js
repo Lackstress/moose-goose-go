@@ -29,18 +29,96 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'landing.html'));
 });
 
+// Games lobby - your games listing
+app.get('/games', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // GameHub - your games
 app.get('/ghub', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'hub.html'));
 });
 
-// DuckMath - serve from duckmath folder
-app.use('/duckmath', express.static(path.join(__dirname, '..', 'duckmath')));
-
-// DuckMath index fallback
-app.get('/duckmath/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'duckmath', 'index.html'));
+// DuckMath - serve from duckmath folder with asset path rewriting
+app.get('/duckmath', (req, res) => {
+  const fs = require('fs');
+  const filePath = path.join(__dirname, '..', 'duckmath', 'index.html');
+  let html = fs.readFileSync(filePath, 'utf8');
+  
+  // Rewrite specific asset paths to include /duckmath prefix
+  // Use replaceAll to ensure we get all occurrences
+  html = html.replaceAll('href="/assets/', 'href="/duckmath/assets/');
+  html = html.replaceAll('src="/assets/', 'src="/duckmath/assets/');
+  html = html.replaceAll('href="/g4m3s/', 'href="/duckmath/g4m3s/');
+  html = html.replaceAll('src="/g4m3s/', 'src="/duckmath/g4m3s/');
+  
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
 });
+
+app.get('/duckmath/', (req, res) => {
+  const fs = require('fs');
+  const filePath = path.join(__dirname, '..', 'duckmath', 'index.html');
+  let html = fs.readFileSync(filePath, 'utf8');
+  
+  // Rewrite specific asset paths to include /duckmath prefix
+  // Use replaceAll to ensure we get all occurrences
+  html = html.replaceAll('href="/assets/', 'href="/duckmath/assets/');
+  html = html.replaceAll('src="/assets/', 'src="/duckmath/assets/');
+  html = html.replaceAll('href="/g4m3s/', 'href="/duckmath/g4m3s/');
+  html = html.replaceAll('src="/g4m3s/', 'src="/duckmath/g4m3s/');
+  
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
+
+// DuckMath game page - serve with asset path rewriting (handles both with and without query params)
+app.get('/duckmath/g4m3s', (req, res) => {
+  const fs = require('fs');
+  const filePath = path.join(__dirname, '..', 'duckmath', 'g4m3s', 'index.html');
+  let html = fs.readFileSync(filePath, 'utf8');
+  
+  // Rewrite specific asset paths to include /duckmath prefix
+  html = html.replaceAll('href="/assets/', 'href="/duckmath/assets/');
+  html = html.replaceAll('src="/assets/', 'src="/duckmath/assets/');
+  html = html.replaceAll('href="/g4m3s/', 'href="/duckmath/g4m3s/');
+  html = html.replaceAll('src="/g4m3s/', 'src="/duckmath/g4m3s/');
+  html = html.replaceAll('src="/loading.html"', 'src="/duckmath/loading.html"');
+  
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
+
+// Redirect /g4m3s/* to /duckmath/g4m3s/* (for DuckMath game links)
+app.get('/g4m3s/*', (req, res) => {
+  res.redirect('/duckmath' + req.originalUrl);
+});
+
+// Redirect other DuckMath paths that might be missing the prefix
+app.get('/more/*', (req, res) => {
+  res.redirect('/duckmath' + req.originalUrl);
+});
+
+app.get('/blog/*', (req, res) => {
+  res.redirect('/duckmath' + req.originalUrl);
+});
+
+// DuckMath JavaScript file rewriting for navigation links
+app.get('/duckmath/assets/js/index.js', (req, res) => {
+  const fs = require('fs');
+  const filePath = path.join(__dirname, '..', 'duckmath', 'assets', 'js', 'index.js');
+  let js = fs.readFileSync(filePath, 'utf8');
+  
+  // Rewrite navigation links to stay within /duckmath context
+  js = js.replaceAll('href="/"', 'href="/duckmath"');
+  js = js.replaceAll('href="/index.html"', 'href="/duckmath"');
+  
+  res.setHeader('Content-Type', 'application/javascript');
+  res.send(js);
+});
+
+// DuckMath assets and other files
+app.use('/duckmath', express.static(path.join(__dirname, '..', 'duckmath')));
 
 // Static files for games
 app.use(express.static(path.join(__dirname, 'public')));
