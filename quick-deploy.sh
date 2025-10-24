@@ -9,7 +9,17 @@ read -p "Domain: " DOMAIN
 read -p "Email: " EMAIL
 
 # Install essentials
-sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx nodejs npm
+echo "📦 Installing system dependencies..."
+sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx curl
+
+# Install Node.js 20.x (required for React 19)
+if ! command -v node &> /dev/null || [ "$(node -v | cut -d'.' -f1 | tr -d 'v')" -lt 18 ]; then
+    echo "📦 Installing Node.js 20.x..."
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt install -y nodejs
+else
+    echo "✅ Node.js already installed: $(node -v)"
+fi
 
 # Clone or update repo
 if [ ! -d "games" ]; then
@@ -29,26 +39,41 @@ fi
 
 # Clone and build Radon Games
 echo "⚡ Cloning and building Radon Games..."
+
+# Install pnpm if not already installed
+if ! command -v pnpm &> /dev/null; then
+    echo "📦 Installing pnpm..."
+    sudo npm install -g pnpm
+fi
+
 if [ ! -d "radon-games" ]; then
-    # Install pnpm if not already installed
-    if ! command -v pnpm &> /dev/null; then
-        sudo npm install -g pnpm
-    fi
+    echo "📥 Cloning Radon Games repository..."
     git clone https://github.com/Radon-Games/Radon-Games.git radon-games
     cd radon-games
+    echo "📦 Installing Radon Games dependencies..."
     pnpm install
+    echo "🔨 Building Radon Games..."
     pnpm run build
+    echo "✅ Radon Games built successfully"
     cd ..
 else
+    echo "🔄 Updating Radon Games..."
     cd radon-games
     git pull
-    if ! command -v pnpm &> /dev/null; then
-        sudo npm install -g pnpm
-    fi
+    echo "📦 Installing/updating dependencies..."
     pnpm install
+    echo "🔨 Rebuilding Radon Games..."
     pnpm run build
+    echo "✅ Radon Games updated and rebuilt"
     cd ..
 fi
+
+# Verify Radon Games build
+if [ ! -d "radon-games/dist" ]; then
+    echo "❌ Error: Radon Games build failed - dist folder not found"
+    exit 1
+fi
+echo "✅ Radon Games dist folder verified"
 
 cd games
 
@@ -92,4 +117,26 @@ sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos --e
 # Firewall
 sudo ufw allow 'Nginx Full' && sudo ufw allow OpenSSH && yes | sudo ufw enable
 
-echo "✅ Live at https://$DOMAIN"
+echo ""
+echo "================================"
+echo "✅ Deployment Complete!"
+echo "================================"
+echo ""
+echo "🌐 Your site is live at: https://$DOMAIN"
+echo ""
+echo "📍 Available Routes:"
+echo "  • https://$DOMAIN/ - Landing page"
+echo "  • https://$DOMAIN/ghub - Game Hub"
+echo "  • https://$DOMAIN/duckmath - DuckMath games"
+echo "  • https://$DOMAIN/radon-g3mes - Radon Games (200+ games)"
+echo ""
+echo "🔧 Useful Commands:"
+echo "  • pm2 status - Check server status"
+echo "  • pm2 logs games-hub - View logs"
+echo "  • pm2 restart games-hub - Restart server"
+echo ""
+echo "🎮 Radon Games Features:"
+echo "  • 200+ HTML5 and Unity games"
+echo "  • Web proxy at /radon-g3mes/proxy"
+echo "  • CDN proxy for game files"
+echo ""
