@@ -104,10 +104,21 @@ cd games
 # Install and start
 npm install
 sudo npm install -g pm2
+
+# Stop existing process if running
 pm2 delete games-hub 2>/dev/null || true
-pm2 start server.js --name games-hub
-pm2 save
-pm2 startup | tail -n 1 | bash
+
+# Start with PM2 and auto-restart on crash
+pm2 start server.js --name games-hub --time --watch false --max-memory-restart 500M
+
+# Save PM2 process list
+pm2 save --force
+
+# Setup PM2 to start on system boot
+sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u $USER --hp $HOME
+pm2 save --force
+
+echo "✅ PM2 configured to auto-start on boot and restart on crashes"
 
 # Configure Nginx
 sudo tee /etc/nginx/sites-available/$DOMAIN << EOF
