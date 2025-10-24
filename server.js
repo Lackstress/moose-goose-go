@@ -1,0 +1,150 @@
+const express = require('express');
+const path = require('path');
+const http = require('http');
+const socketIO = require('socket.io');
+const cors = require('cors');
+const compression = require('compression');
+require('dotenv').config();
+
+const app = express();
+const server = http.createServer(app);
+const io = socketIO(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
+});
+
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(compression());
+app.use(cors());
+app.use(express.json());
+
+// ===== ROUTES =====
+
+// Landing page - root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'landing.html'));
+});
+
+// GameHub - your games
+app.get('/ghub', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'hub.html'));
+});
+
+// DuckMath - serve from duckmath folder
+app.use('/duckmath', express.static(path.join(__dirname, '..', 'duckmath')));
+
+// DuckMath index fallback
+app.get('/duckmath/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'duckmath', 'index.html'));
+});
+
+// Static files for games
+app.use(express.static(path.join(__dirname, 'public')));
+
+// API Routes
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
+// Multiplayer game lobbies
+const lobbies = {};
+const activePlayers = {};
+
+// WebSocket connections
+io.on('connection', (socket) => {
+  console.log('Player connected:', socket.id);
+
+  // Join game lobby
+  socket.on('join-lobby', (data) => {
+    const { gameId, userId, username } = data;
+    const lobbyId = `${gameId}-lobby`;
+
+    if (!lobbies[lobbyId]) {
+      lobbies[lobbyId] = [];
+    }
+
+    lobbies[lobbyId].push({
+      socketId: socket.id,
+      userId,
+      username,
+    });
+
+    activePlayers[socket.id] = { gameId, userId, username };
+
+    socket.join(lobbyId);
+
+    // Notify players in lobby
+    io.to(lobbyId).emit('lobby-update', {
+      players: lobbies[lobbyId],
+      count: lobbies[lobbyId].length,
+    });
+
+    // If 2 players, start match
+    if (lobbies[lobbyId].length === 2) {
+      const [player1, player2] = lobbies[lobbyId];
+      const matchId = `match-${Date.now()}`;
+
+      io.to(lobbyId).emit('match-start', {
+        matchId,
+        player1,
+        player2,
+        gameId,
+      });
+
+      lobbies[lobbyId] = [];
+    }
+  });
+
+  // Leave lobby
+  socket.on('leave-lobby', (data) => {
+    const { gameId } = data;
+    const lobbyId = `${gameId}-lobby`;
+
+    if (lobbies[lobbyId]) {
+      lobbies[lobbyId] = lobbies[lobbyId].filter(p => p.socketId !== socket.id);
+      io.to(lobbyId).emit('lobby-update', {
+        players: lobbies[lobbyId],
+        count: lobbies[lobbyId].length,
+      });
+    }
+
+    delete activePlayers[socket.id];
+    socket.leave(lobbyId);
+  });
+
+  // Game move (for turn-based games)
+  socket.on('game-move', (data) => {
+    const { matchId, move, playerId } = data;
+    io.emit('move-received', { matchId, move, playerId });
+  });
+
+  // Game end
+  socket.on('game-end', (data) => {
+    const { matchId, winner, score } = data;
+    io.emit('game-finished', { matchId, winner, score });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Player disconnected:', socket.id);
+    delete activePlayers[socket.id];
+  });
+});
+
+// Basic routes
+app.get('/games/:gameId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'games', `${req.params.gameId}.html`));
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+});
+
+server.listen(PORT, () => {
+  console.log(`🎮 Games Server running on http://localhost:${PORT}`);
+  console.log(`🌐 WebSocket ready for multiplayer games`);
+  console.log(`🦆 DuckMath available at http://localhost:${PORT}/duckmath`);
+});

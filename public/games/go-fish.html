@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Go Fish</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .game-info {
+      display: flex;
+      justify-content: space-around;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .info-item {
+      text-align: center;
+    }
+
+    .info-label {
+      font-size: 0.9rem;
+      color: #666;
+      font-weight: 600;
+    }
+
+    .info-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .game-area {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 2rem;
+      border-radius: 12px;
+      margin: 2rem 0;
+    }
+
+    .game-status {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background: #f3f4f6;
+      border-radius: 8px;
+      min-height: 3rem;
+    }
+
+    .cards-container {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 2rem 0;
+    }
+
+    .card {
+      width: 80px;
+      height: 120px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: 2px solid white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .card.back {
+      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      cursor: default;
+    }
+
+    .card.selected {
+      border-color: #fbbf24;
+      box-shadow: 0 0 15px #fbbf24;
+    }
+
+    .controls {
+      text-align: center;
+      margin: 2rem 0;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .sets-display {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
+    .set-card {
+      background: #f3f4f6;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      border: 2px solid #667eea;
+    }
+
+    .set-card-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .set-card-label {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .instruction {
+      text-align: center;
+      color: #666;
+      font-size: 0.95rem;
+      margin: 1rem 0;
+      line-height: 1.6;
+    }
+
+    .bet-section {
+      background: #fef3c7;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      border-left: 4px solid #fbbf24;
+    }
+
+    .bet-input {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .player-score {
+      background: #dcfce7;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #16a34a;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo"><h1>🐟 GO FISH</h1></div>
+      <div id="authSection" class="auth-buttons"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="game-container">
+      <div class="game-header">
+        <h1>Go Fish - Card Matching Game</h1>
+        <a href="/" class="btn">Back to Lobby</a>
+      </div>
+
+      <div class="game-info">
+        <div class="info-item">
+          <div class="info-label">💰 Coins</div>
+          <div class="info-value" id="coinDisplay">1000</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">💵 Your Bet</div>
+          <div class="info-value" id="betDisplay">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">🐟 Sets Collected</div>
+          <div class="info-value" id="setsDisplay">0</div>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div id="bettingPhase">
+          <h2>Place Your Bet</h2>
+          <div class="bet-section">
+            <div class="bet-input">
+              <input type="number" id="betAmount" min="10" max="500" value="50" style="padding: 0.5rem; border-radius: 4px; border: 2px solid #667eea; width: 100px;" />
+              <button onclick="startGameWithBet()" class="btn">Start Game</button>
+            </div>
+            <div class="instruction">
+              Quick bets:
+              <button onclick="setBet(25)" class="bet-chip" style="display: inline; padding: 0.4rem 0.8rem; margin: 0 0.3rem;">25</button>
+              <button onclick="setBet(50)" class="bet-chip" style="display: inline; padding: 0.4rem 0.8rem; margin: 0 0.3rem;">50</button>
+              <button onclick="setBet(100)" class="bet-chip" style="display: inline; padding: 0.4rem 0.8rem; margin: 0 0.3rem;">100</button>
+              <button onclick="setBet(250)" class="bet-chip" style="display: inline; padding: 0.4rem 0.8rem; margin: 0 0.3rem;">250</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="gamePhase" style="display: none;">
+          <div class="game-status" id="gameStatus">🎮 Your Turn - Ask for a card rank!</div>
+          <div class="player-score">Sets Collected: <span id="playerSetsCount">0</span>/13 | Score: <span id="scoreValue">0</span> coins</div>
+
+          <h3>Your Hand:</h3>
+          <div class="cards-container" id="playerHand"></div>
+
+          <div class="instruction">
+            <strong>How to Play:</strong><br>
+            Click a card in your hand, then click the "Ask Opponent" button to request that rank.<br>
+            If they have it, they must give you all cards of that rank!<br>
+            Match all 4 cards of a rank to make a set and earn points.
+          </div>
+
+          <div class="controls">
+            <button onclick="askCard()" class="btn" id="askBtn" style="display: none;">Ask Opponent</button>
+            <button onclick="goFish()" class="btn secondary" id="fishBtn">Draw from Pile</button>
+            <button onclick="endGame()" class="btn" style="background: #ef4444;">End Game</button>
+          </div>
+
+          <h3>Your Sets (Completed):</h3>
+          <div class="sets-display" id="completedSets"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    let playerHand = [];
+    let playerSets = [];
+    let currentBet = 0;
+    let gameRunning = false;
+    let selectedCard = null;
+    let score = 0;
+
+    function updateAuthUI() {
+      document.getElementById('authSection').innerHTML = currentUser
+        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
+        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+
+    function setBet(amount) {
+      document.getElementById('betAmount').value = amount;
+    }
+
+    function startGameWithBet() {
+      const amount = parseInt(document.getElementById('betAmount').value) || 50;
+      if (amount < 10) {
+        showNotification('Minimum bet is 10 coins', 'error');
+        return;
+      }
+      if (amount > userCoins) {
+        showNotification('Not enough coins!', 'error');
+        return;
+      }
+
+      currentBet = amount;
+      updateCoins(-amount, 'go-fish', 'bet');
+      startGame();
+    }
+
+    function startGame() {
+      gameRunning = true;
+      playerHand = [];
+      playerSets = [];
+      selectedCard = null;
+      score = 0;
+
+      // Deal initial hand (5 cards)
+      for (let i = 0; i < 5; i++) {
+        playerHand.push(ranks[Math.floor(Math.random() * ranks.length)]);
+      }
+
+      document.getElementById('bettingPhase').style.display = 'none';
+      document.getElementById('gamePhase').style.display = 'block';
+      document.getElementById('betDisplay').textContent = currentBet;
+      renderGame();
+    }
+
+    function renderGame() {
+      renderHand();
+      renderSets();
+      document.getElementById('setsDisplay').textContent = playerSets.length;
+      document.getElementById('playerSetsCount').textContent = playerSets.length;
+      document.getElementById('scoreValue').textContent = score;
+    }
+
+    function renderHand() {
+      const handDiv = document.getElementById('playerHand');
+      handDiv.innerHTML = '';
+
+      playerHand.forEach((card, index) => {
+        const cardEl = document.createElement('div');
+        cardEl.className = `card ${selectedCard === index ? 'selected' : ''}`;
+        cardEl.textContent = card;
+        cardEl.onclick = () => selectCard(index);
+        handDiv.appendChild(cardEl);
+      });
+
+      document.getElementById('askBtn').style.display = selectedCard !== null ? 'inline-block' : 'none';
+    }
+
+    function selectCard(index) {
+      selectedCard = selectedCard === index ? null : index;
+      renderHand();
+    }
+
+    function askCard() {
+      if (selectedCard === null) return;
+
+      const requestedRank = playerHand[selectedCard];
+      
+      // Simulate opponent having cards
+      const hasCards = Math.random() > 0.5;
+
+      if (hasCards) {
+        const cardsReceived = Math.floor(Math.random() * 2) + 1;
+        for (let i = 0; i < cardsReceived; i++) {
+          playerHand.push(requestedRank);
+        }
+        showNotification(`Got ${cardsReceived} ${requestedRank}'s! 🎉`, 'success');
+      } else {
+        showNotification('Go Fish! 🐟', 'info');
+        playerHand.push(ranks[Math.floor(Math.random() * ranks.length)]);
+      }
+
+      checkForSets();
+      selectedCard = null;
+      renderGame();
+    }
+
+    function goFish() {
+      const newCard = ranks[Math.floor(Math.random() * ranks.length)];
+      playerHand.push(newCard);
+      showNotification(`Drew a ${newCard}!`, 'info');
+      checkForSets();
+      renderGame();
+    }
+
+    function checkForSets() {
+      for (let rank of ranks) {
+        const count = playerHand.filter(c => c === rank).length;
+        if (count === 4 && !playerSets.includes(rank)) {
+          playerSets.push(rank);
+          playerHand = playerHand.filter(c => c !== rank);
+          score += currentBet * 2;
+          updateCoins(currentBet * 2, 'go-fish', 'win');
+          showNotification(`Set complete: ${rank}! +${currentBet * 2} coins! 🏆`, 'success');
+        }
+      }
+    }
+
+    function renderSets() {
+      const setsDiv = document.getElementById('completedSets');
+      setsDiv.innerHTML = '';
+
+      playerSets.forEach(rank => {
+        const setEl = document.createElement('div');
+        setEl.className = 'set-card';
+        setEl.innerHTML = `
+          <div class="set-card-value">${rank}</div>
+          <div class="set-card-label">Complete Set</div>
+        `;
+        setsDiv.appendChild(setEl);
+      });
+    }
+
+    function endGame() {
+      gameRunning = false;
+      const finalReward = score;
+      
+      document.getElementById('gamePhase').style.display = 'none';
+      document.getElementById('bettingPhase').style.display = 'block';
+      document.getElementById('gameStatus').textContent = `Game Over! Sets: ${playerSets.length}/13 | Earnings: +${finalReward} coins`;
+      
+      document.getElementById('coinDisplay').textContent = userCoins;
+      document.getElementById('betDisplay').textContent = 0;
+      document.getElementById('setsDisplay').textContent = 0;
+
+      showNotification(`Game ended! You collected ${playerSets.length} sets! 🐟`, 'success');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      document.getElementById('coinDisplay').textContent = userCoins;
+    });
+  </script>
+</body>
+</html>

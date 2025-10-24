@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Match</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 1rem;
+      margin: 1rem auto;
+      max-width: 400px;
+      perspective: 1000px;
+    }
+
+    .memory-card {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 2rem;
+      transition: transform 0.3s;
+      position: relative;
+      transform-style: preserve-3d;
+    }
+
+    .memory-card:hover:not(.matched) {
+      transform: scale(1.05);
+    }
+
+    .memory-card.flipped {
+      background: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .memory-card.matched {
+      cursor: default;
+      background: #10b981;
+      opacity: 0.7;
+    }
+
+    .game-controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .difficulty-selector {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .game-status {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #667eea;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo"><h1>🎮 MEMORY MATCH</h1></div>
+      <div id="authSection" class="auth-buttons"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="game-container">
+      <div class="game-header">
+        <h1>Memory Match</h1>
+        <a href="/" class="btn">Back to Lobby</a>
+      </div>
+
+      <div class="game-stats">
+        <div class="stat">
+          <div class="stat-label">🎯 Matches</div>
+          <div class="stat-value" id="matchesDisplay">0/8</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">🚀 Moves</div>
+          <div class="stat-value" id="movesDisplay">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">⏱️ Time</div>
+          <div class="stat-value" id="timeDisplay">0s</div>
+        </div>
+      </div>
+
+      <div class="difficulty-selector">
+        <button onclick="setDifficulty('easy')" class="btn secondary">Easy (4x4)</button>
+        <button onclick="setDifficulty('normal')" class="btn" id="normalDiff">Normal (4x4)</button>
+        <button onclick="setDifficulty('hard')" class="btn secondary">Hard (6x6)</button>
+      </div>
+
+      <div class="game-grid" id="gameGrid"></div>
+
+      <div class="game-status" id="gameStatus"></div>
+
+      <div class="game-controls">
+        <button onclick="resetGame()" class="btn">New Game</button>
+        <button onclick="window.location.href='/';" class="btn secondary">Back to Lobby</button>
+      </div>
+    </div>
+  </main>
+
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    const emojis = ['🍎', '🍌', '🍇', '🍊', '🍋', '🍌', '🍉', '🍓'];
+    let cards = [];
+    let flipped = [];
+    let matched = 0;
+    let moves = 0;
+    let gameActive = false;
+    let difficulty = 'normal';
+    let startTime = 0;
+    let timerInterval = null;
+    let pairsNeeded = 8;
+
+    function setDifficulty(level) {
+      difficulty = level;
+      if (level === 'hard') {
+        pairsNeeded = 18;
+      } else {
+        pairsNeeded = 8;
+      }
+      resetGame();
+    }
+
+    function initializeGame() {
+      const grid = document.getElementById('gameGrid');
+      grid.innerHTML = '';
+      
+      if (difficulty === 'hard') {
+        grid.style.gridTemplateColumns = 'repeat(6, 1fr)';
+        cards = [];
+        const hardEmojis = ['🍎', '🍌', '🍇', '🍊', '🍋', '🍉', '🍓', '🍒', '🍑', '🍍', '🥥', '🥝', '🍈', '🍏', '🍐', '🥭', '🧅', '🥒'];
+        for (let i = 0; i < 18; i++) {
+          cards.push(hardEmojis[i]);
+        }
+      } else {
+        grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+        cards = [];
+        for (let i = 0; i < 8; i++) {
+          cards.push(emojis[i]);
+        }
+      }
+
+      cards = [...cards, ...cards];
+      cards.sort(() => Math.random() - 0.5);
+
+      cards.forEach((emoji, index) => {
+        const card = document.createElement('button');
+        card.className = 'memory-card';
+        card.dataset.emoji = emoji;
+        card.dataset.index = index;
+        card.textContent = '?';
+        card.addEventListener('click', () => flipCard(card));
+        grid.appendChild(card);
+      });
+
+      flipped = [];
+      matched = 0;
+      moves = 0;
+      gameActive = true;
+      startTime = Date.now();
+      updateDisplay();
+      startTimer();
+    }
+
+    function flipCard(card) {
+      if (!gameActive || card.classList.contains('flipped') || card.classList.contains('matched')) {
+        return;
+      }
+
+      card.classList.add('flipped');
+      card.textContent = card.dataset.emoji;
+      flipped.push(card);
+
+      if (flipped.length === 2) {
+        gameActive = false;
+        moves++;
+        updateDisplay();
+
+        setTimeout(() => {
+          checkMatch();
+        }, 600);
+      }
+    }
+
+    function checkMatch() {
+      const [card1, card2] = flipped;
+
+      if (card1.dataset.emoji === card2.dataset.emoji) {
+        card1.classList.add('matched');
+        card2.classList.add('matched');
+        matched++;
+        updateDisplay();
+
+        if (matched === pairsNeeded) {
+          endGame();
+        }
+      } else {
+        card1.classList.remove('flipped');
+        card2.classList.remove('flipped');
+        card1.textContent = '?';
+        card2.textContent = '?';
+      }
+
+      flipped = [];
+      gameActive = true;
+    }
+
+    function updateDisplay() {
+      document.getElementById('matchesDisplay').textContent = `${matched}/${pairsNeeded}`;
+      document.getElementById('movesDisplay').textContent = moves;
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        document.getElementById('timeDisplay').textContent = elapsed + 's';
+      }, 1000);
+    }
+
+    function endGame() {
+      gameActive = false;
+      clearInterval(timerInterval);
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      document.getElementById('gameStatus').textContent = `🎉 You won in ${moves} moves and ${elapsed}s!`;
+      showNotification('Congratulations! You matched all pairs!', 'success');
+    }
+
+    function resetGame() {
+      gameActive = false;
+      clearInterval(timerInterval);
+      document.getElementById('gameStatus').textContent = '';
+      document.getElementById('timeDisplay').textContent = '0s';
+      initializeGame();
+    }
+
+    function updateAuthUI() {
+      document.getElementById('authSection').innerHTML = currentUser
+        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
+        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      setDifficulty('normal');
+    });
+  </script>
+</body>
+</html>

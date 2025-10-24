@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Flip</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .coin-container {
+      display: flex;
+      justify-content: center;
+      margin: 2rem 0;
+    }
+
+    .coin {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      font-weight: bold;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      animation: none;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .coin.flip {
+      animation: flipCoin 1s ease-in-out;
+    }
+
+    @keyframes flipCoin {
+      0% { transform: rotateY(0) rotateX(0); }
+      50% { transform: rotateY(1080deg) rotateX(360deg); }
+      100% { transform: rotateY(0) rotateX(0); }
+    }
+
+    .betting-area {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .choice-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .choice-btn {
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      border: 3px solid;
+      border-radius: 8px;
+      background: white;
+      transition: all 0.3s;
+    }
+
+    .choice-btn.heads {
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    .choice-btn.tails {
+      border-color: #764ba2;
+      color: #764ba2;
+    }
+
+    .choice-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .choice-btn.selected {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .game-status {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 1rem 0;
+      padding: 1.5rem;
+      background: #f3f4f6;
+      border-radius: 8px;
+      min-height: 60px;
+    }
+
+    .result-message {
+      text-align: center;
+      font-size: 1.3rem;
+      margin: 1rem 0;
+    }
+
+    .result-win { color: #10b981; }
+    .result-lose { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo"><h1>🪙 COIN FLIP</h1></div>
+      <div id="authSection" class="auth-buttons"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="game-container">
+      <div class="game-header">
+        <h1>Coin Flip - Double or Nothing!</h1>
+        <a href="/" class="btn">Back to Lobby</a>
+      </div>
+
+      <div class="game-stats">
+        <div class="stat">
+          <div class="stat-label">💰 Coins</div>
+          <div class="stat-value" id="coinDisplay">1000</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">💵 Your Bet</div>
+          <div class="stat-value" id="betDisplay">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">📊 Win Rate</div>
+          <div class="stat-value" id="winRateDisplay">0%</div>
+        </div>
+      </div>
+
+      <div id="bettingPhase">
+        <h2>💵 Place Your Bet</h2>
+        
+        <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+          <label for="betAmount" style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Bet Amount:</label>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <input type="number" id="betAmount" min="10" max="1000" value="100" style="padding: 0.5rem; border-radius: 4px; border: 2px solid #667eea; width: 120px;" />
+            <button onclick="placeBet()" class="btn">Place Bet</button>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
+          <button onclick="quickBet(10)" class="bet-chip" style="background: #e0f2fe; border-color: #0284c7;">10 💰</button>
+          <button onclick="quickBet(25)" class="bet-chip" style="background: #dcfce7; border-color: #22c55e;">25 💰</button>
+          <button onclick="quickBet(50)" class="bet-chip" style="background: #fef3c7; border-color: #ca8a04;">50 💰</button>
+          <button onclick="quickBet(100)" class="bet-chip" style="background: #fee2e2; border-color: #ef4444;">100 💰</button>
+          <button onclick="quickBet(250)" class="bet-chip" style="background: #f5d4fd; border-color: #d946ef;">250 💰</button>
+          <button onclick="quickBet(500)" class="bet-chip" style="background: #fce7f3; border-color: #ec4899;">500 💰</button>
+        </div>
+      </div>
+
+      <div id="gamePhase" style="display: none;">
+        <h2>Choose Your Side</h2>
+        <div class="choice-buttons">
+          <button class="choice-btn heads" onclick="chooseHeads()">
+            👑 HEADS
+          </button>
+          <button class="choice-btn tails" onclick="chooseTails()">
+            📊 TAILS
+          </button>
+        </div>
+
+        <div class="coin-container">
+          <div class="coin" id="coinDisplay2">🪙</div>
+        </div>
+
+        <div class="game-status" id="gameStatus"></div>
+        <div id="resultMessage" class="result-message"></div>
+
+        <div class="controls">
+          <button onclick="newGame()" class="btn" id="newGameBtn" style="display: none;">Play Again</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    let currentBet = 0;
+    let playerChoice = null;
+    let result = null;
+    let wins = 0;
+    let losses = 0;
+
+    function updateAuthUI() {
+      document.getElementById('authSection').innerHTML = currentUser
+        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
+        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+
+    function placeBet() {
+      const amount = parseInt(document.getElementById('betAmount').value);
+
+      if (amount < 10) {
+        showNotification('Minimum bet is 10 coins', 'error');
+        return;
+      }
+
+      if (amount > userCoins) {
+        showNotification('You do not have enough coins', 'error');
+        return;
+      }
+
+      currentBet = amount;
+      playerChoice = null;
+      result = null;
+
+      document.getElementById('bettingPhase').style.display = 'none';
+      document.getElementById('gamePhase').style.display = 'block';
+      document.getElementById('betDisplay').textContent = currentBet;
+      document.getElementById('gameStatus').textContent = 'Choose your side!';
+      document.getElementById('resultMessage').textContent = '';
+      document.getElementById('newGameBtn').style.display = 'none';
+
+      // Reset button styles
+      document.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+    }
+
+    function quickBet(amount) {
+      document.getElementById('betAmount').value = amount;
+      placeBet();
+    }
+
+    function chooseHeads() {
+      playerChoice = 'heads';
+      document.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      event.target.closest('.choice-btn').classList.add('selected');
+      flipCoin();
+    }
+
+    function chooseTails() {
+      playerChoice = 'tails';
+      document.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      event.target.closest('.choice-btn').classList.add('selected');
+      flipCoin();
+    }
+
+    function flipCoin() {
+      const coinElement = document.getElementById('coinDisplay2');
+      coinElement.classList.add('flip');
+
+      setTimeout(() => {
+        result = Math.random() < 0.5 ? 'heads' : 'tails';
+        coinElement.textContent = result === 'heads' ? '👑' : '📊';
+        coinElement.classList.remove('flip');
+
+        document.querySelectorAll('.choice-btn').forEach(btn => {
+          btn.disabled = true;
+        });
+
+        determineWinner();
+      }, 1000);
+    }
+
+    function determineWinner() {
+      const won = playerChoice === result;
+
+      if (won) {
+        const winnings = currentBet;
+        updateCoins(winnings, 'coinflip', 'win');
+        document.getElementById('gameStatus').textContent = `You chose ${playerChoice.toUpperCase()} and WON!`;
+        document.getElementById('resultMessage').textContent = `+${winnings} Coins! 🎉`;
+        document.getElementById('resultMessage').className = 'result-message result-win';
+        wins++;
+        showNotification(`You won ${winnings} coins!`, 'success');
+      } else {
+        updateCoins(-currentBet, 'coinflip', 'loss');
+        document.getElementById('gameStatus').textContent = `You chose ${playerChoice.toUpperCase()} but got ${result.toUpperCase()}!`;
+        document.getElementById('resultMessage').textContent = `-${currentBet} Coins! 😢`;
+        document.getElementById('resultMessage').className = 'result-message result-lose';
+        losses++;
+        showNotification(`You lost ${currentBet} coins!`);
+      }
+
+      document.getElementById('coinDisplay').textContent = userCoins;
+      updateWinRate();
+      document.getElementById('newGameBtn').style.display = 'inline-block';
+    }
+
+    function updateWinRate() {
+      const total = wins + losses;
+      const rate = total > 0 ? Math.round((wins / total) * 100) : 0;
+      document.getElementById('winRateDisplay').textContent = rate + '%';
+    }
+
+    function newGame() {
+      currentBet = 0;
+      playerChoice = null;
+      result = null;
+
+      document.getElementById('bettingPhase').style.display = 'block';
+      document.getElementById('gamePhase').style.display = 'none';
+      document.getElementById('betDisplay').textContent = '0';
+      document.getElementById('gameStatus').textContent = '';
+      document.getElementById('resultMessage').textContent = '';
+      document.getElementById('newGameBtn').style.display = 'none';
+
+      document.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.disabled = false;
+        btn.classList.remove('selected');
+      });
+
+      document.getElementById('coinDisplay2').textContent = '🪙';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      document.getElementById('coinDisplay').textContent = userCoins;
+    });
+  </script>
+</body>
+</html>

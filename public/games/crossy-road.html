@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crossy Road</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    #gameCanvas {
+      display: block;
+      margin: 1rem auto;
+      background: #87ceeb;
+      border: 3px solid #667eea;
+      border-radius: 8px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .betting-area {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .game-status {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #667eea;
+      margin: 1rem 0;
+    }
+
+    .instructions {
+      background: #f3f4f6;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .result-message {
+      text-align: center;
+      font-size: 1.2rem;
+      margin: 1rem 0;
+    }
+
+    .result-win { color: #10b981; }
+    .result-lose { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo"><h1>🚗 CROSSY ROAD</h1></div>
+      <div id="authSection" class="auth-buttons"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="game-container">
+      <div class="game-header">
+        <h1>Crossy Road - Dodge & Survive!</h1>
+        <a href="/" class="btn">Back to Lobby</a>
+      </div>
+
+      <div class="game-stats">
+        <div class="stat">
+          <div class="stat-label">💰 Coins</div>
+          <div class="stat-value" id="coinDisplay">1000</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">💵 Your Bet</div>
+          <div class="stat-value" id="betDisplay">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">📊 Distance</div>
+          <div class="stat-value" id="distanceDisplay">0</div>
+        </div>
+      </div>
+
+      <div id="bettingPhase">
+        <h2>Place Your Bet (Higher = Better Rewards!)</h2>
+        <div class="betting-area">
+          <input type="number" id="betAmount" min="10" max="500" value="50" />
+          <button onclick="startGame()" class="btn">Start Game</button>
+        </div>
+        <div class="betting-area">
+          <button onclick="setBet(50)" class="btn secondary">50</button>
+          <button onclick="setBet(100)" class="btn secondary">100</button>
+          <button onclick="setBet(250)" class="btn secondary">250</button>
+        </div>
+      </div>
+
+      <div id="gamePhase" style="display: none;">
+        <div class="instructions">
+          <p>Use ARROW KEYS or A/D to move left/right</p>
+          <p>Avoid cars and reach further distance for bigger rewards!</p>
+        </div>
+
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+        <div class="game-status" id="gameStatus"></div>
+        <div id="resultMessage" class="result-message"></div>
+
+        <div class="controls">
+          <button onclick="resetGame()" class="btn" id="resetBtn" style="display: none;">Play Again</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const gridSize = 40;
+
+    let player = { x: 4, y: 14 };
+    let cars = [];
+    let distance = 0;
+    let gameActive = false;
+    let currentBet = 0;
+    let keys = {};
+
+    // Game states
+    let gameState = 'betting';
+
+    // Input handling
+    document.addEventListener('keydown', (e) => {
+      keys[e.key] = true;
+      if (gameActive) {
+        if ((e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') && player.x > 0) {
+          player.x--;
+        }
+        if ((e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') && player.x < 9) {
+          player.x++;
+        }
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      keys[e.key] = false;
+    });
+
+    class Car {
+      constructor(lane, direction) {
+        this.lane = lane;
+        this.direction = direction; // 1 for right, -1 for left
+        this.x = direction > 0 ? -1 : 10;
+        this.width = 1.5;
+      }
+
+      update() {
+        this.x += this.direction * 0.15;
+      }
+
+      draw() {
+        ctx.fillStyle = ['#ef4444', '#3b82f6', '#10b981'][Math.floor(Math.random() * 3)];
+        ctx.fillRect(
+          this.x * gridSize,
+          this.lane * gridSize,
+          this.width * gridSize,
+          gridSize - 5
+        );
+      }
+
+      isOffscreen() {
+        return this.x > 11 || this.x < -2;
+      }
+    }
+
+    function startGame() {
+      const bet = parseInt(document.getElementById('betAmount').value);
+
+      if (bet < 10) {
+        showNotification('Minimum bet is 10 coins', 'error');
+        return;
+      }
+
+      if (bet > userCoins) {
+        showNotification('Not enough coins', 'error');
+        return;
+      }
+
+      currentBet = bet;
+      updateCoins(-bet, 'crossyroad', 'bet');
+      document.getElementById('betDisplay').textContent = bet;
+
+      document.getElementById('bettingPhase').style.display = 'none';
+      document.getElementById('gamePhase').style.display = 'block';
+
+      gameActive = true;
+      player = { x: 4, y: 14 };
+      cars = [];
+      distance = 0;
+      gameState = 'playing';
+
+      gameLoop();
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+
+      if (gameActive) {
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    function update() {
+      // Spawn cars
+      if (Math.random() < 0.02) {
+        const lane = Math.floor(Math.random() * 12);
+        const direction = Math.random() < 0.5 ? 1 : -1;
+        cars.push(new Car(lane, direction));
+      }
+
+      // Update cars
+      cars = cars.filter(car => !car.isOffscreen());
+      cars.forEach(car => car.update());
+
+      // Check collisions
+      cars.forEach(car => {
+        if (player.y === car.lane &&
+            player.x * gridSize < (car.x + car.width) * gridSize &&
+            (player.x + 1) * gridSize > car.x * gridSize) {
+          endGame(false);
+        }
+      });
+
+      // Player moves forward
+      if (distance % 50 === 0 && distance > 0) {
+        player.y--;
+        if (player.y < 0) {
+          player.y = 0;
+        }
+      }
+
+      distance++;
+      document.getElementById('distanceDisplay').textContent = Math.floor(distance / 10);
+    }
+
+    function draw() {
+      // Sky
+      ctx.fillStyle = '#87ceeb';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Ground tiles
+      for (let i = 0; i < 15; i++) {
+        ctx.fillStyle = i % 2 === 0 ? '#90ee90' : '#7cb342';
+        ctx.fillRect(0, i * gridSize, canvas.width, gridSize);
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, i * gridSize, canvas.width, gridSize);
+      }
+
+      // Road
+      for (let i = 4; i < 12; i++) {
+        ctx.fillStyle = '#333';
+        ctx.fillRect(0, i * gridSize, canvas.width, gridSize);
+
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        ctx.moveTo(0, (i + 0.5) * gridSize);
+        ctx.lineTo(canvas.width, (i + 0.5) * gridSize);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Draw cars
+      cars.forEach(car => car.draw());
+
+      // Draw player
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(
+        player.x * gridSize + 5,
+        player.y * gridSize + 5,
+        gridSize - 10,
+        gridSize - 10
+      );
+
+      // Eyes
+      ctx.fillStyle = '#000';
+      ctx.fillRect(player.x * gridSize + 10, player.y * gridSize + 10, 5, 5);
+      ctx.fillRect(player.x * gridSize + 25, player.y * gridSize + 10, 5, 5);
+    }
+
+    function endGame(won) {
+      gameActive = false;
+      const distTraveled = Math.floor(distance / 10);
+      const multiplier = Math.max(1, Math.floor(distTraveled / 10));
+      const winnings = currentBet * multiplier;
+      const profit = winnings - currentBet;
+
+      document.getElementById('gameStatus').textContent = `Game Over! Distance: ${distTraveled}`;
+      document.getElementById('resultMessage').textContent = `You earned ${winnings} coins! (+${profit})`;
+      document.getElementById('resultMessage').className = 'result-message result-win';
+
+      updateCoins(winnings, 'crossyroad', 'win');
+      document.getElementById('coinDisplay').textContent = userCoins;
+      document.getElementById('resetBtn').style.display = 'inline-block';
+
+      showNotification(`Great job! You earned ${winnings} coins!`, 'success');
+    }
+
+    function resetGame() {
+      gameState = 'betting';
+      currentBet = 0;
+      distance = 0;
+      cars = [];
+
+      document.getElementById('bettingPhase').style.display = 'block';
+      document.getElementById('gamePhase').style.display = 'none';
+      document.getElementById('gameStatus').textContent = '';
+      document.getElementById('resultMessage').textContent = '';
+      document.getElementById('betDisplay').textContent = '0';
+      document.getElementById('resetBtn').style.display = 'none';
+    }
+
+    function setBet(amount) {
+      document.getElementById('betAmount').value = amount;
+    }
+
+    function updateAuthUI() {
+      document.getElementById('authSection').innerHTML = currentUser
+        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
+        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      document.getElementById('coinDisplay').textContent = userCoins;
+      ctx.fillStyle = '#87ceeb';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    });
+  </script>
+</body>
+</html>

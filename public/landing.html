@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gaming Hub - Choose Your Platform</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .landing-container {
+      max-width: 1200px;
+      width: 100%;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 4rem;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      animation: fadeInDown 0.8s ease;
+    }
+
+    .header p {
+      font-size: 1.3rem;
+      opacity: 0.95;
+      animation: fadeInUp 0.8s ease;
+    }
+
+    .platforms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 3rem;
+      margin-bottom: 3rem;
+      animation: fadeIn 1s ease 0.3s both;
+    }
+
+    .platform-card {
+      background: white;
+      border-radius: 20px;
+      padding: 3rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .platform-card:hover {
+      transform: translateY(-15px);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+    }
+
+    .platform-icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .platform-title {
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 1rem;
+    }
+
+    .platform-description {
+      color: #666;
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      min-height: 4rem;
+    }
+
+    .feature-list {
+      text-align: left;
+      display: inline-block;
+      margin-bottom: 2rem;
+      background: #f9fafb;
+      padding: 1.5rem;
+      border-radius: 12px;
+      border-left: 4px solid #667eea;
+    }
+
+    .feature-list li {
+      list-style: none;
+      margin: 0.7rem 0;
+      color: #555;
+      font-size: 0.95rem;
+    }
+
+    .feature-list li:before {
+      content: "✓ ";
+      color: #22c55e;
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+
+    .platform-btn {
+      display: inline-block;
+      padding: 1rem 2.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .platform-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+    }
+
+    .footer {
+      text-align: center;
+      color: white;
+      opacity: 0.9;
+      margin-top: 3rem;
+      font-size: 0.95rem;
+    }
+
+    .url-info {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      margin-bottom: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .url-info p {
+      margin: 0.5rem 0;
+      font-size: 0.95rem;
+    }
+
+    .url-info code {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0.3rem 0.7rem;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      display: inline-block;
+      margin: 0.3rem 0;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2.5rem;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+      }
+
+      .platforms-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .platform-card {
+        padding: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="landing-container">
+    <div class="header">
+      <h1>🎮 Gaming Hub</h1>
+      <p>Choose Your Gaming Platform</p>
+    </div>
+
+    <div class="url-info">
+      <p><strong>💡 URL Structure:</strong></p>
+      <p>GameHub: <code>/ghub</code></p>
+      <p>DuckMath: <code>/duckmath</code></p>
+    </div>
+
+    <div class="platforms-grid">
+      <!-- GameHub Card -->
+      <div class="platform-card">
+        <span class="platform-icon">🎰</span>
+        <div class="platform-title">GameHub</div>
+        <div class="platform-description">
+          Our hand-crafted gaming collection with exclusive features and rewards
+        </div>
+        <ul class="feature-list">
+          <li>13 Custom Games</li>
+          <li>Coin Betting System</li>
+          <li>Multiplayer Games</li>
+          <li>User Accounts</li>
+          <li>Leaderboards</li>
+        </ul>
+        <a href="/ghub" class="platform-btn">Play GameHub →</a>
+      </div>
+
+      <!-- DuckMath Card -->
+      <div class="platform-card">
+        <span class="platform-icon">🦆</span>
+        <div class="platform-title">DuckMath Hub</div>
+        <div class="platform-description">
+          Massive collection of unblocked games from around the web
+        </div>
+        <ul class="feature-list">
+          <li>100+ Games</li>
+          <li>Variety of Categories</li>
+          <li>Always Updated</li>
+          <li>No Login Required</li>
+          <li>Instant Access</li>
+        </ul>
+        <a href="/duckmath" class="platform-btn">Play DuckMath →</a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>🌟 Enjoy unlimited gaming with GameHub & DuckMath 🌟</p>
+    </div>
+  </div>
+</body>
+</html>

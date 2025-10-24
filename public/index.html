@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Games Lobby - Play & Win!</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Redirect to hub
+    window.location.href = '/ghub';
+  </script>
+</head>
+<body>
+  <p>Redirecting to Games Hub...</p>
+</body>
+</html>
+
+  <main class="container">
+    <!-- User Profile Section -->
+    <section id="userInfo" class="user-section">
+      <div class="profile-card">
+        <p>Login or Register to save your progress!</p>
+      </div>
+    </section>
+
+    <!-- Classic Games Section -->
+    <section class="games-section">
+      <h2>🕹️ Classic Games</h2>
+      <div class="games-grid">
+        <div class="game-card">
+          <h3>Snake</h3>
+          <p>The classic snake game</p>
+          <a href="/games/snake.html" class="btn">Play</a>
+        </div>
+        <div class="game-card">
+          <h3>Flappy Bird</h3>
+          <p>Tap to fly through obstacles</p>
+          <a href="/games/flappy-bird.html" class="btn">Play</a>
+        </div>
+        <div class="game-card">
+          <h3>Memory Match</h3>
+          <p>Test your memory</p>
+          <a href="/games/memory.html" class="btn">Play</a>
+        </div>
+        <div class="game-card">
+          <h3>2048</h3>
+          <p>Combine numbers to reach 2048</p>
+          <a href="/games/2048.html" class="btn">Play</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Multiplayer Card Games Section -->
+    <section class="games-section">
+      <h2>🎯 Multiplayer Games</h2>
+      <div class="games-grid">
+        <div class="game-card">
+          <h3>Tic Tac Toe</h3>
+          <p>Play online against others</p>
+          <a href="/games/tic-tac-toe.html" class="btn">Play</a>
+        </div>
+        <div class="game-card">
+          <h3>Go Fish</h3>
+          <p>Classic card matching game</p>
+          <a href="/games/go-fish.html" class="btn">Play</a>
+        </div>
+        <div class="game-card">
+          <h3>UNO</h3>
+          <p>Match colors & numbers online</p>
+          <a href="/games/uno.html" class="btn">Play</a>
+        </div>
+        <div class="game-card">
+          <h3>Poker</h3>
+          <p>Play online poker with bets</p>
+          <a href="/games/poker.html" class="btn">Play</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gambling/Casino Games Section -->
+    <section class="games-section">
+      <h2>🎰 Casino Games (Bet Your Coins!)</h2>
+      <div class="games-grid">
+        <div class="game-card">
+          <h3>Plinko</h3>
+          <p>Watch the ball drop</p>
+          <a href="/games/plinko.html" class="btn">Play</a>
+        </div>
+        <div class="game-card">
+          <h3>Coin Flip</h3>
+          <p>Double or nothing</p>
+          <a href="/games/coinflip.html" class="btn">Play</a>
+        </div>
+        <div class="game-card">
+          <h3>Roulette</h3>
+          <p>Spin the wheel</p>
+          <a href="/games/roulette.html" class="btn">Play</a>
+        </div>
+        <div class="game-card">
+          <h3>Blackjack 21</h3>
+          <p>Beat the dealer</p>
+          <a href="/games/blackjack.html" class="btn">Play</a>
+        </div>
+        <div class="game-card">
+          <h3>Crossy Road</h3>
+          <p>Dodge traffic & obstacles</p>
+          <a href="/games/crossy-road.html" class="btn">Play</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- Notification Container -->
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <footer>
+    <p>&copy; 2025 Games Lobby. All rights reserved. | Play responsibly!</p>
+  </footer>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

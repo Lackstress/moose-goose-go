@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flappy Bird</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    #gameCanvas {
+      display: block;
+      margin: 1rem auto;
+      background: linear-gradient(135deg, #87ceeb 0%, #e0f6ff 100%);
+      border-radius: 8px;
+      border: 3px solid #667eea;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .game-info {
+      display: flex;
+      justify-content: space-around;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .info-item {
+      text-align: center;
+    }
+
+    .info-label {
+      font-size: 0.9rem;
+      color: #666;
+      font-weight: 600;
+    }
+
+    .info-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .game-controls {
+      text-align: center;
+      margin: 2rem 0;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 12px;
+    }
+
+    .game-status {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      min-height: 2rem;
+    }
+
+    .status-playing { color: #667eea; }
+    .status-gameover { color: #ef4444; }
+    .status-ready { color: #10b981; }
+
+    .instruction {
+      font-size: 1.1rem;
+      color: #666;
+      margin: 1rem 0;
+    }
+
+    .high-score {
+      font-size: 1.3rem;
+      color: #f59e0b;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo"><h1>🐦 FLAPPY BIRD</h1></div>
+      <div id="authSection" class="auth-buttons"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="game-container">
+      <div class="game-header">
+        <h1>Flappy Bird - Tap to Fly!</h1>
+        <a href="/" class="btn">Back to Lobby</a>
+      </div>
+
+      <div class="game-info">
+        <div class="info-item">
+          <div class="info-label">💰 Coins</div>
+          <div class="info-value" id="coinDisplay">1000</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">📊 Current Score</div>
+          <div class="info-value" id="scoreDisplay">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">🏆 High Score</div>
+          <div class="info-value" id="highScoreDisplay">0</div>
+        </div>
+      </div>
+
+      <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+      <div class="game-controls">
+        <div class="game-status" id="gameStatus">Ready to play!</div>
+        <div class="instruction" id="instruction">Click or tap the canvas to start flying! Avoid the pipes!</div>
+        
+        <button onclick="startGame()" class="btn" id="startBtn">START GAME</button>
+        <button onclick="togglePause()" class="btn secondary" id="pauseBtn" style="display: none;">PAUSE</button>
+        <button onclick="resetGame()" class="btn" id="resetBtn" style="display: none;">PLAY AGAIN</button>
+        
+        <div class="high-score">
+          Session High Score: <span id="sessionHighScore">0</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const bird = {
+      x: 50,
+      y: canvas.height / 2,
+      width: 30,
+      height: 30,
+      velocity: 0,
+      gravity: 0.6,
+      jumpForce: -12
+    };
+
+    const pipes = [];
+    const pipeWidth = 80;
+    const pipeGap = 150;
+    const pipeSpeed = 4;
+    const pipeSpacing = 250;
+
+    let gameRunning = false;
+    let gamePaused = false;
+    let score = 0;
+    let highScore = localStorage.getItem('flappyHighScore') || 0;
+    let sessionHighScore = 0;
+    let gameFrames = 0;
+
+    function updateAuthUI() {
+      document.getElementById('authSection').innerHTML = currentUser
+        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
+        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+
+    function drawBird() {
+      // Bird body (yellow circle)
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath();
+      ctx.arc(bird.x, bird.y, bird.width / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Eye
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(bird.x + 8, bird.y - 5, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Pupil
+      ctx.fillStyle = 'black';
+      ctx.beginPath();
+      ctx.arc(bird.x + 10, bird.y - 5, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Beak
+      ctx.fillStyle = '#FF6B00';
+      ctx.beginPath();
+      ctx.moveTo(bird.x + 13, bird.y);
+      ctx.lineTo(bird.x + 20, bird.y + 3);
+      ctx.lineTo(bird.x + 13, bird.y + 6);
+      ctx.closePath();
+      ctx.fill();
+
+      // Wing
+      ctx.strokeStyle = '#FFA500';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(bird.x - 5, bird.y, 8, 0, Math.PI);
+      ctx.stroke();
+    }
+
+    function drawPipes() {
+      ctx.fillStyle = '#22c55e';
+      pipes.forEach(pipe => {
+        // Top pipe
+        ctx.fillRect(pipe.x, 0, pipeWidth, pipe.topHeight);
+
+        // Bottom pipe
+        ctx.fillRect(pipe.x, pipe.topHeight + pipeGap, pipeWidth, canvas.height - pipe.topHeight - pipeGap);
+
+        // Pipe shine effect
+        ctx.fillStyle = '#16a34a';
+        ctx.fillRect(pipe.x + 5, 0, 5, pipe.topHeight);
+        ctx.fillRect(pipe.x + 5, pipe.topHeight + pipeGap, 5, canvas.height - pipe.topHeight - pipeGap);
+        ctx.fillStyle = '#22c55e';
+      });
+    }
+
+    function updateGame() {
+      if (!gameRunning || gamePaused) return;
+
+      // Bird physics
+      bird.velocity += bird.gravity;
+      bird.y += bird.velocity;
+
+      // Pipe movement
+      for (let i = pipes.length - 1; i >= 0; i--) {
+        pipes[i].x -= pipeSpeed;
+
+        // Score point
+        if (pipes[i].x + pipeWidth < bird.x && !pipes[i].scored) {
+          pipes[i].scored = true;
+          score++;
+          if (score > sessionHighScore) sessionHighScore = score;
+          if (score > highScore) highScore = score;
+          
+          const reward = Math.floor(score * 2);
+          updateCoins(reward, 'flappy-bird', 'win');
+          showNotification(`+${reward} coins! 🎉`, 'success');
+        }
+
+        // Remove off-screen pipes
+        if (pipes[i].x + pipeWidth < 0) {
+          pipes.splice(i, 1);
+        }
+      }
+
+      // Add new pipe
+      if (gameFrames % pipeSpacing === 0) {
+        const topHeight = Math.random() * (canvas.height - pipeGap - 100) + 50;
+        pipes.push({
+          x: canvas.width,
+          topHeight: topHeight,
+          scored: false
+        });
+      }
+
+      // Collision detection
+      checkCollision();
+
+      // Update display
+      document.getElementById('scoreDisplay').textContent = score;
+      document.getElementById('highScoreDisplay').textContent = highScore;
+      document.getElementById('sessionHighScore').textContent = sessionHighScore;
+      document.getElementById('coinDisplay').textContent = userCoins;
+
+      gameFrames++;
+    }
+
+    function checkCollision() {
+      // Ground/ceiling collision
+      if (bird.y + bird.width / 2 > canvas.height || bird.y - bird.width / 2 < 0) {
+        endGame();
+        return;
+      }
+
+      // Pipe collision
+      pipes.forEach(pipe => {
+        if (
+          bird.x + bird.width / 2 > pipe.x &&
+          bird.x - bird.width / 2 < pipe.x + pipeWidth
+        ) {
+          if (bird.y - bird.width / 2 < pipe.topHeight || bird.y + bird.width / 2 > pipe.topHeight + pipeGap) {
+            endGame();
+          }
+        }
+      });
+    }
+
+    function drawGame() {
+      // Clear canvas
+      ctx.fillStyle = '#87ceeb';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw clouds
+      drawClouds();
+
+      // Draw game elements
+      drawPipes();
+      drawBird();
+
+      // Draw score
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 32px Arial';
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 3;
+      ctx.strokeText(score, 20, 50);
+      ctx.fillText(score, 20, 50);
+    }
+
+    function drawClouds() {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.beginPath();
+      ctx.arc(100, 50, 20, 0, Math.PI * 2);
+      ctx.arc(130, 45, 25, 0, Math.PI * 2);
+      ctx.arc(160, 50, 20, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(400, 100, 25, 0, Math.PI * 2);
+      ctx.arc(440, 95, 30, 0, Math.PI * 2);
+      ctx.arc(480, 100, 25, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function gameLoop() {
+      updateGame();
+      drawGame();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+      if (gameRunning) return;
+      
+      gameRunning = true;
+      gamePaused = false;
+      score = 0;
+      pipes.length = 0;
+      bird.y = canvas.height / 2;
+      bird.velocity = 0;
+      gameFrames = 0;
+
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('pauseBtn').style.display = 'inline-block';
+      document.getElementById('resetBtn').style.display = 'none';
+      document.getElementById('gameStatus').textContent = '🎮 Playing...';
+      document.getElementById('gameStatus').className = 'game-status status-playing';
+      document.getElementById('instruction').textContent = 'Click or tap to make the bird jump!';
+
+      canvas.focus();
+    }
+
+    function endGame() {
+      gameRunning = false;
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('pauseBtn').style.display = 'none';
+      document.getElementById('resetBtn').style.display = 'inline-block';
+      document.getElementById('gameStatus').textContent = `Game Over! Final Score: ${score}`;
+      document.getElementById('gameStatus').className = 'game-status status-gameover';
+      
+      localStorage.setItem('flappyHighScore', highScore);
+    }
+
+    function resetGame() {
+      gameRunning = false;
+      gamePaused = false;
+      score = 0;
+      pipes.length = 0;
+      bird.y = canvas.height / 2;
+      bird.velocity = 0;
+      gameFrames = 0;
+
+      document.getElementById('startBtn').style.display = 'inline-block';
+      document.getElementById('pauseBtn').style.display = 'none';
+      document.getElementById('resetBtn').style.display = 'none';
+      document.getElementById('gameStatus').textContent = 'Ready to play!';
+      document.getElementById('gameStatus').className = 'game-status status-ready';
+      document.getElementById('instruction').textContent = 'Click or tap the canvas to start flying!';
+      document.getElementById('scoreDisplay').textContent = 0;
+
+      drawGame();
+    }
+
+    function togglePause() {
+      if (!gameRunning) return;
+      gamePaused = !gamePaused;
+      document.getElementById('pauseBtn').textContent = gamePaused ? 'RESUME' : 'PAUSE';
+      document.getElementById('gameStatus').textContent = gamePaused ? '⏸ Paused' : '🎮 Playing...';
+    }
+
+    // Input handling
+    canvas.addEventListener('click', () => {
+      if (!gameRunning) startGame();
+      else bird.velocity = bird.jumpForce;
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (!gameRunning) startGame();
+        else bird.velocity = bird.jumpForce;
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      document.getElementById('highScoreDisplay').textContent = highScore;
+      document.getElementById('sessionHighScore').textContent = sessionHighScore;
+      document.getElementById('coinDisplay').textContent = userCoins;
+      drawGame();
+      gameLoop();
+    });
+  </script>
+</body>
+</html>

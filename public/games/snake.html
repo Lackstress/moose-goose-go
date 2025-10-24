@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    #gameCanvas {
+      display: block;
+      margin: 1rem auto;
+      background: #000;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .game-controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .difficulty-selector {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .game-status {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #667eea;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo"><h1>🐍 SNAKE</h1></div>
+      <div id="authSection" class="auth-buttons"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="game-container">
+      <div class="game-header">
+        <h1>Snake</h1>
+        <a href="/" class="btn">Back to Lobby</a>
+      </div>
+
+      <div class="game-stats">
+        <div class="stat">
+          <div class="stat-label">🎯 Score</div>
+          <div class="stat-value" id="scoreDisplay">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">🏆 High Score</div>
+          <div class="stat-value" id="highScoreDisplay">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">⏱️ Time</div>
+          <div class="stat-value" id="timeDisplay">0s</div>
+        </div>
+      </div>
+
+      <div class="difficulty-selector">
+        <button onclick="setDifficulty('easy')" class="btn secondary">Easy</button>
+        <button onclick="setDifficulty('normal')" class="btn" id="normalDiff">Normal</button>
+        <button onclick="setDifficulty('hard')" class="btn secondary">Hard</button>
+      </div>
+
+      <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+      <div class="game-status" id="gameStatus"></div>
+
+      <div class="game-controls">
+        <button onclick="toggleGame()" class="btn" id="playBtn">Start Game</button>
+        <button onclick="resetGame()" class="btn secondary">Reset</button>
+      </div>
+    </div>
+  </main>
+
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const gridSize = 20;
+    const tileCount = canvas.width / gridSize;
+
+    let snake = [{ x: 10, y: 10 }];
+    let food = { x: 15, y: 15 };
+    let direction = { x: 1, y: 0 };
+    let nextDirection = { x: 1, y: 0 };
+    let score = 0;
+    let highScore = localStorage.getItem('snakeHighScore') || 0;
+    let gameActive = false;
+    let gameSpeed = 100;
+    let gameStartTime = 0;
+    let elapsedTime = 0;
+    let difficulty = 'normal';
+
+    document.getElementById('highScoreDisplay').textContent = highScore;
+
+    document.addEventListener('keydown', (e) => {
+      switch(e.key.toLowerCase()) {
+        case 'arrowup': nextDirection = { x: 0, y: -1 }; break;
+        case 'arrowdown': nextDirection = { x: 0, y: 1 }; break;
+        case 'arrowleft': nextDirection = { x: -1, y: 0 }; break;
+        case 'arrowright': nextDirection = { x: 1, y: 0 }; break;
+      }
+    });
+
+    function setDifficulty(level) {
+      difficulty = level;
+      const difficulties = {
+        'easy': 150,
+        'normal': 100,
+        'hard': 50
+      };
+      gameSpeed = difficulties[level];
+
+      // Update button styling
+      document.querySelectorAll('.difficulty-selector .btn').forEach(btn => {
+        btn.classList.remove('primary');
+      });
+      event.target.classList.add('primary');
+    }
+
+    function drawGame() {
+      // Clear canvas
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw grid
+      ctx.strokeStyle = 'rgba(102, 126, 234, 0.1)';
+      for (let i = 0; i <= tileCount; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * gridSize, 0);
+        ctx.lineTo(i * gridSize, canvas.height);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, i * gridSize);
+        ctx.lineTo(canvas.width, i * gridSize);
+        ctx.stroke();
+      }
+
+      // Draw snake
+      snake.forEach((segment, index) => {
+        if (index === 0) {
+          ctx.fillStyle = '#667eea';
+        } else {
+          ctx.fillStyle = '#764ba2';
+        }
+        ctx.fillRect(
+          segment.x * gridSize + 1,
+          segment.y * gridSize + 1,
+          gridSize - 2,
+          gridSize - 2
+        );
+      });
+
+      // Draw food
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(
+        food.x * gridSize + gridSize / 2,
+        food.y * gridSize + gridSize / 2,
+        gridSize / 2 - 2,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+
+    function updateGame() {
+      if (!gameActive) {
+        drawGame();
+        return;
+      }
+
+      direction = nextDirection;
+
+      // Move snake
+      const head = { ...snake[0] };
+      head.x += direction.x;
+      head.y += direction.y;
+
+      // Check collisions
+      if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+        endGame();
+        return;
+      }
+
+      if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+        endGame();
+        return;
+      }
+
+      snake.unshift(head);
+
+      // Check food collision
+      if (head.x === food.x && head.y === food.y) {
+        score += 10;
+        document.getElementById('scoreDisplay').textContent = score;
+        generateFood();
+      } else {
+        snake.pop();
+      }
+
+      drawGame();
+    }
+
+    function generateFood() {
+      let newFood;
+      do {
+        newFood = {
+          x: Math.floor(Math.random() * tileCount),
+          y: Math.floor(Math.random() * tileCount)
+        };
+      } while (snake.some(s => s.x === newFood.x && s.y === newFood.y));
+      food = newFood;
+    }
+
+    function toggleGame() {
+      if (!gameActive) {
+        gameActive = true;
+        gameStartTime = Date.now();
+        document.getElementById('playBtn').textContent = 'Pause Game';
+        gameLoop();
+      } else {
+        gameActive = false;
+        document.getElementById('playBtn').textContent = 'Resume Game';
+      }
+    }
+
+    function endGame() {
+      gameActive = false;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('snakeHighScore', highScore);
+        document.getElementById('highScoreDisplay').textContent = highScore;
+        document.getElementById('gameStatus').textContent = '🎉 New High Score!';
+      } else {
+        document.getElementById('gameStatus').textContent = 'Game Over!';
+      }
+      document.getElementById('playBtn').textContent = 'Start Game';
+    }
+
+    function resetGame() {
+      snake = [{ x: 10, y: 10 }];
+      direction = { x: 1, y: 0 };
+      nextDirection = { x: 1, y: 0 };
+      score = 0;
+      gameActive = false;
+      elapsedTime = 0;
+      document.getElementById('scoreDisplay').textContent = '0';
+      document.getElementById('timeDisplay').textContent = '0s';
+      document.getElementById('gameStatus').textContent = '';
+      document.getElementById('playBtn').textContent = 'Start Game';
+      generateFood();
+      drawGame();
+    }
+
+    function gameLoop() {
+      updateGame();
+      if (gameActive) {
+        elapsedTime = Math.floor((Date.now() - gameStartTime) / 1000);
+        document.getElementById('timeDisplay').textContent = elapsedTime + 's';
+        setTimeout(gameLoop, gameSpeed);
+      }
+    }
+
+    function updateAuthUI() {
+      document.getElementById('authSection').innerHTML = currentUser
+        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
+        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      setDifficulty('normal');
+      generateFood();
+      drawGame();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unblocked Games Hub</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .hub-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .hub-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      color: white;
+    }
+
+    .hub-title {
+      font-size: 3rem;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .hub-subtitle {
+      font-size: 1.3rem;
+      color: #cbd5e1;
+      margin-bottom: 0.5rem;
+    }
+
+    .hub-description {
+      font-size: 1.1rem;
+      color: #94a3b8;
+      margin-bottom: 2rem;
+    }
+
+    .games-sources {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0;
+    }
+
+    .source-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid transparent;
+    }
+
+    .source-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 16px 48px rgba(102, 126, 234, 0.25);
+      border-color: #667eea;
+    }
+
+    .source-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .source-title {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 0.5rem;
+    }
+
+    .source-description {
+      color: #666;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .game-count {
+      background: #f3f4f6;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .access-btn {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    .access-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .setup-guide {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      padding: 2rem;
+      margin: 2rem 0;
+      border-left: 4px solid #fbbf24;
+    }
+
+    .setup-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 1rem;
+    }
+
+    .setup-steps {
+      list-style: none;
+      padding: 0;
+    }
+
+    .setup-steps li {
+      padding: 1rem;
+      margin: 0.5rem 0;
+      background: #f3f4f6;
+      border-radius: 8px;
+      border-left: 3px solid #667eea;
+    }
+
+    .setup-steps code {
+      background: #2d5016;
+      color: #22c55e;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .feature-item {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-name {
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    .auth-check {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      z-index: 999;
+      display: none;
+    }
+
+    .auth-check.show {
+      display: block;
+    }
+
+    .auth-warning {
+      color: #ef4444;
+      font-weight: bold;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo"><h1>🎮 GAMES HUB</h1></div>
+      <div id="authSection" class="auth-buttons"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="hub-container">
+      <div class="hub-header">
+        <h1 class="hub-title">🎯 Unblocked Games Universe</h1>
+        <p class="hub-subtitle">Access 100+ Games from Multiple Sources</p>
+        <p class="hub-description">You're authenticated! Choose where you want to play:</p>
+      </div>
+
+      <!-- Games Sources -->
+      <div class="games-sources">
+        <!-- Our Games -->
+        <div class="source-card">
+          <div class="source-icon">🎰</div>
+          <div class="source-title">Our Games</div>
+          <div class="source-description">
+            Hand-crafted games built specifically for our platform. Enjoy exclusive casino games, classics, and multiplayer experiences with full betting systems and real-time rewards.
+          </div>
+          <div class="game-count">13 Games Available</div>
+          <div class="features-grid" style="margin-bottom: 1.5rem;">
+            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
+              ✓ Betting System
+            </div>
+            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
+              ✓ Coin Rewards
+            </div>
+            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
+              ✓ Multiplayer
+            </div>
+          </div>
+          <a href="/" class="access-btn">Play Our Games →</a>
+        </div>
+
+        <!-- DuckMath Games -->
+        <div class="source-card">
+          <div class="source-icon">🦆</div>
+          <div class="source-title">Unblocked Hub</div>
+          <div class="source-description">
+            Access the massive DuckMath games collection with 100+ unblocked games. Connect to your forked repository for instant access to a huge library of games and activities.
+          </div>
+          <div class="game-count" id="duckGameCount">100+ Games Available</div>
+          <div class="features-grid" style="margin-bottom: 1.5rem;">
+            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
+              ✓ Huge Library
+            </div>
+            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
+              ✓ Various Genres
+            </div>
+            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
+              ✓ Always Updated
+            </div>
+          </div>
+          <button onclick="accessDuckMath()" class="access-btn">Access DuckMath →</button>
+        </div>
+      </div>
+
+      <!-- Setup Guide -->
+      <div class="setup-guide">
+        <h2 class="setup-title">🚀 Setup DuckMath Integration</h2>
+        <p style="color: #666; margin-bottom: 1.5rem;">To enable the DuckMath games, follow these simple steps:</p>
+        
+        <ol class="setup-steps">
+          <li>
+            <strong>Fork DuckMath Repository:</strong><br>
+            Visit <code>https://github.com/duckmath/duckmath.github.io</code> and click <strong>Fork</strong>
+          </li>
+          <li>
+            <strong>Clone Your Fork:</strong><br>
+            <code>git clone https://github.com/YOUR-USERNAME/duckmath.git</code>
+          </li>
+          <li>
+            <strong>Navigate to Directory:</strong><br>
+            <code>cd duckmath</code>
+          </li>
+          <li>
+            <strong>Run Locally:</strong><br>
+            <code>npx serve</code> (runs on http://localhost:3000 or next available port)
+          </li>
+          <li>
+            <strong>Update Configuration:</strong><br>
+            Update the <code>DUCKMATH_URL</code> in your browser console or contact support
+          </li>
+        </ol>
+
+        <p style="margin-top: 1.5rem; color: #666; font-size: 0.95rem; padding: 1rem; background: #f3f4f6; border-radius: 8px;">
+          ℹ️ <strong>Tip:</strong> You can also deploy to Vercel, Cloudflare Pages, or GitHub Pages for permanent hosting. The games will work seamlessly with your account!
+        </p>
+      </div>
+
+      <!-- Feature Comparison -->
+      <div style="background: rgba(255, 255, 255, 0.95); border-radius: 16px; padding: 2rem; margin: 2rem 0;">
+        <h2 style="text-align: center; color: #667eea; margin-bottom: 2rem; font-size: 1.5rem;">📊 Platform Comparison</h2>
+        
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f3f4f6;">
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #667eea;">Feature</th>
+                <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #667eea;">Our Games</th>
+                <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #667eea;">DuckMath Hub</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 1rem;">Game Count</td>
+                <td style="padding: 1rem; text-align: center;">13 Games</td>
+                <td style="padding: 1rem; text-align: center;">100+ Games</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e2e8f0; background: #f9fafb;">
+                <td style="padding: 1rem;">Betting System</td>
+                <td style="padding: 1rem; text-align: center;">✅ Yes</td>
+                <td style="padding: 1rem; text-align: center;">❌ No</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 1rem;">Coin Rewards</td>
+                <td style="padding: 1rem; text-align: center;">✅ Yes</td>
+                <td style="padding: 1rem; text-align: center;">❌ No</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e2e8f0; background: #f9fafb;">
+                <td style="padding: 1rem;">Multiplayer</td>
+                <td style="padding: 1rem; text-align: center;">✅ Yes</td>
+                <td style="padding: 1rem; text-align: center;">❌ No</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 1rem;">Custom Account</td>
+                <td style="padding: 1rem; text-align: center;">✅ Yes</td>
+                <td style="padding: 1rem; text-align: center;">✅ Yes (via SSO)</td>
+              </tr>
+              <tr style="background: #f9fafb;">
+                <td style="padding: 1rem;">Game Variety</td>
+                <td style="padding: 1rem; text-align: center;">Casino Focus</td>
+                <td style="padding: 1rem; text-align: center;">All Categories</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Call to Action -->
+      <div style="text-align: center; margin: 3rem 0; color: white;">
+        <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem;">Ready to Play?</h2>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+          <a href="/" class="btn" style="padding: 1rem 2rem; font-size: 1.1rem;">🎮 Play Our Games</a>
+          <button onclick="accessDuckMath()" class="btn" style="padding: 1rem 2rem; font-size: 1.1rem; background: #667eea;">🦆 Access DuckMath</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <div id="authCheck" class="auth-check show">
+    <div style="font-size: 2rem; margin-bottom: 1rem;">🔐</div>
+    <h2>Authentication Required</h2>
+    <p class="auth-warning">You must be logged in to access games.</p>
+    <div style="display: flex; gap: 1rem; flex-direction: column; margin-top: 1.5rem;">
+      <button onclick="showLoginModal()" class="btn" style="width: 100%;">Login</button>
+      <button onclick="showRegisterModal()" class="btn" style="width: 100%; background: #667eea;">Register</button>
+      <button onclick="loginAsGuest()" class="btn secondary" style="width: 100%;">Continue as Guest</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    function updateAuthUI() {
+      const authSection = document.getElementById('authSection');
+      if (currentUser) {
+        authSection.innerHTML = `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`;
+      } else {
+        authSection.innerHTML = '<button onclick="showLoginModal()" class="btn">Login</button>';
+      }
+    }
+
+    function accessDuckMath() {
+      if (!currentUser) {
+        document.getElementById('authCheck').classList.add('show');
+        return;
+      }
+
+      // DuckMath is now served from same port on /duckmath path
+      window.location.href = '/duckmath';
+      showNotification(`Opening DuckMath! 🦆`, 'success');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      
+      // Check if user is authenticated
+      if (!currentUser) {
+        // Show auth check modal
+        setTimeout(() => {
+          document.getElementById('authCheck').classList.add('show');
+        }, 500);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plinko - Lucky Drop</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    #plinkoCanvas {
+      display: block;
+      margin: 1rem auto;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
+      border: 2px solid #333;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .betting-area {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    .bet-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .multiplier-display {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+      gap: 0.5rem;
+      margin: 1rem 0;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .multiplier {
+      background: white;
+      padding: 0.5rem;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: bold;
+      border: 2px solid #ddd;
+    }
+
+    .multiplier.win {
+      background: #10b981;
+      color: white;
+      border-color: #10b981;
+    }
+
+    .game-status {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #f3f4f6;
+      border-radius: 8px;
+      min-height: 50px;
+    }
+
+    .result-message {
+      text-align: center;
+      font-size: 1.2rem;
+      margin: 1rem 0;
+    }
+
+    .result-win { color: #10b981; }
+    .result-lose { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo"><h1>🎰 PLINKO</h1></div>
+      <div id="authSection" class="auth-buttons"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="game-container">
+      <div class="game-header">
+        <h1>Plinko - Lucky Drop</h1>
+        <a href="/" class="btn">Back to Lobby</a>
+      </div>
+
+      <div class="game-stats">
+        <div class="stat">
+          <div class="stat-label">💰 Coins</div>
+          <div class="stat-value" id="coinDisplay">1000</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">💵 Current Bet</div>
+          <div class="stat-value" id="betDisplay">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">📊 Wins</div>
+          <div class="stat-value" id="winsDisplay">0</div>
+        </div>
+      </div>
+
+      <h3>💵 Place Your Bet</h3>
+      
+      <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+        <label for="betAmount" style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Custom Bet:</label>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <input type="number" id="betAmount" min="10" max="1000" value="50" style="padding: 0.5rem; border-radius: 4px; border: 2px solid #667eea; width: 120px;" />
+          <button onclick="placeBetCustom()" class="btn">Drop Ball!</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0;">
+        <button onclick="placeBet(10)" class="bet-chip" style="background: #e0f2fe; border-color: #0284c7;">10 💰</button>
+        <button onclick="placeBet(25)" class="bet-chip" style="background: #dcfce7; border-color: #22c55e;">25 💰</button>
+        <button onclick="placeBet(50)" class="bet-chip" style="background: #fef3c7; border-color: #ca8a04;">50 💰</button>
+        <button onclick="placeBet(100)" class="bet-chip" style="background: #fee2e2; border-color: #ef4444;">100 💰</button>
+        <button onclick="placeBet(250)" class="bet-chip" style="background: #f5d4fd; border-color: #d946ef;">250 💰</button>
+        <button onclick="placeBet(500)" class="bet-chip" style="background: #fce7f3; border-color: #ec4899;">500 💰</button>
+      </div>
+
+      <h3>Multipliers</h3>
+      <div class="multiplier-display" id="multiplierDisplay"></div>
+
+      <canvas id="plinkoCanvas" width="500" height="600"></canvas>
+
+      <div class="game-status" id="gameStatus"></div>
+      <div id="resultMessage" class="result-message"></div>
+
+      <div class="controls">
+        <button onclick="resetGame()" class="btn" id="playAgainBtn" style="display: none;">Play Again</button>
+      </div>
+    </div>
+  </main>
+
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    const canvas = document.getElementById('plinkoCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const multipliers = [100, 50, 10, 5, 2.5, 1.5, 1, 0.5, 1, 1.5, 2.5, 5, 10, 50, 100];
+    let currentBet = 0;
+
+    function placeBetCustom() {
+      const amount = parseInt(document.getElementById('betAmount').value) || 50;
+      placeBet(amount);
+    }
+    let gameInProgress = false;
+    let wins = 0;
+
+    class Particle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 2;
+        this.vy = 0;
+        this.radius = 8;
+        this.settled = false;
+        this.column = 7; // Start in middle
+      }
+
+      update() {
+        if (this.settled) return;
+
+        this.vy += 0.3; // gravity
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Bounce off walls
+        if (this.x - this.radius < 0) {
+          this.x = this.radius;
+          this.vx *= -0.8;
+        }
+        if (this.x + this.radius > canvas.width) {
+          this.x = canvas.width - this.radius;
+          this.vx *= -0.8;
+        }
+
+        // Check if settled
+        if (this.y + this.radius >= canvas.height - 50) {
+          this.settled = true;
+          const slot = Math.floor((this.x / canvas.width) * 15);
+          this.column = Math.max(0, Math.min(14, slot));
+          this.y = canvas.height - 50;
+          this.vy = 0;
+        }
+      }
+
+      draw() {
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    let particle = null;
+
+    function drawPlinko() {
+      ctx.fillStyle = 'rgba(102, 126, 234, 0.1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw pegs
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      for (let row = 0; row < 10; row++) {
+        for (let col = 0; col <= row; col++) {
+          const x = (canvas.width / (row + 1)) * (col + 0.5);
+          const y = 50 + row * 40;
+          ctx.beginPath();
+          ctx.arc(x, y, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Draw multiplier bins
+      const binWidth = canvas.width / 15;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      for (let i = 0; i < 15; i++) {
+        const x = i * binWidth;
+        ctx.fillRect(x, canvas.height - 50, binWidth, 50);
+        ctx.fillStyle = 'rgba(102, 126, 234, 0.8)';
+        ctx.fillText(multipliers[i].toFixed(1) + 'x', x + binWidth / 2, canvas.height - 25);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      }
+
+      if (particle) {
+        particle.draw();
+      }
+    }
+
+    function animate() {
+      drawPlinko();
+
+      if (particle) {
+        particle.update();
+        if (particle.settled && gameInProgress) {
+          completeGame(particle.column);
+          gameInProgress = false;
+          particle = null;
+        }
+      }
+
+      if (gameInProgress || particle) {
+        requestAnimationFrame(animate);
+      }
+    }
+
+    function placeBet(amount) {
+      if (typeof amount === 'object') {
+        amount = parseInt(document.getElementById('betAmount').value);
+      }
+
+      if (amount < 10) {
+        showNotification('Minimum bet is 10 coins', 'error');
+        return;
+      }
+      if (amount > userCoins) {
+        showNotification('You do not have enough coins', 'error');
+        return;
+      }
+
+      currentBet = amount;
+      document.getElementById('betDisplay').textContent = currentBet;
+      dropBall();
+    }
+
+    function dropBall() {
+      gameInProgress = true;
+      particle = new Particle(canvas.width / 2, 20);
+      document.getElementById('gameStatus').textContent = 'Ball dropping...';
+      document.getElementById('playAgainBtn').style.display = 'none';
+      animate();
+    }
+
+    function completeGame(column) {
+      const multiplier = multipliers[column];
+      const winnings = Math.floor(currentBet * multiplier);
+
+      document.getElementById('gameStatus').textContent = `Landed on ${multiplier}x multiplier!`;
+
+      if (multiplier >= 1) {
+        const profit = winnings - currentBet;
+        updateCoins(profit, 'plinko', 'win');
+        document.getElementById('resultMessage').textContent = `You Won ${winnings} Coins! (+${profit})`;
+        document.getElementById('resultMessage').className = 'result-message result-win';
+        wins++;
+        showNotification(`You won ${winnings} coins!`, 'success');
+      } else {
+        updateCoins(-currentBet, 'plinko', 'loss');
+        document.getElementById('resultMessage').textContent = `You lost ${currentBet} coins!`;
+        document.getElementById('resultMessage').className = 'result-message result-lose';
+        showNotification(`You lost ${currentBet} coins!`);
+      }
+
+      document.getElementById('coinDisplay').textContent = userCoins;
+      document.getElementById('winsDisplay').textContent = wins;
+      document.getElementById('playAgainBtn').style.display = 'inline-block';
+    }
+
+    function resetGame() {
+      currentBet = 0;
+      particle = null;
+      document.getElementById('gameStatus').textContent = '';
+      document.getElementById('resultMessage').textContent = '';
+      document.getElementById('betDisplay').textContent = '0';
+      document.getElementById('playAgainBtn').style.display = 'none';
+      drawPlinko();
+    }
+
+    function displayMultipliers() {
+      const display = document.getElementById('multiplierDisplay');
+      display.innerHTML = multipliers.map(m => 
+        `<div class="multiplier">${m.toFixed(1)}x</div>`
+      ).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      document.getElementById('coinDisplay').textContent = userCoins;
+      displayMultipliers();
+      drawPlinko();
+    });
+
+    function updateAuthUI() {
+      document.getElementById('authSection').innerHTML = currentUser
+        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
+        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+  </script>
+</body>
+</html>

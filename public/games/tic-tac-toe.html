@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe - Multiplayer</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 5px;
+      margin: 1rem auto;
+      justify-content: center;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: white;
+      border: 2px solid #667eea;
+      font-size: 2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+
+    .cell:hover {
+      background: #f3f4f6;
+      transform: scale(1.05);
+    }
+
+    .cell.x { color: #667eea; font-weight: bold; }
+    .cell.o { color: #764ba2; font-weight: bold; }
+
+    .status {
+      text-align: center;
+      font-size: 1.2rem;
+      margin: 1rem 0;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .multiplayer-info {
+      background: #f3f4f6;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .player-turn {
+      font-size: 1.1rem;
+      color: #667eea;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo"><h1>🎮 TIC TAC TOE</h1></div>
+      <div id="authSection" class="auth-buttons"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="game-container">
+      <div class="game-header">
+        <h1>Tic Tac Toe - Online Multiplayer</h1>
+        <a href="/" class="btn">Back to Lobby</a>
+      </div>
+
+      <div id="gameMode" class="multiplayer-info">
+        <button onclick="startLocalGame()" class="btn">Play vs Computer</button>
+        <button onclick="joinMultiplayerLobby()" class="btn secondary">Find Online Opponent</button>
+      </div>
+
+      <div id="lobbyWaiting" style="display:none;" class="waiting">
+        <div class="spinner"></div>
+        <p>Finding opponent...</p>
+      </div>
+
+      <div id="gameArea" style="display:none;">
+        <div class="multiplayer-info" id="playerInfo"></div>
+        <div class="status" id="status"></div>
+        <div class="game-board" id="board"></div>
+        <div class="controls">
+          <button onclick="resetGame()" class="btn">Reset Game</button>
+          <button onclick="goHome()" class="btn secondary">Exit</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    let gameBoard = ['', '', '', '', '', '', '', '', ''];
+    let currentPlayer = 'X';
+    let gameActive = false;
+    let isMultiplayer = false;
+    let playerSymbol = 'X';
+    let opponent = null;
+    const socket = io();
+
+    const winCombinations = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
+
+    // Initialize board
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      renderBoard();
+
+      socket.on('match-start', (data) => {
+        opponent = data.player2;
+        gameBoard = ['', '', '', '', '', '', '', '', ''];
+        currentPlayer = 'X';
+        gameActive = true;
+        isMultiplayer = true;
+        
+        if (data.player1.socketId === socket.id) {
+          playerSymbol = 'X';
+          document.getElementById('playerInfo').innerHTML = `<div class="player-turn">You are X | Opponent is O</div>`;
+        } else {
+          playerSymbol = 'O';
+          document.getElementById('playerInfo').innerHTML = `<div class="player-turn">You are O | Opponent is X</div>`;
+        }
+
+        document.getElementById('lobbyWaiting').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'block';
+        updateStatus();
+        renderBoard();
+      });
+
+      socket.on('move-received', (data) => {
+        if (data.playerId !== currentUser?.id) {
+          gameBoard[data.move] = currentPlayer === 'X' ? 'O' : 'X';
+          currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+          renderBoard();
+          updateStatus();
+        }
+      });
+    });
+
+    function updateAuthUI() {
+      document.getElementById('authSection').innerHTML = currentUser
+        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
+        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+
+    function startLocalGame() {
+      document.getElementById('gameMode').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      isMultiplayer = false;
+      gameBoard = ['', '', '', '', '', '', '', '', ''];
+      currentPlayer = 'X';
+      gameActive = true;
+      updateStatus();
+      renderBoard();
+    }
+
+    function joinMultiplayerLobby() {
+      if (!currentUser) {
+        showNotification('Please login to play multiplayer', 'error');
+        return;
+      }
+      document.getElementById('gameMode').style.display = 'none';
+      document.getElementById('lobbyWaiting').style.display = 'block';
+      socket.emit('join-lobby', {
+        gameId: 'tic-tac-toe',
+        userId: currentUser.id,
+        username: currentUser.username,
+      });
+    }
+
+    function renderBoard() {
+      const board = document.getElementById('board');
+      board.innerHTML = gameBoard
+        .map((cell, index) => `
+          <div class="cell ${cell.toLowerCase()}" onclick="makeMove(${index})" id="cell-${index}">
+            ${cell}
+          </div>
+        `)
+        .join('');
+    }
+
+    function makeMove(index) {
+      if (!gameActive || gameBoard[index] !== '') return;
+      if (isMultiplayer && currentPlayer !== playerSymbol) return;
+
+      gameBoard[index] = currentPlayer;
+
+      if (isMultiplayer) {
+        socket.emit('game-move', {
+          move: index,
+          playerId: currentUser.id,
+        });
+      }
+
+      const winner = checkWinner();
+      if (winner) {
+        gameActive = false;
+        updateStatus();
+      } else if (gameBoard.every(cell => cell !== '')) {
+        gameActive = false;
+        updateStatus();
+      } else {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        if (!isMultiplayer && currentPlayer === 'O') {
+          setTimeout(computerMove, 500);
+        }
+        updateStatus();
+      }
+
+      renderBoard();
+    }
+
+    function computerMove() {
+      const emptyCells = gameBoard
+        .map((cell, index) => (cell === '' ? index : null))
+        .filter(i => i !== null);
+
+      if (emptyCells.length === 0) return;
+      const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      makeMove(randomIndex);
+    }
+
+    function checkWinner() {
+      for (let combo of winCombinations) {
+        const [a, b, c] = combo;
+        if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+          return gameBoard[a];
+        }
+      }
+      return null;
+    }
+
+    function updateStatus() {
+      const status = document.getElementById('status');
+      const winner = checkWinner();
+
+      if (winner) {
+        status.textContent = `🎉 Player ${winner} wins!`;
+        status.style.color = winner === 'X' ? '#667eea' : '#764ba2';
+      } else if (gameBoard.every(cell => cell !== '')) {
+        status.textContent = "It's a Draw!";
+      } else {
+        status.textContent = `Current Player: ${currentPlayer}`;
+      }
+    }
+
+    function resetGame() {
+      if (isMultiplayer) {
+        if (confirm('Leave the game?')) {
+          socket.emit('leave-lobby', { gameId: 'tic-tac-toe' });
+          goHome();
+        }
+      } else {
+        gameBoard = ['', '', '', '', '', '', '', '', ''];
+        currentPlayer = 'X';
+        gameActive = true;
+        updateStatus();
+        renderBoard();
+      }
+    }
+
+    function goHome() {
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>
