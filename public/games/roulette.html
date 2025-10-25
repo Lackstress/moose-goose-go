@@ -451,6 +451,11 @@
         return;
       }
       
+      // Update backend for bet if logged in
+      if (typeof updateCoins === 'function') {
+        updateCoins(-totalBet, 'roulette', 'bet');
+      }
+      
       spinning = true;
       document.getElementById('spinBtn').disabled = true;
       document.getElementById('winningNumber').style.display = 'none';
@@ -510,6 +515,11 @@
       balance += winnings;
       const profit = winnings - totalBet;
       
+      // Update backend if logged in - only send net profit
+      if (typeof updateCoins === 'function' && winnings > 0) {
+        updateCoins(winnings, 'roulette', 'win');
+      }
+      
       let color = number === 0 ? '#22c55e' : (redNumbers.includes(number) ? '#ef4444' : '#1f2937');
       winMsg.innerHTML = `Winning Number: <span style="color: ${color}; font-size: 64px;">${number}</span><br>` +
                          `${profit > 0 ? 'YOU WIN: $' + profit + ' 🎉' : 'No win this time'}`;
@@ -539,6 +549,14 @@
       document.getElementById('coldNumbers').innerHTML = cold.map(([num, count]) => 
         `<div class="number-badge">${num} (${count}x)</div>`
       ).join('');
+    }
+  </script>
+  <script src="/js/main.js"></script>
+  <script>
+    // Initialize balance from auth system
+    if (typeof userCoins !== 'undefined') {
+      balance = userCoins;
+      updateDisplay();
     }
   </script>
 </body>

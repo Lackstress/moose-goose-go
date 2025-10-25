@@ -237,6 +237,7 @@ function resetCoins() {
       .then(data => {
         if (data.success) {
           userCoins = 1000;
+          saveUserToStorage(); // Update localStorage with new balance
           updateUI();
           showNotification('Coins reset to 1000');
         }
@@ -259,6 +260,8 @@ async function updateCoins(amount, gameId, type = 'bet') {
     if (data.success) {
       userCoins = data.coins;
       updateUI();
+      // Persist updated coins so other pages reflect the new balance
+      try { saveUserToStorage(); } catch (_) {}
     }
   } catch (err) {
     console.error('Failed to update coins:', err);
@@ -277,16 +280,19 @@ function updateUI() {
       authCheck.classList.remove('show');
     }
 
-    authSection.innerHTML = `
-      <div class="user-panel">
-        <div class="user-info">
-          <span>👤 ${currentUser.username}</span>
-          <span class="coins">💰 ${userCoins}</span>
+    // Only render auth UI if the container exists on this page
+    if (authSection) {
+      authSection.innerHTML = `
+        <div class="user-panel">
+          <div class="user-info">
+            <span>👤 ${currentUser.username}</span>
+            <span class="coins">💰 ${userCoins}</span>
+          </div>
+          <button onclick="logout()" class="btn small">Logout</button>
+          ${!isGuest ? `<button onclick="resetCoins()" class="btn small">Reset</button>` : ''}
         </div>
-        <button onclick="logout()" class="btn small">Logout</button>
-        ${!isGuest ? `<button onclick="resetCoinsBtn.click()" class="btn small">Reset</button>` : ''}
-      </div>
-    `;
+      `;
+    }
 
     if (userInfo) {
       userInfo.innerHTML = `
@@ -298,13 +304,15 @@ function updateUI() {
       `;
     }
   } else {
-    authSection.innerHTML = `
-      <div class="auth-buttons">
-        <button onclick="showLoginModal()" class="btn">Login</button>
-        <button onclick="showRegisterModal()" class="btn">Register</button>
-        <button onclick="loginAsGuest()" class="btn secondary">Play as Guest</button>
-      </div>
-    `;
+    if (authSection) {
+      authSection.innerHTML = `
+        <div class="auth-buttons">
+          <button onclick="showLoginModal()" class="btn">Login</button>
+          <button onclick="showRegisterModal()" class="btn">Register</button>
+          <button onclick="loginAsGuest()" class="btn secondary">Play as Guest</button>
+        </div>
+      `;
+    }
 
     if (userInfo) {
       userInfo.innerHTML = `
@@ -334,7 +342,17 @@ function showNotification(message, type = 'info') {
   notification.className = `notification ${type}`;
   notification.textContent = message;
 
-  const container = document.getElementById('notificationContainer');
+  let container = document.getElementById('notificationContainer');
+  // Create a minimal container on pages that don't include one (e.g., game pages)
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'notificationContainer';
+    container.style.position = 'fixed';
+    container.style.top = '20px';
+    container.style.right = '20px';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+  }
   container.appendChild(notification);
 
   setTimeout(() => {
@@ -348,13 +366,27 @@ function saveUserToStorage() {
   localStorage.setItem('gameUser', JSON.stringify({ currentUser, userCoins, isGuest }));
 }
 
-function loadUserFromStorage() {
+async function loadUserFromStorage() {
   const stored = localStorage.getItem('gameUser');
   if (stored) {
     const data = JSON.parse(stored);
     currentUser = data.currentUser;
     userCoins = data.userCoins;
     isGuest = data.isGuest;
+    
+    // Fetch fresh balance from backend for registered users
+    if (!isGuest && currentUser && currentUser.id) {
+      try {
+        const response = await fetch(`/api/auth/profile/${currentUser.id}`);
+        const profile = await response.json();
+        if (profile && profile.coins !== undefined) {
+          userCoins = profile.coins;
+          saveUserToStorage(); // Update localStorage with fresh data
+        }
+      } catch (err) {
+        console.error('Failed to fetch fresh balance:', err);
+      }
+    }
   }
   updateUI();
 }

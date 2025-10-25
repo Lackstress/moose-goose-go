@@ -280,6 +280,12 @@
 
       isFlipping = true;
       balance -= currentBet;
+      
+      // Update backend if logged in
+      if (typeof updateCoins === 'function') {
+        updateCoins(-currentBet, 'coinflip', 'bet');
+      }
+      
       document.getElementById('balance').textContent = balance;
       document.getElementById('resultMessage').style.display = 'none';
       document.getElementById('flipBtn').disabled = true;
@@ -309,11 +315,17 @@
       const resultMsg = document.getElementById('resultMessage');
       
       if (result === choice) {
-        balance += currentBet * 2;
+        const winnings = currentBet * 2;
+        balance += winnings;
         wins++;
         streak++;
-        resultMsg.textContent = 'YOU WIN $' + (currentBet * 2) + '! 🎉';
+        resultMsg.textContent = 'YOU WIN $' + winnings + '! 🎉';
         resultMsg.className = 'result-message result-win';
+        
+        // Update backend if logged in (add total winnings since bet already deducted)
+        if (typeof updateCoins === 'function') {
+          updateCoins(winnings, 'coinflip', 'win');
+        }
       } else {
         losses++;
         streak = 0;
@@ -327,6 +339,16 @@
       document.getElementById('losses').textContent = losses;
       document.getElementById('streak').textContent = streak;
     }
+  </script>
+  <script src="/js/main.js"></script>
+  <script>
+    // Initialize balance from auth system after main.js populates from storage
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof userCoins !== 'undefined') {
+        balance = userCoins;
+        document.getElementById('balance').textContent = balance;
+      }
+    });
   </script>
 </body>
 </html>

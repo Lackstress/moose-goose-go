@@ -326,6 +326,12 @@
 
       gameActive = true;
       bank -= currentBet;
+      
+      // Update backend if logged in
+      if (typeof updateCoins === 'function') {
+        updateCoins(-currentBet, 'blackjack', 'bet');
+      }
+      
       updateBank();
 
       playerHand = [drawCard(), drawCard()];
@@ -496,6 +502,15 @@
       }
 
       bank += winnings;
+      
+      // Update backend if logged in
+      if (typeof updateCoins === 'function') {
+        const profit = winnings - currentBet;
+        if (profit !== 0) {
+          updateCoins(profit, 'blackjack', profit > 0 ? 'win' : 'loss');
+        }
+      }
+      
       updateBank();
 
       setTimeout(() => {
@@ -531,6 +546,16 @@
     // Initialize
     initDeck();
     updateBank();
+  </script>
+  <script src="/js/main.js"></script>
+  <script>
+    // Initialize bank from auth system after main.js populates from storage
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof userCoins !== 'undefined') {
+        bank = userCoins;
+        updateBank();
+      }
+    });
   </script>
 </body>
 </html>
