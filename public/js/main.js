@@ -2,11 +2,63 @@
 let currentUser = null;
 let userCoins = 1000;
 let isGuest = false;
-const socket = io();
+let socket = null;
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
+
+// Initialize socket connection with reconnection logic
+function initializeSocket() {
+  try {
+    socket = io({
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: maxReconnectAttempts,
+      timeout: 20000,
+    });
+
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
+      reconnectAttempts = 0;
+      showNotification('Connected to server', 'success');
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+      if (reason === 'io server disconnect') {
+        // Server disconnected us, try to reconnect manually
+        socket.connect();
+      }
+      showNotification('Connection lost. Reconnecting...', 'warning');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      reconnectAttempts++;
+      if (reconnectAttempts >= maxReconnectAttempts) {
+        showNotification('Failed to connect to server. Please refresh the page.', 'error');
+      }
+    });
+
+    socket.on('reconnect', (attemptNumber) => {
+      console.log('Reconnected after', attemptNumber, 'attempts');
+      showNotification('Reconnected to server', 'success');
+    });
+
+    socket.on('reconnect_failed', () => {
+      console.error('Failed to reconnect');
+      showNotification('Failed to reconnect. Please refresh the page.', 'error');
+    });
+  } catch (error) {
+    console.error('Failed to initialize socket:', error);
+    showNotification('Failed to connect to multiplayer server', 'error');
+  }
+}
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
   loadUserFromStorage();
+  initializeSocket();
   setupEventListeners();
 });
 
@@ -314,11 +366,23 @@ function joinMultiplayerGame(gameId) {
     return;
   }
 
-  socket.emit('join-lobby', {
-    gameId,
-    userId: currentUser.id,
-    username: currentUser.username,
-  });
+  if (!socket || !socket.connected) {
+    showNotification('Connection to server failed. Reconnecting...', 'error');
+    initializeSocket();
+    setTimeout(() => joinMultiplayerGame(gameId), 2000);
+    return;
+  }
 
-  window.location.href = `/games/${gameId}`;
+  try {
+    socket.emit('join-lobby', {
+      gameId,
+      userId: currentUser.id,
+      username: currentUser.username,
+    });
+
+    window.location.href = `/games/${gameId}`;
+  } catch (error) {
+    console.error('Failed to join multiplayer game:', error);
+    showNotification('Failed to join game. Please try again.', 'error');
+  }
 }

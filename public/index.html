@@ -3,105 +3,301 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Games Lobby - Play & Win!</title>
+  <title>GameHub - Premium Gaming Experience</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <header class="header">
-    <h1>🎮 GAMES HUB</h1>
-    <div id="authSection"></div>
+<body class="dark-theme">
+  <header class="header-dark">
+    <div class="header-container">
+      <div class="logo">
+        <h1>🎮 GAMEHUB</h1>
+      </div>
+      <div id="authSection" class="auth-buttons"></div>
+    </div>
   </header>
 
-  <main class="container">
-    <!-- User Profile Section -->
-    <section id="userInfo" class="user-section">
-      <div class="profile-card">
-        <p>Login or Register to save your progress!</p>
+  <main class="container-dark">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <h1 class="hero-title">Welcome to GameHub</h1>
+        <p class="hero-subtitle">Premium collection of 13 handcrafted games with betting & rewards</p>
+      </div>
+      <div id="userInfo" class="user-banner">
+        <p>🎯 Login or Register to unlock betting, rewards & leaderboards!</p>
       </div>
     </section>
 
     <!-- Classic Games Section -->
-    <section class="games-section">
-      <h2>🕹️ Classic Games</h2>
-      <div class="games-grid">
-        <div class="game-card">
-          <h3>Snake</h3>
-          <p>The classic snake game</p>
-          <a href="/games/snake.html" class="btn">Play</a>
+    <section class="games-section-dark">
+      <div class="section-header">
+        <h2><span class="section-icon">🕹️</span> Classic Arcade</h2>
+        <span class="section-count">4 Games</span>
+      </div>
+      <div class="games-grid-modern">
+        <div class="game-card-modern classic">
+          <div class="card-banner">
+            <span class="game-icon">🐍</span>
+            <span class="difficulty easy">Easy</span>
+          </div>
+          <div class="card-content">
+            <h3>Snake</h3>
+            <p class="game-desc">Classic arcade snake game. Eat, grow, survive!</p>
+            <div class="game-tags">
+              <span class="tag">Arcade</span>
+              <span class="tag">Retro</span>
+            </div>
+          </div>
+          <a href="/games/snake.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
-        <div class="game-card">
-          <h3>Flappy Bird</h3>
-          <p>Tap to fly through obstacles</p>
-          <a href="/games/flappy-bird.html" class="btn">Play</a>
+
+        <div class="game-card-modern classic">
+          <div class="card-banner">
+            <span class="game-icon">🐦</span>
+            <span class="difficulty medium">Medium</span>
+          </div>
+          <div class="card-content">
+            <h3>Flappy Bird</h3>
+            <p class="game-desc">Tap to fly through pipes. Test your reflexes!</p>
+            <div class="game-tags">
+              <span class="tag">Arcade</span>
+              <span class="tag">Skill</span>
+            </div>
+          </div>
+          <a href="/games/flappy-bird.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
-        <div class="game-card">
-          <h3>Memory Match</h3>
-          <p>Test your memory</p>
-          <a href="/games/memory.html" class="btn">Play</a>
+
+        <div class="game-card-modern classic">
+          <div class="card-banner">
+            <span class="game-icon">🧠</span>
+            <span class="difficulty easy">Easy</span>
+          </div>
+          <div class="card-content">
+            <h3>Memory Match</h3>
+            <p class="game-desc">Find matching pairs. Train your memory!</p>
+            <div class="game-tags">
+              <span class="tag">Puzzle</span>
+              <span class="tag">Brain</span>
+            </div>
+          </div>
+          <a href="/games/memory.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
-        <div class="game-card">
-          <h3>2048</h3>
-          <p>Combine numbers to reach 2048</p>
-          <a href="/games/2048.html" class="btn">Play</a>
+
+        <div class="game-card-modern classic">
+          <div class="card-banner">
+            <span class="game-icon">🔢</span>
+            <span class="difficulty medium">Medium</span>
+          </div>
+          <div class="card-content">
+            <h3>2048</h3>
+            <p class="game-desc">Merge tiles to reach 2048. Addictive puzzle!</p>
+            <div class="game-tags">
+              <span class="tag">Puzzle</span>
+              <span class="tag">Strategy</span>
+            </div>
+          </div>
+          <a href="/games/2048.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
       </div>
     </section>
 
-    <!-- Multiplayer Card Games Section -->
-    <section class="games-section">
-      <h2>🎯 Multiplayer Games</h2>
-      <div class="games-grid">
-        <div class="game-card">
-          <h3>Tic Tac Toe</h3>
-          <p>Play online against others</p>
-          <a href="/games/tic-tac-toe.html" class="btn">Play</a>
+    <!-- Multiplayer Games Section -->
+    <section class="games-section-dark">
+      <div class="section-header">
+        <h2><span class="section-icon">🎯</span> Multiplayer Arena</h2>
+        <span class="section-count">4 Games</span>
+      </div>
+      <div class="games-grid-modern">
+        <div class="game-card-modern multiplayer">
+          <div class="card-banner">
+            <span class="game-icon">❌⭕</span>
+            <span class="difficulty easy">Easy</span>
+          </div>
+          <div class="card-content">
+            <h3>Tic Tac Toe</h3>
+            <p class="game-desc">Classic X & O. Beat your opponent online!</p>
+            <div class="game-tags">
+              <span class="tag">Multiplayer</span>
+              <span class="tag">Quick</span>
+            </div>
+          </div>
+          <a href="/games/tic-tac-toe.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
-        <div class="game-card">
-          <h3>Go Fish</h3>
-          <p>Classic card matching game</p>
-          <a href="/games/go-fish.html" class="btn">Play</a>
+
+        <div class="game-card-modern multiplayer">
+          <div class="card-banner">
+            <span class="game-icon">🎣</span>
+            <span class="difficulty easy">Easy</span>
+          </div>
+          <div class="card-content">
+            <h3>Go Fish</h3>
+            <p class="game-desc">Classic card game. Match pairs & collect sets!</p>
+            <div class="game-tags">
+              <span class="tag">Cards</span>
+              <span class="tag">Casual</span>
+            </div>
+          </div>
+          <a href="/games/go-fish.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
-        <div class="game-card">
-          <h3>UNO</h3>
-          <p>Match colors & numbers online</p>
-          <a href="/games/uno.html" class="btn">Play</a>
+
+        <div class="game-card-modern multiplayer">
+          <div class="card-banner">
+            <span class="game-icon">🎴</span>
+            <span class="difficulty medium">Medium</span>
+          </div>
+          <div class="card-content">
+            <h3>UNO</h3>
+            <p class="game-desc">Match colors & numbers. First to empty wins!</p>
+            <div class="game-tags">
+              <span class="tag">Cards</span>
+              <span class="tag">Strategy</span>
+            </div>
+          </div>
+          <a href="/games/uno.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
-        <div class="game-card">
-          <h3>Poker</h3>
-          <p>Play online poker with bets</p>
-          <a href="/games/poker.html" class="btn">Play</a>
+
+        <div class="game-card-modern multiplayer">
+          <div class="card-banner">
+            <span class="game-icon">🃏</span>
+            <span class="difficulty hard">Hard</span>
+          </div>
+          <div class="card-content">
+            <h3>Poker</h3>
+            <p class="game-desc">Texas Hold'em. Bluff, bet & win big!</p>
+            <div class="game-tags">
+              <span class="tag">Cards</span>
+              <span class="tag">Betting</span>
+            </div>
+          </div>
+          <a href="/games/poker.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
       </div>
     </section>
 
-    <!-- Gambling/Casino Games Section -->
-    <section class="games-section">
-      <h2>🎰 Casino Games (Bet Your Coins!)</h2>
-      <div class="games-grid">
-        <div class="game-card">
-          <h3>Plinko</h3>
-          <p>Watch the ball drop</p>
-          <a href="/games/plinko.html" class="btn">Play</a>
+    <!-- Casino Games Section -->
+    <section class="games-section-dark">
+      <div class="section-header">
+        <h2><span class="section-icon">🎰</span> Casino & Betting</h2>
+        <span class="section-count">5 Games</span>
+      </div>
+      <div class="games-grid-modern">
+        <div class="game-card-modern casino">
+          <div class="card-banner">
+            <span class="game-icon">📍</span>
+            <span class="difficulty medium">Medium</span>
+          </div>
+          <div class="card-content">
+            <h3>Plinko</h3>
+            <p class="game-desc">Drop the ball, watch it bounce. Big rewards!</p>
+            <div class="game-tags">
+              <span class="tag">Casino</span>
+              <span class="tag">Luck</span>
+            </div>
+          </div>
+          <a href="/games/plinko.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
-        <div class="game-card">
-          <h3>Coin Flip</h3>
-          <p>Double or nothing</p>
-          <a href="/games/coinflip.html" class="btn">Play</a>
+
+        <div class="game-card-modern casino">
+          <div class="card-banner">
+            <span class="game-icon">🪙</span>
+            <span class="difficulty easy">Easy</span>
+          </div>
+          <div class="card-content">
+            <h3>Coin Flip</h3>
+            <p class="game-desc">Heads or tails? Double your coins instantly!</p>
+            <div class="game-tags">
+              <span class="tag">Casino</span>
+              <span class="tag">Quick</span>
+            </div>
+          </div>
+          <a href="/games/coinflip.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
-        <div class="game-card">
-          <h3>Roulette</h3>
-          <p>Spin the wheel</p>
-          <a href="/games/roulette.html" class="btn">Play</a>
+
+        <div class="game-card-modern casino">
+          <div class="card-banner">
+            <span class="game-icon">🎡</span>
+            <span class="difficulty medium">Medium</span>
+          </div>
+          <div class="card-content">
+            <h3>Roulette</h3>
+            <p class="game-desc">Spin the wheel. Red, black or number bets!</p>
+            <div class="game-tags">
+              <span class="tag">Casino</span>
+              <span class="tag">Classic</span>
+            </div>
+          </div>
+          <a href="/games/roulette.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
-        <div class="game-card">
-          <h3>Blackjack 21</h3>
-          <p>Beat the dealer</p>
-          <a href="/games/blackjack.html" class="btn">Play</a>
+
+        <div class="game-card-modern casino">
+          <div class="card-banner">
+            <span class="game-icon">🂡</span>
+            <span class="difficulty medium">Medium</span>
+          </div>
+          <div class="card-content">
+            <h3>Blackjack 21</h3>
+            <p class="game-desc">Beat the dealer. Get 21 without busting!</p>
+            <div class="game-tags">
+              <span class="tag">Cards</span>
+              <span class="tag">Strategy</span>
+            </div>
+          </div>
+          <a href="/games/blackjack.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
-        <div class="game-card">
-          <h3>Crossy Road</h3>
-          <p>Dodge traffic & obstacles</p>
-          <a href="/games/crossy-road.html" class="btn">Play</a>
+
+        <div class="game-card-modern casino">
+          <div class="card-banner">
+            <span class="game-icon">🐔</span>
+            <span class="difficulty hard">Hard</span>
+          </div>
+          <div class="card-content">
+            <h3>Crossy Road</h3>
+            <p class="game-desc">Cross roads & rivers. Don't get hit!</p>
+            <div class="game-tags">
+              <span class="tag">Arcade</span>
+              <span class="tag">Action</span>
+            </div>
+          </div>
+          <a href="/games/crossy-road.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
         </div>
       </div>
     </section>
@@ -118,8 +314,8 @@
   <!-- Notification Container -->
   <div id="notificationContainer" class="notification-container"></div>
 
-  <footer>
-    <p>&copy; 2025 Games Lobby. All rights reserved. | Play responsibly!</p>
+  <footer class="footer-dark">
+    <p>🎮 GameHub © 2025 | Play Responsibly | 13 Premium Games</p>
   </footer>
 
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
