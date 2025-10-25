@@ -123,14 +123,14 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'landing.html'));
 });
 
-// Games lobby - your games listing
+// Games hub selection - choose game source
 app.get('/games', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'hub.html'));
 });
 
-// GameHub - your games
+// GameHub - your games lobby
 app.get('/ghub', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'hub.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // DuckMath - serve from duckmath folder with asset path rewriting
