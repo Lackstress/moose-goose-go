@@ -123,11 +123,6 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'landing.html'));
 });
 
-// Games hub selection - choose game source
-app.get('/games', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'hub.html'));
-});
-
 // GameHub - your games lobby
 app.get('/ghub', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
