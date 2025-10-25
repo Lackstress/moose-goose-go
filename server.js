@@ -219,23 +219,32 @@ app.get('/blog/*', (req, res) => {
   res.redirect('/duckmath' + req.originalUrl);
 });
 
-// DuckMath JavaScript file rewriting for navigation links
-app.get('/duckmath/assets/js/index.js', (req, res) => {
+// DuckMath JavaScript file rewriting - all JS files for better compatibility
+app.get('/duckmath/assets/js/*.js', (req, res) => {
   const fs = require('fs');
-  const filePath = path.join(__dirname, '..', 'duckmath', 'assets', 'js', 'index.js');
+  const jsFile = req.params[0];
+  const filePath = path.join(__dirname, '..', 'duckmath', 'assets', 'js', `${jsFile}.js`);
   
-  // Check if duckmath exists
+  // Check if file exists
   if (!fs.existsSync(filePath)) {
-    return res.status(404).send('// DuckMath not installed');
+    return res.status(404).send('// File not found');
   }
   
   let js = fs.readFileSync(filePath, 'utf8');
   
-  // Rewrite navigation links to stay within /duckmath context
+  // Rewrite navigation links and paths to stay within /duckmath context
   js = js.replaceAll('href="/"', 'href="/duckmath"');
   js = js.replaceAll('href="/index.html"', 'href="/duckmath"');
+  js = js.replaceAll('action="/"', 'action="/duckmath"');
+  js = js.replaceAll('url("/', 'url("/duckmath/');
+  js = js.replaceAll('src="/', 'src="/duckmath/');
+  js = js.replaceAll("href='/'", "href='/duckmath'");
+  js = js.replaceAll("src='/'", "src='/duckmath/'");
+  js = js.replaceAll('window.location.href = "/"', 'window.location.href = "/duckmath"');
+  js = js.replaceAll("window.location.href = '/'", "window.location.href = '/duckmath'");
   
   res.setHeader('Content-Type', 'application/javascript');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
   res.send(js);
 });
 
@@ -248,10 +257,6 @@ function injectRadonInterceptor(html) {
     <script>
       (function() {
         const basePath = '/radon-g3mes';
-        
-        // Store original location properties
-        const originalLocation = window.location;
-        const descriptor = Object.getOwnPropertyDescriptor(window, 'location');
         
         // Intercept all clicks on the page
         document.addEventListener('click', function(e) {
@@ -276,6 +281,15 @@ function injectRadonInterceptor(html) {
           }
         }, true);
         
+        // Intercept form submissions
+        document.addEventListener('submit', function(e) {
+          const form = e.target;
+          const action = form.getAttribute('action');
+          if (action && action.startsWith('/') && !action.startsWith(basePath)) {
+            form.setAttribute('action', basePath + action);
+          }
+        }, true);
+        
         // Override pushState and replaceState to add base path
         const originalPushState = history.pushState;
         const originalReplaceState = history.replaceState;
@@ -292,6 +306,24 @@ function injectRadonInterceptor(html) {
             url = basePath + url;
           }
           return originalReplaceState.call(this, state, title, url);
+        };
+        
+        // Intercept fetch requests to fix proxy and API calls
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+          if (typeof url === 'string' && url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('/api')) {
+            url = basePath + url;
+          }
+          return originalFetch.call(this, url, options);
+        };
+        
+        // Fix XMLHttpRequest for legacy AJAX
+        const originalOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, ...args) {
+          if (typeof url === 'string' && url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('/api')) {
+            url = basePath + url;
+          }
+          return originalOpen.call(this, method, url, ...args);
         };
       })();
     </script>
@@ -424,76 +456,133 @@ io.on('connection', (socket) => {
 
   // Join game lobby
   socket.on('join-lobby', (data) => {
-    const { gameId, userId, username } = data;
-    const lobbyId = `${gameId}-lobby`;
+    try {
+      const { gameId, userId, username } = data;
+      
+      if (!gameId || !userId || !username) {
+        console.error('Invalid lobby join data:', data);
+        socket.emit('error', { message: 'Invalid join data' });
+        return;
+      }
+      
+      const lobbyId = `${gameId}-lobby`;
 
-    if (!lobbies[lobbyId]) {
-      lobbies[lobbyId] = [];
-    }
+      if (!lobbies[lobbyId]) {
+        lobbies[lobbyId] = [];
+      }
 
-    lobbies[lobbyId].push({
-      socketId: socket.id,
-      userId,
-      username,
-    });
+      // Check if player is already in lobby
+      const existingPlayer = lobbies[lobbyId].find(p => p.userId === userId);
+      if (existingPlayer) {
+        console.log('Player already in lobby:', userId);
+        return;
+      }
 
-    activePlayers[socket.id] = { gameId, userId, username };
-
-    socket.join(lobbyId);
-
-    // Notify players in lobby
-    io.to(lobbyId).emit('lobby-update', {
-      players: lobbies[lobbyId],
-      count: lobbies[lobbyId].length,
-    });
-
-    // If 2 players, start match
-    if (lobbies[lobbyId].length === 2) {
-      const [player1, player2] = lobbies[lobbyId];
-      const matchId = `match-${Date.now()}`;
-
-      io.to(lobbyId).emit('match-start', {
-        matchId,
-        player1,
-        player2,
-        gameId,
+      lobbies[lobbyId].push({
+        socketId: socket.id,
+        userId,
+        username,
       });
 
-      lobbies[lobbyId] = [];
+      activePlayers[socket.id] = { gameId, userId, username };
+
+      socket.join(lobbyId);
+
+      console.log(`Player ${username} joined lobby ${lobbyId}. Total players: ${lobbies[lobbyId].length}`);
+
+      // Notify players in lobby
+      io.to(lobbyId).emit('lobby-update', {
+        players: lobbies[lobbyId],
+        count: lobbies[lobbyId].length,
+      });
+
+      // If 2 players, start match
+      if (lobbies[lobbyId].length === 2) {
+        const [player1, player2] = lobbies[lobbyId];
+        const matchId = `match-${Date.now()}`;
+
+        console.log(`Starting match ${matchId} between ${player1.username} and ${player2.username}`);
+
+        io.to(lobbyId).emit('match-start', {
+          matchId,
+          player1,
+          player2,
+          gameId,
+        });
+
+        lobbies[lobbyId] = [];
+      }
+    } catch (error) {
+      console.error('Error in join-lobby:', error);
+      socket.emit('error', { message: 'Failed to join lobby' });
     }
   });
 
   // Leave lobby
   socket.on('leave-lobby', (data) => {
-    const { gameId } = data;
-    const lobbyId = `${gameId}-lobby`;
+    try {
+      const { gameId } = data;
+      const lobbyId = `${gameId}-lobby`;
 
-    if (lobbies[lobbyId]) {
-      lobbies[lobbyId] = lobbies[lobbyId].filter(p => p.socketId !== socket.id);
-      io.to(lobbyId).emit('lobby-update', {
-        players: lobbies[lobbyId],
-        count: lobbies[lobbyId].length,
-      });
+      if (lobbies[lobbyId]) {
+        const playerIndex = lobbies[lobbyId].findIndex(p => p.socketId === socket.id);
+        if (playerIndex !== -1) {
+          const player = lobbies[lobbyId][playerIndex];
+          console.log(`Player ${player.username} left lobby ${lobbyId}`);
+          lobbies[lobbyId].splice(playerIndex, 1);
+        }
+        
+        io.to(lobbyId).emit('lobby-update', {
+          players: lobbies[lobbyId],
+          count: lobbies[lobbyId].length,
+        });
+      }
+
+      delete activePlayers[socket.id];
+      socket.leave(lobbyId);
+    } catch (error) {
+      console.error('Error in leave-lobby:', error);
     }
-
-    delete activePlayers[socket.id];
-    socket.leave(lobbyId);
   });
 
   // Game move (for turn-based games)
   socket.on('game-move', (data) => {
-    const { matchId, move, playerId } = data;
-    io.emit('move-received', { matchId, move, playerId });
+    try {
+      const { matchId, move, playerId } = data;
+      console.log(`Game move in match ${matchId}: player ${playerId}, move ${move}`);
+      io.emit('move-received', { matchId, move, playerId });
+    } catch (error) {
+      console.error('Error in game-move:', error);
+    }
   });
 
   // Game end
   socket.on('game-end', (data) => {
-    const { matchId, winner, score } = data;
-    io.emit('game-finished', { matchId, winner, score });
+    try {
+      const { matchId, winner, score } = data;
+      console.log(`Game ended: match ${matchId}, winner ${winner}`);
+      io.emit('game-finished', { matchId, winner, score });
+    } catch (error) {
+      console.error('Error in game-end:', error);
+    }
   });
 
   socket.on('disconnect', () => {
     console.log('Player disconnected:', socket.id);
+    
+    // Clean up player from lobbies
+    const playerData = activePlayers[socket.id];
+    if (playerData) {
+      const lobbyId = `${playerData.gameId}-lobby`;
+      if (lobbies[lobbyId]) {
+        lobbies[lobbyId] = lobbies[lobbyId].filter(p => p.socketId !== socket.id);
+        io.to(lobbyId).emit('lobby-update', {
+          players: lobbies[lobbyId],
+          count: lobbies[lobbyId].length,
+        });
+      }
+    }
+    
     delete activePlayers[socket.id];
   });
 });
