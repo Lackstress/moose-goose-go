@@ -4,6 +4,7 @@ const http = require('http');
 const socketIO = require('socket.io');
 const cors = require('cors');
 const compression = require('compression');
+const MultiplayerManager = require('./multiplayer-manager');
 require('dotenv').config();
 
 const app = express();
@@ -16,6 +17,9 @@ const io = socketIO(server, {
 });
 
 const PORT = process.env.PORT || 3000;
+
+// Initialize Multiplayer Manager
+const multiplayerManager = new MultiplayerManager(io);
 
 // Middleware
 app.use(compression());
@@ -118,14 +122,89 @@ app.all('/~/sj/*', async (req, res) => {
   }
 });
 
-// Landing page - root
+// Landing page - root (shows all 3 hubs to choose from)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'landing.html'));
 });
 
-// GameHub - your games lobby
+// GameHub - THE ACTUAL 13 GAMES HUB
 app.get('/ghub', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// /games route - intentionally shows "lost" message
+app.get('/games', (req, res) => {
+  res.status(404).send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Lost?</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          color: #fff;
+        }
+        .container {
+          text-align: center;
+          padding: 40px;
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 20px;
+          backdrop-filter: blur(10px);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          max-width: 600px;
+        }
+        h1 {
+          font-size: 4rem;
+          margin-bottom: 20px;
+          text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        p {
+          font-size: 1.5rem;
+          margin-bottom: 30px;
+          opacity: 0.9;
+        }
+        .btn {
+          display: inline-block;
+          padding: 15px 40px;
+          font-size: 1.2rem;
+          color: #fff;
+          background: rgba(255, 255, 255, 0.2);
+          border: 2px solid #fff;
+          border-radius: 50px;
+          text-decoration: none;
+          transition: all 0.3s ease;
+          cursor: pointer;
+        }
+        .btn:hover {
+          background: #fff;
+          color: #667eea;
+          transform: translateY(-2px);
+          box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>🎮 Oops!</h1>
+        <p>Seems like you got lost.</p>
+        <p>Would you like to return to the landing page?</p>
+        <a href="/" class="btn">← Back to Home</a>
+      </div>
+    </body>
+    </html>
+  `);
 });
 
 // DuckMath - serve from duckmath folder with asset path rewriting
@@ -567,10 +646,108 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ===== ENHANCED MULTIPLAYER HANDLERS =====
+
+  // Find a match (matchmaking)
+  socket.on('find-match', (data) => {
+    try {
+      const { gameType, playerData } = data;
+      const result = multiplayerManager.findMatch(gameType, socket.id, playerData);
+      socket.emit('match-found', result);
+    } catch (error) {
+      console.error('Error in find-match:', error);
+      socket.emit('error', { message: 'Failed to find match' });
+    }
+  });
+
+  // Create private room
+  socket.on('create-room', (data) => {
+    try {
+      const { gameType, playerData, settings } = data;
+      const room = multiplayerManager.createRoom(gameType, socket.id, { settings });
+      const result = multiplayerManager.addPlayerToRoom(room.id, socket.id, playerData);
+      socket.emit('room-created', result);
+    } catch (error) {
+      console.error('Error in create-room:', error);
+      socket.emit('error', { message: 'Failed to create room' });
+    }
+  });
+
+  // Join specific room
+  socket.on('join-room', (data) => {
+    try {
+      const { roomId, playerData } = data;
+      const result = multiplayerManager.addPlayerToRoom(roomId, socket.id, playerData);
+      socket.emit('room-joined', result);
+    } catch (error) {
+      console.error('Error in join-room:', error);
+      socket.emit('error', { message: 'Failed to join room' });
+    }
+  });
+
+  // Leave room
+  socket.on('leave-room', () => {
+    try {
+      multiplayerManager.removePlayerFromRoom(socket.id);
+    } catch (error) {
+      console.error('Error in leave-room:', error);
+    }
+  });
+
+  // Make a move in game
+  socket.on('make-move', (data) => {
+    try {
+      const result = multiplayerManager.handleMove(socket.id, data);
+      if (!result.success) {
+        socket.emit('move-error', result);
+      }
+    } catch (error) {
+      console.error('Error in make-move:', error);
+      socket.emit('error', { message: 'Failed to process move' });
+    }
+  });
+
+  // Send chat message
+  socket.on('chat-send', (data) => {
+    try {
+      const { message } = data;
+      multiplayerManager.sendChatMessage(socket.id, message);
+    } catch (error) {
+      console.error('Error in chat-send:', error);
+    }
+  });
+
+  // Join as spectator
+  socket.on('spectate-room', (data) => {
+    try {
+      const { roomId } = data;
+      const result = multiplayerManager.addSpectator(roomId, socket.id);
+      socket.emit('spectate-joined', result);
+    } catch (error) {
+      console.error('Error in spectate-room:', error);
+      socket.emit('error', { message: 'Failed to join as spectator' });
+    }
+  });
+
+  // Get room list
+  socket.on('get-rooms', (data) => {
+    try {
+      const { gameType } = data;
+      const rooms = multiplayerManager.getRoomsList(gameType);
+      socket.emit('rooms-list', { rooms });
+    } catch (error) {
+      console.error('Error in get-rooms:', error);
+      socket.emit('error', { message: 'Failed to get rooms' });
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('Player disconnected:', socket.id);
     
-    // Clean up player from lobbies
+    // Remove from multiplayer manager
+    multiplayerManager.removePlayerFromRoom(socket.id);
+    
+    // Clean up player from old lobbies (legacy support)
     const playerData = activePlayers[socket.id];
     if (playerData) {
       const lobbyId = `${playerData.gameId}-lobby`;
