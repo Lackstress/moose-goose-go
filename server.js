@@ -457,6 +457,9 @@ app.use('/radon-g3mes/libcurl', express.static(path.join(__dirname, '..', 'radon
 app.use('/radon-g3mes/epoxy', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'epoxy')));
 app.use('/radon-g3mes/scram', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'scram')));
 
+// Seraph Games - serve unblocked games collection
+app.use('/seraph', express.static(path.join(__dirname, 'seraph')));
+
 // Radon Games CDN proxy - proxy game files from radon.games
 app.get('/radon-g3mes/cdn/*', async (req, res) => {
   const cdnPath = req.path.replace('/radon-g3mes/cdn/', '');
