@@ -28,7 +28,7 @@
 
 ### Key Features
 - ✅ **14 Built-in Games** (Casino, Classic, Multiplayer)
-- ✅ **4 Game Platforms** (GameHub + DuckMath + Radon + Seraph)
+- ✅ **3 Game Platforms** (GameHub + DuckMath + Radon)
 - ✅ **User Authentication** (Register/Login/Guest)
 - ✅ **Virtual Coin System** (1000 starting balance)
 - ✅ **Real-time Multiplayer** (WebSocket-based)
@@ -43,7 +43,6 @@ Choose Platform:
   → GameHub (/ghub) - 14 custom games
   → DuckMath (/duckmath) - Educational games
   → Radon Games (/radon-g3mes) - React-based portal
-  → Seraph Games (/seraph) - Advanced game platform
   ↓
 Play Games → Track Coins → Multiplayer Matches → Compete
 ```
@@ -275,8 +274,6 @@ CREATE TABLE transactions (
 | `/duckmath/*` | Static + path rewriting | DuckMath assets |
 | `/radon-g3mes` | Dynamic HTML rewrite | **Radon Games platform** |
 | `/radon-g3mes/*` | Static + CDN proxy | Radon Games assets |
-| `/seraph` | Dynamic HTML rewrite | **Seraph Games platform** |
-| `/seraph/*` | Static serving | Seraph Games assets |
 | `/~/sj/*` | Bare server proxy | **Proxy for Radon** web unblocker |
 
 ### Special Behaviors
@@ -307,12 +304,6 @@ if (href.startsWith('/') && !href.startsWith('/radon-g3mes')) {
 **Purpose:** CORS proxy for Radon Games to bypass website restrictions  
 **Format:** `/~/sj/https://example.com/resource`  
 **Features:** Strips security headers, allows iframe embedding
-
-#### 5. Seraph Games Integration
-**Purpose:** Advanced game platform providing additional games
-**Status:** Integrated in latest commit  
-**Route:** `/seraph` and `/seraph/*`  
-**Features:** Static serving with path handling
 
 ---
 
@@ -430,13 +421,7 @@ function getUserSession()
 - **Integration:** Asset rewriting + JavaScript interceptor + CDN proxy
 - **CDN:** `https://radon.games/cdn/` → `/radon-g3mes/cdn/`
 
-#### 4. Seraph Games
-- **Location:** `/seraph` or sibling directory
-- **Type:** Advanced game platform
-- **Integration:** Static file serving with path handling
-- **Status:** Recently integrated (commit a0eaacc)
-
-#### 5. Socket.io CDN
+#### 4. Socket.io CDN
 - **URL:** `https://cdn.socket.io/4.5.4/socket.io.min.js`
 - **Purpose:** Real-time multiplayer communication
 - **Used In:** All multiplayer games
@@ -575,7 +560,7 @@ docker-compose up -d
 → Delete `database/games.db` and restart server
 
 **"Add external games"**
-→ Follow DuckMath/Radon/Seraph integration pattern (path rewriting + static serving)
+→ Follow DuckMath/Radon integration pattern (path rewriting + static serving)
 
 **"Update landing page"**
 → Edit `public/landing.html`
@@ -583,11 +568,7 @@ docker-compose up -d
 **"Add authentication"**
 → Already implemented - use `getUserSession()` and check `currentUser`
 
-**"Integrate a new platform"**
-→ Add route in `server.js`, update `landing.html`, handle path rewriting if needed
-
 ### Critical Paths
-- **Never remove** external platform routes (DuckMath, Radon, Seraph)
 - **Always prefix** external platforms to avoid path conflicts
 - **Test multiplayer** with 2 browser instances
 - **Verify coin transactions** update database correctly

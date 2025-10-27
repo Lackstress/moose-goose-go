@@ -37,7 +37,6 @@ A complete multiplayer gaming platform with **14+ built-in games**, **3 external
 - **GameHub** (`/ghub`) - 14 custom in-house games
 - **DuckMath** (`/duckmath`) - External educational game collection
 - **Radon Games** (`/radon-g3mes`) - React-based game portal
-- **Seraph Games** (`/seraph`) - Advanced game platform
 
 ### 🌐 Multiplayer Features
 - Real-time WebSocket connections (Socket.io)
@@ -103,7 +102,6 @@ A complete multiplayer gaming platform with **14+ built-in games**, **3 external
    - **GameHub** - Play 14 official games
    - **DuckMath** - Educational games
    - **Radon Games** - React-based portal
-   - **Seraph Games** - Advanced games
 
 ### Playing Games
 1. Select any game from your chosen platform
