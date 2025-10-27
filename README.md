@@ -1,6 +1,6 @@
-# 🎮 Games Lobby - Full-Featured Gaming Platform
+# 🎮 Gaming Hub Platform - Full-Featured Gaming Portal
 
-A complete gaming platform with **multiplayer games**, **casino/gambling games with fake coins**, and **user accounts** for saving progress.
+A complete multiplayer gaming platform with **14+ built-in games**, **3 external game platforms**, **user authentication**, and a **virtual coin system** for betting and progression tracking.
 
 ## 🚀 Features
 
@@ -8,7 +8,7 @@ A complete gaming platform with **multiplayer games**, **casino/gambling games w
 - **Username + Password Registration/Login**
 - **Optional PIN Recovery** (for password reset)
 - **Guest Mode** (play without saving)
-- **Coin System** (1000 starting coins, resettable)
+- **Virtual Coin System** (1000 starting coins, resettable)
 - **Progress Persistence** (SQLite database)
 
 ### 🎮 Game Categories
@@ -16,24 +16,36 @@ A complete gaming platform with **multiplayer games**, **casino/gambling games w
 #### Classic Games
 - 🐍 **Snake** - Classic snake game with difficulty levels
 - 🕹️ **Memory Match** - Test your memory with pairs
-- (Flappy Bird, 2048 templates ready)
+- 🐦 **Flappy Bird** - Dodge pipes and rack up points
+- 🎮 **2048** - Merge tiles to reach 2048
 
 #### Multiplayer Card Games
 - 🎯 **Tic Tac Toe** - Online multiplayer vs real players
-- (Go Fish, UNO variations - templates ready)
+- 🎴 **Go Fish** - Multiplayer card collection game
+- 🃏 **UNO** - Play UNO with other players
+- 🎰 **Poker** - 5-card poker multiplayer
 
 #### Casino/Gambling Games (Bet & Win!)
 - 🎰 **Plinko** - Drop the ball and catch multipliers
 - 🪙 **Coin Flip** - Double or nothing
 - 🎡 **Roulette** - Spin the wheel (Red/Black/Even/Odd)
 - 🃏 **Blackjack 21** - Beat the dealer
-- 🚗 **Crossy Road** - Dodge traffic for coins
-- (Poker templates ready)
+- 🏎️ **Crossy Road** - Dodge traffic for coins
+- ⛏️ **Mines** - Click carefully to win big
+
+### 🌐 Multi-Platform Support
+- **GameHub** (`/ghub`) - 14 custom in-house games
+- **DuckMath** (`/duckmath`) - External educational game collection
+- **Radon Games** (`/radon-g3mes`) - React-based game portal
+- **Seraph Games** (`/seraph`) - Advanced game platform
 
 ### 🌐 Multiplayer Features
 - Real-time WebSocket connections (Socket.io)
-- Online lobbies for 2-player games
-- Matchmaking system
+- Online lobbies for 2+ player games
+- Enhanced matchmaking system
+- Room creation and management
+- Chat functionality in multiplayer games
+- Spectator mode for viewing live games
 
 ### 💾 Data Persistence
 - User profiles with stats
@@ -70,6 +82,12 @@ A complete gaming platform with **multiplayer games**, **casino/gambling games w
    http://localhost:3000
    ```
 
+**Server will start on port 3000** with support for:
+- 🎮 GameHub with 14 games
+- 🦆 DuckMath platform
+- 🎮 Radon Games portal  
+- 🎪 Seraph Games platform
+
 ---
 
 ## 🎯 How to Use
@@ -79,8 +97,16 @@ A complete gaming platform with **multiplayer games**, **casino/gambling games w
 2. Enter username and password (min 6 chars)
 3. Start with 1000 coins!
 
+### Choosing a Platform
+1. Visit the landing page at `/`
+2. Select from:
+   - **GameHub** - Play 14 official games
+   - **DuckMath** - Educational games
+   - **Radon Games** - React-based portal
+   - **Seraph Games** - Advanced games
+
 ### Playing Games
-1. Select any game from the lobby
+1. Select any game from your chosen platform
 2. For **classic games**: Play locally, track your high score
 3. For **casino games**: Place a bet, play, win/lose coins
 4. For **multiplayer games**: Find an opponent online or play locally vs AI
@@ -98,18 +124,26 @@ A complete gaming platform with **multiplayer games**, **casino/gambling games w
 
 ```
 /workspaces/games/
-├── server.js                 # Main Express server with WebSocket
-├── package.json             # Dependencies
+├── server.js                 # Main Express server with all routes
+├── multiplayer-manager.js    # WebSocket room/matchmaking system
+├── package.json              # Dependencies & scripts
+│
 ├── database/
-│   └── db.js               # SQLite initialization & schema
+│   ├── db.js                # SQLite initialization & schema
+│   ├── games.db             # User data (auto-created)
+│   └── gamedata.db          # Game state (auto-created)
+│
 ├── routes/
-│   └── auth.js             # User authentication API
+│   └── auth.js              # User authentication API
+│
 ├── public/
-│   ├── index.html          # Home lobby page
-│   ├── styles.css          # Global styling
+│   ├── landing.html         # Main landing page (/)
+│   ├── index.html           # GameHub main page (/ghub)
+│   ├── styles.css           # Global styling
+│   ├── script.js            # Global scripts
 │   ├── js/
-│   │   └── main.js         # Auth, UI, and core logic
-│   └── games/
+│   │   └── main.js          # Auth, UI, coin system, shared logic
+│   └── games/               # Individual game files (14 games)
 │       ├── snake.html
 │       ├── memory.html
 │       ├── tic-tac-toe.html
@@ -118,8 +152,22 @@ A complete gaming platform with **multiplayer games**, **casino/gambling games w
 │       ├── coinflip.html
 │       ├── roulette.html
 │       ├── crossy-road.html
-│       └── [more games...]
-└── games.db               # SQLite database (created on first run)
+│       ├── flappy-bird.html
+│       ├── 2048.html
+│       ├── go-fish.html
+│       ├── uno.html
+│       ├── poker.html
+│       └── mines.html
+│
+├── nginx.conf               # Nginx reverse proxy configuration
+├── Dockerfile               # Docker container definition
+├── docker-compose.yml       # Docker compose orchestration
+├── deploy-docker.sh         # Docker deployment script
+├── deploy.sh                # Direct deployment script
+├── quick-deploy.sh          # Fast deploy (PM2, no Docker)
+├── setup-swap.sh            # Memory swap configuration
+│
+└── README.md                # This file
 ```
 
 ---
@@ -257,21 +305,22 @@ CREATE TABLE transactions (
 ## 🎯 Next Steps to Complete
 
 ### Games to Add
-- [ ] **Go Fish** - Multiplayer card game
-- [ ] **UNO** - Card game with variations
-- [ ] **Poker** - 5-card poker
-- [ ] **Flappy Bird** - Classic clone
-- [ ] **2048** - Puzzle game
+- [ ] More casino variants
+- [ ] Leaderboard integration
+- [ ] Achievement system
+- [ ] Daily challenges
 
 ### Features to Implement
 - [ ] Achievements & Badges
-- [ ] Daily challenges
-- [ ] Leaderboards (global/weekly/daily)
+- [ ] Daily challenges with rewards
+- [ ] Global/weekly/daily leaderboards
 - [ ] Sound effects & notifications
 - [ ] Game statistics & analytics
-- [ ] Seasonal events
+- [ ] Seasonal events & tournaments
 - [ ] Referral system
 - [ ] Premium/VIP features
+- [ ] Replay/replay sharing
+- [ ] Tournament brackets
 
 ### Optimization
 - [ ] Lazy-load games

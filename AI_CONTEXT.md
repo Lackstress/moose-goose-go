@@ -1,7 +1,7 @@
 # 🤖 AI Context Guide - Gaming Hub Platform
 
-> **Last Updated:** October 26, 2025  
-> **Commit:** f8d81d20fe9da1e09e02fe0ab274a31e68a159c6  
+> **Last Updated:** October 27, 2025  
+> **Commit:** c26334a  
 > **Purpose:** This document provides comprehensive context for AI assistants working on this codebase.
 
 ---
@@ -28,11 +28,12 @@
 
 ### Key Features
 - ✅ **14 Built-in Games** (Casino, Classic, Multiplayer)
+- ✅ **4 Game Platforms** (GameHub + DuckMath + Radon + Seraph)
 - ✅ **User Authentication** (Register/Login/Guest)
 - ✅ **Virtual Coin System** (1000 starting balance)
 - ✅ **Real-time Multiplayer** (WebSocket-based)
-- ✅ **Multi-Platform Hub** (GameHub + DuckMath + Radon Games)
 - ✅ **Database Persistence** (SQLite)
+- ✅ **Advanced Matchmaking** (Room system, spectator mode)
 
 ### User Flow
 ```
@@ -40,10 +41,11 @@ Landing Page (/)
   ↓
 Choose Platform: 
   → GameHub (/ghub) - 14 custom games
-  → DuckMath (/duckmath) - External game collection
-  → Radon Games (/radon-g3mes) - React-based game portal
+  → DuckMath (/duckmath) - Educational games
+  → Radon Games (/radon-g3mes) - React-based portal
+  → Seraph Games (/seraph) - Advanced game platform
   ↓
-Play Games → Track Coins → Multiplayer Matches
+Play Games → Track Coins → Multiplayer Matches → Compete
 ```
 
 ---
@@ -92,7 +94,6 @@ Play Games → Track Coins → Multiplayer Matches
 ├── public/                     # Static frontend files
 │   ├── landing.html           # Root landing page (/)
 │   ├── index.html             # GameHub main page (/ghub)
-│   ├── hub.html               # (deprecated/unused)
 │   ├── 404.html               # Custom 404 page
 │   ├── styles.css             # Global styles
 │   ├── script.js              # Global scripts
@@ -100,13 +101,21 @@ Play Games → Track Coins → Multiplayer Matches
 │   ├── js/
 │   │   └── main.js            # Auth, coin system, shared utilities
 │   │
-│   └── games/                 # Individual game HTML files
-│       ├── snake.html
-│       ├── blackjack.html
-│       ├── plinko.html
-│       ├── tic-tac-toe.html
-│       ├── mines.html
-│       └── [10+ more games]
+│   └── games/                 # 14 Individual game HTML files
+│       ├── snake.html         # Classic snake game
+│       ├── memory.html        # Memory match game
+│       ├── tic-tac-toe.html   # Multiplayer tic-tac-toe
+│       ├── blackjack.html     # Casino blackjack with betting
+│       ├── plinko.html        # Plinko dropping game
+│       ├── coinflip.html      # Coin flip gambling
+│       ├── roulette.html      # Roulette wheel
+│       ├── crossy-road.html   # Crossy road clone
+│       ├── flappy-bird.html   # Flappy bird game
+│       ├── 2048.html          # 2048 puzzle game
+│       ├── go-fish.html       # Multiplayer go fish
+│       ├── uno.html           # Multiplayer UNO
+│       ├── poker.html         # Poker card game
+│       └── mines.html         # Mines clearing game
 │
 ├── deploy-docker.sh           # Docker deployment script
 ├── deploy.sh                  # Direct deployment script
@@ -261,12 +270,13 @@ CREATE TABLE transactions (
 |-----|---------|---------|
 | `/` | `landing.html` | **Landing page** - Choose platform |
 | `/ghub` | `index.html` | **GameHub** - 14 custom games |
-| `/games` | Custom 404 | **Intentional block** - Shows "lost" message |
 | `/games/:gameId` | `games/{gameId}.html` | Individual game pages |
 | `/duckmath` | Dynamic HTML rewrite | **DuckMath platform** |
 | `/duckmath/*` | Static + path rewriting | DuckMath assets |
 | `/radon-g3mes` | Dynamic HTML rewrite | **Radon Games platform** |
 | `/radon-g3mes/*` | Static + CDN proxy | Radon Games assets |
+| `/seraph` | Dynamic HTML rewrite | **Seraph Games platform** |
+| `/seraph/*` | Static serving | Seraph Games assets |
 | `/~/sj/*` | Bare server proxy | **Proxy for Radon** web unblocker |
 
 ### Special Behaviors
@@ -297,6 +307,12 @@ if (href.startsWith('/') && !href.startsWith('/radon-g3mes')) {
 **Purpose:** CORS proxy for Radon Games to bypass website restrictions  
 **Format:** `/~/sj/https://example.com/resource`  
 **Features:** Strips security headers, allows iframe embedding
+
+#### 5. Seraph Games Integration
+**Purpose:** Advanced game platform providing additional games
+**Status:** Integrated in latest commit  
+**Route:** `/seraph` and `/seraph/*`  
+**Features:** Static serving with path handling
 
 ---
 
@@ -408,13 +424,19 @@ function getUserSession()
 - **Integration:** Path rewriting + static file serving
 - **Assets:** `/duckmath/assets/`, `/duckmath/g4m3s/`
 
-#### 2. Radon Games
+#### 3. Radon Games
 - **Location:** `/radon-games/dist` (sibling to games repo)
 - **Type:** React-based game portal
 - **Integration:** Asset rewriting + JavaScript interceptor + CDN proxy
 - **CDN:** `https://radon.games/cdn/` → `/radon-g3mes/cdn/`
 
-#### 3. Socket.io CDN
+#### 4. Seraph Games
+- **Location:** `/seraph` or sibling directory
+- **Type:** Advanced game platform
+- **Integration:** Static file serving with path handling
+- **Status:** Recently integrated (commit a0eaacc)
+
+#### 5. Socket.io CDN
 - **URL:** `https://cdn.socket.io/4.5.4/socket.io.min.js`
 - **Purpose:** Real-time multiplayer communication
 - **Used In:** All multiplayer games
@@ -553,10 +575,7 @@ docker-compose up -d
 → Delete `database/games.db` and restart server
 
 **"Add external games"**
-→ Follow DuckMath/Radon integration pattern (path rewriting + static serving)
-
-**"Fix /games path"**
-→ Intentionally blocked - redirect users to `/ghub` or landing page
+→ Follow DuckMath/Radon/Seraph integration pattern (path rewriting + static serving)
 
 **"Update landing page"**
 → Edit `public/landing.html`
@@ -564,12 +583,16 @@ docker-compose up -d
 **"Add authentication"**
 → Already implemented - use `getUserSession()` and check `currentUser`
 
+**"Integrate a new platform"**
+→ Add route in `server.js`, update `landing.html`, handle path rewriting if needed
+
 ### Critical Paths
-- **Never remove** `/games` 404 handler (intentional filter bypass)
+- **Never remove** external platform routes (DuckMath, Radon, Seraph)
 - **Always prefix** external platforms to avoid path conflicts
 - **Test multiplayer** with 2 browser instances
 - **Verify coin transactions** update database correctly
-- **Check sibling directories** for DuckMath/Radon before adding routes
+- **Check sibling directories** for external platforms before adding routes
+- **Update landing.html** when integrating new platforms
 
 ---
 
