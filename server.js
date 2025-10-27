@@ -235,6 +235,11 @@ app.get('/duckmath', (req, res) => {
   html = html.replaceAll('href="/g4m3s/', 'href="/duckmath/g4m3s/');
   html = html.replaceAll('src="/g4m3s/', 'src="/duckmath/g4m3s/');
   
+  // Rewrite all root-relative links to include /duckmath prefix, but keep external URLs and anchor links
+  // Match href="/" but skip: duckmath/ prefix, protocol-relative //, http/https, anchors #
+  html = html.replace(/href="\/(?!duckmath\/|\/\/|https?:|#)/g, 'href="/duckmath/');
+  html = html.replace(/src="\/(?!duckmath\/|\/\/|https?:|#)/g, 'src="/duckmath/');
+  
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
 });
@@ -257,11 +262,30 @@ app.get('/duckmath/', (req, res) => {
   html = html.replaceAll('href="/g4m3s/', 'href="/duckmath/g4m3s/');
   html = html.replaceAll('src="/g4m3s/', 'src="/duckmath/g4m3s/');
   
+  // Rewrite all root-relative links to include /duckmath prefix, but keep external URLs and anchor links
+  // Match href="/" but skip: duckmath/ prefix, protocol-relative //, http/https, anchors #
+  html = html.replace(/href="\/(?!duckmath\/|\/\/|https?:|#)/g, 'href="/duckmath/');
+  html = html.replace(/src="\/(?!duckmath\/|\/\/|https?:|#)/g, 'src="/duckmath/');
+  
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
 });
 
 // DuckMath game page - serve with asset path rewriting (handles both with and without query params)
+// Redirect individual game files to query parameter format
+// E.g., /duckmath/g4m3s/slope.html -> /duckmath/g4m3s/?title=Slope
+app.get('/duckmath/g4m3s/:gameFile', (req, res) => {
+  const gameFile = req.params.gameFile;
+  // Extract game name from filename (e.g., "slope.html" -> "Slope")
+  const gameName = gameFile
+    .replace(/\.html$/, '')
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join('-');
+  
+  res.redirect(`/duckmath/g4m3s/?title=${gameName}`);
+});
+
 app.get('/duckmath/g4m3s', (req, res) => {
   const fs = require('fs');
   const filePath = path.join(__dirname, '..', 'duckmath', 'g4m3s', 'index.html');
@@ -280,6 +304,11 @@ app.get('/duckmath/g4m3s', (req, res) => {
   html = html.replaceAll('src="/g4m3s/', 'src="/duckmath/g4m3s/');
   html = html.replaceAll('src="/loading.html"', 'src="/duckmath/loading.html"');
   
+  // Rewrite all root-relative links to include /duckmath prefix, but keep external URLs and anchor links
+  // Match href="/" but skip: duckmath/ prefix, protocol-relative //, http/https, anchors #
+  html = html.replace(/href="\/(?!duckmath\/|\/\/|https?:|#)/g, 'href="/duckmath/');
+  html = html.replace(/src="\/(?!duckmath\/|\/\/|https?:|#)/g, 'src="/duckmath/');
+  
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
 });
@@ -296,6 +325,15 @@ app.get('/more/*', (req, res) => {
 
 app.get('/blog/*', (req, res) => {
   res.redirect('/duckmath' + req.originalUrl);
+});
+
+// Redirect DuckMath HTML files that are accessed without the /duckmath prefix
+app.get('/leaderboard.html', (req, res) => {
+  res.redirect('/duckmath/leaderboard.html');
+});
+
+app.get('/about.html', (req, res) => {
+  res.redirect('/duckmath/about.html');
 });
 
 // DuckMath JavaScript file rewriting - all JS files for better compatibility
@@ -327,7 +365,86 @@ app.get('/duckmath/assets/js/*.js', (req, res) => {
   res.send(js);
 });
 
-// DuckMath assets and other files
+// DuckMath static assets with custom handler for HTML files
+// This creates a custom handler that intercepts HTML files for rewriting
+const duckmathDir = path.join(__dirname, '..', 'duckmath');
+app.use('/duckmath', (req, res, next) => {
+  const fs = require('fs');
+  const filePath = path.join(__dirname, '..', 'duckmath', req.path);
+  
+  // Only handle .html files - let other files be served by static middleware
+  if (filePath.endsWith('.html') && fs.existsSync(filePath)) {
+    let html = fs.readFileSync(filePath, 'utf8');
+    
+    // Rewrite specific asset paths to include /duckmath prefix
+    html = html.replaceAll('href="/assets/', 'href="/duckmath/assets/');
+    html = html.replaceAll('src="/assets/', 'src="/duckmath/assets/');
+    html = html.replaceAll('href="/g4m3s/', 'href="/duckmath/g4m3s/');
+    html = html.replaceAll('src="/g4m3s/', 'src="/duckmath/g4m3s/');
+    html = html.replaceAll('href="/more/', 'href="/duckmath/more/');
+    html = html.replaceAll('src="/more/', 'src="/duckmath/more/');
+    html = html.replaceAll('href="/blog/', 'href="/duckmath/blog/');
+    html = html.replaceAll('src="/blog/', 'src="/duckmath/blog/');
+    html = html.replaceAll('href="/leaderboard', 'href="/duckmath/leaderboard');
+    html = html.replaceAll('href="/about', 'href="/duckmath/about');
+    
+    // Rewrite relative paths that don't start with / or protocol
+    // Only match relative paths like: g4m3s/file, more/file, but NOT http://
+    html = html.replace(/href="(?!(?:https?:|\/|#))([a-z\-\/\.]+)/gi, 'href="/duckmath/$1');
+    html = html.replace(/src="(?!(?:https?:|\/|#))([a-z\-\/\.]+)/gi, 'src="/duckmath/$1');
+    
+    // Rewrite all root-relative links to include /duckmath prefix
+    // Match href="/" but skip: duckmath/ prefix, protocol-relative //, http/https, anchors #
+    html = html.replace(/href="\/(?!duckmath\/|\/\/|https?:|#)/g, 'href="/duckmath/');
+    html = html.replace(/src="\/(?!duckmath\/|\/\/|https?:|#)/g, 'src="/duckmath/');
+    
+    // Inject client-side script to fix dynamically created links
+    const fixDynamicLinksScript = `
+    <script>
+      (function() {
+        const basePath = '/duckmath';
+        
+        // Function to fix all relative and root-relative links
+        function fixAllLinks() {
+          document.querySelectorAll('a[href], img[src], script[src], link[href]').forEach(el => {
+            const attr = el.getAttribute('href') || el.getAttribute('src');
+            if (attr && typeof attr === 'string') {
+              // Fix relative paths like g4m3s/, more/, blog/
+              if (!attr.startsWith('/') && !attr.startsWith('http') && !attr.startsWith('#')) {
+                if (el.hasAttribute('href')) el.setAttribute('href', basePath + '/' + attr);
+                else if (el.hasAttribute('src')) el.setAttribute('src', basePath + '/' + attr);
+              }
+              // Fix root-relative paths that don't have duckmath prefix
+              else if (attr.startsWith('/') && !attr.startsWith(basePath) && !attr.startsWith('//') && !attr.startsWith('/http')) {
+                if (el.hasAttribute('href')) el.setAttribute('href', basePath + attr);
+                else if (el.hasAttribute('src')) el.setAttribute('src', basePath + attr);
+              }
+            }
+          });
+        }
+        
+        // Run on page load
+        fixAllLinks();
+        
+        // Also run when DOM changes (for dynamically added content)
+        const observer = new MutationObserver(fixAllLinks);
+        observer.observe(document.body, { childList: true, subtree: true });
+      })();
+    </script>
+    `;
+    
+    // Insert before closing body tag
+    html = html.replace('</body>', fixDynamicLinksScript + '</body>');
+    
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html);
+  }
+  
+  // For non-HTML files or files that don't exist, use static middleware
+  next();
+});
+
+// DuckMath static file serving
 app.use('/duckmath', express.static(path.join(__dirname, '..', 'duckmath')));
 
 // Helper function to inject Radon Games base path interceptor
@@ -337,6 +454,43 @@ function injectRadonInterceptor(html) {
       (function() {
         const basePath = '/radon-g3mes';
         
+        // First, fix all existing href and src attributes on page load
+        function fixAllLinks() {
+          // Fix all anchor links
+          document.querySelectorAll('a[href]').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('http') && !href.startsWith('//')) {
+              link.setAttribute('href', basePath + href);
+            }
+          });
+          
+          // Fix all image sources
+          document.querySelectorAll('img[src]').forEach(img => {
+            const src = img.getAttribute('src');
+            if (src && src.startsWith('/') && !src.startsWith(basePath) && !src.startsWith('http') && !src.startsWith('//')) {
+              img.setAttribute('src', basePath + src);
+            }
+          });
+          
+          // Fix form actions
+          document.querySelectorAll('form[action]').forEach(form => {
+            const action = form.getAttribute('action');
+            if (action && action.startsWith('/') && !action.startsWith(basePath) && !action.startsWith('http') && !action.startsWith('//')) {
+              form.setAttribute('action', basePath + action);
+            }
+          });
+        }
+        
+        // Run on initial load
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', fixAllLinks);
+        } else {
+          fixAllLinks();
+        }
+        
+        // Also run periodically to catch dynamically added content
+        setInterval(fixAllLinks, 1000);
+        
         // Intercept all clicks on the page
         document.addEventListener('click', function(e) {
           const target = e.target.closest('a');
@@ -345,8 +499,8 @@ function injectRadonInterceptor(html) {
           const href = target.getAttribute('href');
           if (!href) return;
           
-          // Skip external links and already-prefixed links
-          if (href.startsWith('http') || href.startsWith('//') || href.startsWith(basePath)) {
+          // Skip external links and already-prefixed links and anchor links
+          if (href.startsWith('http') || href.startsWith('//') || href.startsWith(basePath) || href.startsWith('#')) {
             return;
           }
           
@@ -364,7 +518,7 @@ function injectRadonInterceptor(html) {
         document.addEventListener('submit', function(e) {
           const form = e.target;
           const action = form.getAttribute('action');
-          if (action && action.startsWith('/') && !action.startsWith(basePath)) {
+          if (action && action.startsWith('/') && !action.startsWith(basePath) && !action.startsWith('http') && !action.startsWith('//')) {
             form.setAttribute('action', basePath + action);
           }
         }, true);
@@ -374,14 +528,14 @@ function injectRadonInterceptor(html) {
         const originalReplaceState = history.replaceState;
         
         history.pushState = function(state, title, url) {
-          if (url && url.startsWith('/') && !url.startsWith(basePath)) {
+          if (url && url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('http') && !url.startsWith('//')) {
             url = basePath + url;
           }
           return originalPushState.call(this, state, title, url);
         };
         
         history.replaceState = function(state, title, url) {
-          if (url && url.startsWith('/') && !url.startsWith(basePath)) {
+          if (url && url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('http') && !url.startsWith('//')) {
             url = basePath + url;
           }
           return originalReplaceState.call(this, state, title, url);
@@ -390,7 +544,7 @@ function injectRadonInterceptor(html) {
         // Intercept fetch requests to fix proxy and API calls
         const originalFetch = window.fetch;
         window.fetch = function(url, options) {
-          if (typeof url === 'string' && url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('/api')) {
+          if (typeof url === 'string' && url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('/api') && !url.startsWith('http') && !url.startsWith('//')) {
             url = basePath + url;
           }
           return originalFetch.call(this, url, options);
@@ -399,7 +553,7 @@ function injectRadonInterceptor(html) {
         // Fix XMLHttpRequest for legacy AJAX
         const originalOpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url, ...args) {
-          if (typeof url === 'string' && url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('/api')) {
+          if (typeof url === 'string' && url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('/api') && !url.startsWith('http') && !url.startsWith('//')) {
             url = basePath + url;
           }
           return originalOpen.call(this, method, url, ...args);
