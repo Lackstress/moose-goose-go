@@ -19,6 +19,11 @@
       background: #1a1a1a;
       color: #fff;
       overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     .container {
@@ -28,7 +33,7 @@
       display: grid;
       grid-template-columns: minmax(250px, 280px) 1fr minmax(250px, 280px);
       gap: 15px;
-      height: 100vh;
+      flex: 1;
       overflow: hidden;
     }
 
@@ -36,6 +41,7 @@
       .container {
         grid-template-columns: 1fr;
         height: auto;
+        flex: 1;
       }
     }
 

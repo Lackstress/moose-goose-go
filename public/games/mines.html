@@ -19,9 +19,11 @@
       background: #0f0f0f;
       color: #fff;
       overflow-x: hidden;
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
     }
 
     .header {
@@ -31,6 +33,7 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid #334155;
+      flex-shrink: 0;
     }
 
     .header h1 {
@@ -65,6 +68,7 @@
       grid-template-columns: 300px 1fr 300px;
       gap: 20px;
       flex: 1;
+      overflow: hidden;
     }
 
     /* Left Panel */
