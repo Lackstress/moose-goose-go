@@ -10,6 +10,8 @@
       max-width: 1200px;
       margin: 0 auto;
       padding: 2rem;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .hub-header {
@@ -43,7 +45,7 @@
 
     .games-sources {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 2rem;
       margin: 3rem 0;
     }
@@ -151,8 +153,8 @@
 
     .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
       margin: 1.5rem 0;
     }
 
@@ -196,6 +198,221 @@
       color: #ef4444;
       font-weight: bold;
       margin: 1rem 0;
+    }
+
+    /* Responsive Design Improvements */
+    
+    /* Tablet and smaller laptops (max-width: 1024px) */
+    @media (max-width: 1024px) {
+      .hub-container {
+        padding: 1.5rem;
+      }
+
+      .hub-title {
+        font-size: 2.5rem;
+      }
+
+      .hub-subtitle {
+        font-size: 1.2rem;
+      }
+
+      .hub-description {
+        font-size: 1rem;
+      }
+
+      .games-sources {
+        gap: 1.5rem;
+        margin: 2rem 0;
+      }
+
+      .source-card {
+        padding: 1.5rem;
+      }
+
+      .source-title {
+        font-size: 1.6rem;
+      }
+
+      .source-icon {
+        font-size: 2.5rem;
+      }
+    }
+
+    /* Tablets (max-width: 768px) */
+    @media (max-width: 768px) {
+      .hub-container {
+        padding: 1.25rem;
+      }
+
+      .hub-header {
+        margin-bottom: 2rem;
+      }
+
+      .hub-title {
+        font-size: 2rem;
+      }
+
+      .hub-subtitle {
+        font-size: 1.1rem;
+      }
+
+      .hub-description {
+        font-size: 0.95rem;
+      }
+
+      .games-sources {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.25rem;
+        margin: 1.5rem 0;
+      }
+
+      .source-card {
+        padding: 1.25rem;
+      }
+
+      .source-title {
+        font-size: 1.5rem;
+      }
+
+      .source-icon {
+        font-size: 2.25rem;
+      }
+
+      .source-description {
+        font-size: 0.9rem;
+      }
+
+      .auth-check {
+        padding: 1.5rem;
+        max-width: 90%;
+        width: auto;
+      }
+    }
+
+    /* Mobile devices (max-width: 480px) */
+    @media (max-width: 480px) {
+      .hub-container {
+        padding: 1rem;
+      }
+
+      .hub-header {
+        margin-bottom: 1.5rem;
+      }
+
+      .hub-title {
+        font-size: 1.75rem;
+        line-height: 1.2;
+      }
+
+      .hub-subtitle {
+        font-size: 1rem;
+      }
+
+      .hub-description {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+      }
+
+      .games-sources {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      .source-card {
+        padding: 1rem;
+      }
+
+      .source-card:hover {
+        transform: translateY(-4px);
+      }
+
+      .source-icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .source-title {
+        font-size: 1.35rem;
+      }
+
+      .source-description {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+      }
+
+      .game-count {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+      }
+
+      .features-grid {
+        gap: 0.5rem;
+      }
+
+      .features-grid > div {
+        padding: 0.4rem !important;
+        font-size: 0.8rem !important;
+      }
+
+      .access-btn {
+        padding: 0.875rem;
+        font-size: 0.95rem;
+      }
+
+      .auth-check {
+        padding: 1.25rem;
+        max-width: 85%;
+      }
+
+      .auth-check h2 {
+        font-size: 1.25rem;
+      }
+
+      .auth-check p {
+        font-size: 0.9rem;
+      }
+    }
+
+    /* Extra small devices (max-width: 375px) */
+    @media (max-width: 375px) {
+      .hub-container {
+        padding: 0.75rem;
+      }
+
+      .hub-title {
+        font-size: 1.5rem;
+      }
+
+      .hub-subtitle {
+        font-size: 0.95rem;
+      }
+
+      .hub-description {
+        font-size: 0.85rem;
+      }
+
+      .source-card {
+        padding: 0.875rem;
+      }
+
+      .source-title {
+        font-size: 1.25rem;
+      }
+
+      .source-icon {
+        font-size: 1.75rem;
+      }
+
+      .source-description {
+        font-size: 0.8rem;
+      }
+
+      .features-grid > div {
+        font-size: 0.75rem !important;
+      }
     }
   </style>
 </head>
