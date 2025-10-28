@@ -22,20 +22,50 @@
     }
 
     .container {
-      max-width: 1400px;
+      max-width: 100%;
       margin: 0 auto;
-      padding: 20px;
+      padding: 15px;
       display: grid;
-      grid-template-columns: 280px 1fr 280px;
-      gap: 20px;
+      grid-template-columns: minmax(250px, 280px) 1fr minmax(250px, 280px);
+      gap: 15px;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    @media (max-width: 1200px) {
+      .container {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+        gap: 10px;
+      }
     }
 
     /* Left Panel - Betting Controls */
     .left-panel {
       background: #2a2a2a;
       border-radius: 12px;
-      padding: 20px;
+      padding: 15px;
       height: fit-content;
+      overflow-y: auto;
+      max-height: 100vh;
+    }
+
+    @media (max-width: 1200px) {
+      .left-panel {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .left-panel {
+        padding: 10px;
+      }
     }
 
     .balance {
@@ -169,9 +199,26 @@
     .game-board {
       background: #2a2a2a;
       border-radius: 12px;
-      padding: 20px;
+      padding: 15px;
       position: relative;
-      min-height: 700px;
+      display: flex;
+      flex-direction: column;
+      min-height: 500px;
+      overflow: hidden;
+    }
+
+    @media (max-width: 1200px) {
+      .game-board {
+        min-height: 600px;
+        order: -1;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .game-board {
+        min-height: 400px;
+        padding: 10px;
+      }
     }
 
     .stats-bar {
@@ -207,16 +254,39 @@
       background: #1a1a1a;
       display: block;
       margin: 0 auto;
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+      aspect-ratio: 4 / 3;
+    }
+
+    @media (max-width: 768px) {
+      canvas {
+        aspect-ratio: 3 / 4;
+      }
     }
 
     /* Right Panel - History */
     .right-panel {
       background: #2a2a2a;
       border-radius: 12px;
-      padding: 20px;
+      padding: 15px;
       height: fit-content;
-      max-height: 700px;
+      max-height: 100vh;
       overflow-y: auto;
+    }
+
+    @media (max-width: 1200px) {
+      .right-panel {
+        max-height: 400px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .right-panel {
+        max-height: 300px;
+        padding: 10px;
+      }
     }
 
     .right-panel h2 {
@@ -382,15 +452,6 @@
         <button class="multiplier-btn" onclick="placeBet()">BET</button>
       </div>
 
-      <div class="risk-selector">
-        <h3>RISK LEVEL</h3>
-        <div class="risk-buttons">
-          <button class="risk-btn low active" onclick="setRisk('low')">Low</button>
-          <button class="risk-btn medium" onclick="setRisk('medium')">Medium</button>
-          <button class="risk-btn high" onclick="setRisk('high')">High</button>
-        </div>
-      </div>
-
       <button class="bet-button" id="dropButton" onclick="dropBall()">🎲 DROP BALL</button>
       <button class="bet-button" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);" onclick="resetGame()">🔄 Reset Game</button>
 
@@ -456,7 +517,6 @@
     // Game State
     let balance = 1000;
     let currentBet = 100;
-    let risk = 'low';
     let totalWagered = 0;
     let totalWon = 0;
     let ballsDropped = 0;
@@ -465,19 +525,15 @@
     const canvas = document.getElementById('plinkoCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Multipliers based on risk (17 slots)
-    const multipliers = {
-      low: [1000, 130, 26, 9, 4, 2, 0.2, 0.2, 0.2, 0.2, 0.2, 2, 4, 9, 26, 130, 1000],
-      medium: [1000, 130, 26, 9, 4, 2, 1, 0.5, 0.3, 0.5, 1, 2, 4, 9, 26, 130, 1000],
-      high: [1000, 130, 26, 9, 4, 3, 2, 1, 0.5, 1, 2, 3, 4, 9, 26, 130, 1000]
-    };
+    // Fixed hard multipliers (removed risk selection)
+    const multipliers = [1000, 130, 26, 9, 4, 2, 0.2, 0.2, 0.2, 0.2, 0.2, 2, 4, 9, 26, 130, 1000];
 
     // Plinko board configuration
     const rows = 16;
     const pegRadius = 5;
     const ballRadius = 10;
     const spacing = 45;
-    const startX = canvas.width / 2;
+    const startX = 300;
     const startY = 50;
 
     // Initialize
@@ -512,7 +568,7 @@
 
       const colors = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#f97316', '#f97316', '#f97316', '#f97316', '#f97316', '#22c55e', '#84cc16', '#eab308', '#f59e0b', '#f97316', '#ef4444'];
       
-      multipliers[risk].forEach((mult, i) => {
+      multipliers.forEach((mult, i) => {
         ctx.fillStyle = colors[i];
         ctx.fillRect(i * bucketWidth, bucketY, bucketWidth, bucketHeight);
         ctx.strokeStyle = '#1a1a1a';
@@ -572,8 +628,8 @@
       activeBalls.forEach(ball => {
         if (!ball.active) return;
 
-        // Physics simulation
-        ball.vy += 0.5; // gravity
+        // Physics simulation - SLOWER GRAVITY AND FRICTION
+        ball.vy += 0.3; // reduced from 0.5 - slower fall
         ball.y += ball.vy;
         ball.x += ball.vx;
 
@@ -590,10 +646,10 @@
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             if (dist < pegRadius + ballRadius) {
-              // Bounce
+              // Bounce with reduced force
               const angle = Math.atan2(dy, dx);
-              ball.vx = Math.cos(angle) * 3 * (Math.random() > 0.5 ? 1 : -1);
-              ball.vy = Math.abs(ball.vy) * 0.7;
+              ball.vx = Math.cos(angle) * 2 * (Math.random() > 0.5 ? 1 : -1); // reduced from 3 to 2
+              ball.vy = Math.abs(ball.vy) * 0.5; // more friction on bounce
               ball.y = rowY + Math.sin(angle) * (pegRadius + ballRadius);
               ball.x = pegX + Math.cos(angle) * (pegRadius + ballRadius);
             }
@@ -606,7 +662,7 @@
           // Determine which bucket
           const bucketIndex = Math.floor((ball.x / canvas.width) * 17);
           const clampedIndex = Math.max(0, Math.min(16, bucketIndex));
-          const multiplier = multipliers[risk][clampedIndex];
+          const multiplier = multipliers[clampedIndex];
           const winAmount = Math.floor(ball.betAmount * multiplier);
           const profit = winAmount - ball.betAmount;
           
@@ -689,7 +745,7 @@
       document.getElementById('ballsDropped').textContent = ballsDropped;
       
       const betAmount = parseInt(document.getElementById('betAmount').value) || 100;
-      const maxMultiplier = Math.max(...multipliers[risk]);
+      const maxMultiplier = Math.max(...multipliers);
       document.getElementById('maxWin').textContent = betAmount * maxMultiplier;
     }
 
@@ -707,14 +763,6 @@
 
     function placeBet() {
       dropBall();
-    }
-
-    function setRisk(newRisk) {
-      risk = newRisk;
-      document.querySelectorAll('.risk-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelector(`.risk-btn.${newRisk}`).classList.add('active');
-      drawBoard();
-      updateUI();
     }
 
     function resetGame() {
