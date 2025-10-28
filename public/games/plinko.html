@@ -534,8 +534,8 @@
     // Fixed hard multipliers (removed risk selection)
     const multipliers = [1000, 130, 26, 9, 4, 2, 0.2, 0.2, 0.2, 0.2, 0.2, 2, 4, 9, 26, 130, 1000];
 
-    // Plinko board configuration
-    const rows = 16;
+    // Plinko board configuration - INCREASED ROWS FOR MORE DIFFICULTY
+    const rows = 20; // increased from 16 to 20 for more challenge
     const pegRadius = 5;
     const ballRadius = 10;
     const spacing = 45;
@@ -634,10 +634,39 @@
       activeBalls.forEach(ball => {
         if (!ball.active) return;
 
-        // Physics simulation - SLOWER GRAVITY AND FRICTION
-        ball.vy += 0.3; // reduced from 0.5 - slower fall
+        // Physics simulation - MUCH SLOWER GRAVITY AND FRICTION FOR BETTER VISIBILITY
+        ball.vy += 0.2; // reduced from 0.3 - even slower fall for better gameplay
         ball.y += ball.vy;
         ball.x += ball.vx;
+
+        // Check collisions with OTHER BALLS (new feature!)
+        activeBalls.forEach(otherBall => {
+          if (ball === otherBall || !otherBall.active) return;
+          
+          const dx = ball.x - otherBall.x;
+          const dy = ball.y - otherBall.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const minDist = ballRadius * 2;
+          
+          if (dist < minDist && dist > 0) {
+            // Balls are colliding - bounce them apart
+            const angle = Math.atan2(dy, dx);
+            const targetX = otherBall.x + Math.cos(angle) * minDist;
+            const targetY = otherBall.y + Math.sin(angle) * minDist;
+            
+            // Move balls apart
+            ball.x = targetX;
+            ball.y = targetY;
+            
+            // Exchange some velocity (elastic collision)
+            const vxTotal = ball.vx + otherBall.vx;
+            const vyTotal = ball.vy + otherBall.vy;
+            ball.vx = vxTotal * 0.5;
+            ball.vy = vyTotal * 0.5;
+            otherBall.vx = vxTotal * 0.5;
+            otherBall.vy = vyTotal * 0.5;
+          }
+        });
 
         // Check collisions with pegs
         for (let row = 0; row < rows; row++) {
@@ -654,8 +683,8 @@
             if (dist < pegRadius + ballRadius) {
               // Bounce with reduced force
               const angle = Math.atan2(dy, dx);
-              ball.vx = Math.cos(angle) * 2 * (Math.random() > 0.5 ? 1 : -1); // reduced from 3 to 2
-              ball.vy = Math.abs(ball.vy) * 0.5; // more friction on bounce
+              ball.vx = Math.cos(angle) * 1.5 * (Math.random() > 0.5 ? 1 : -1); // reduced from 2 to 1.5
+              ball.vy = Math.abs(ball.vy) * 0.4; // more friction on bounce (reduced from 0.5 to 0.4)
               ball.y = rowY + Math.sin(angle) * (pegRadius + ballRadius);
               ball.x = pegX + Math.cos(angle) * (pegRadius + ballRadius);
             }
@@ -724,13 +753,18 @@
       const history = document.getElementById('history');
       const profit = won - bet;
       const isWin = profit > 0;
+      
+      // Get current time for better visibility
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
       const item = document.createElement('div');
       item.className = 'history-item';
       item.innerHTML = `
         <div>
           <div class="history-multiplier ${isWin ? 'win' : 'loss'}">${multiplier}x</div>
-          <div style="font-size: 12px; opacity: 0.6; margin-top: 5px;">Bet: ₿${bet}</div>
+          <div style="font-size: 12px; opacity: 0.8; margin-top: 5px; color: #cbd5e1;">🕐 ${timeStr}</div>
+          <div style="font-size: 12px; opacity: 0.8; margin-top: 3px; color: #94a3b8;">Bet: ₿${bet}</div>
         </div>
         <div class="history-amount ${isWin ? 'profit' : 'loss'}">${isWin ? '+' : ''}₿${profit}</div>
       `;
