@@ -367,7 +367,22 @@
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="js/main.js"></script>
   <script>
-    // Multiplayer Server Management
+    // Multiplayer Server Management - Constants
+    const SOCKET_CONNECTION_DELAY = 1000; // ms to wait for socket connection
+    const SERVER_REFRESH_INTERVAL = 10000; // ms between server list refreshes
+    
+    const MULTIPLAYER_GAMES = [
+      { id: 'tic-tac-toe', name: 'Tic Tac Toe', emoji: '❌⭕' },
+      { id: 'poker', name: 'Poker', emoji: '🃏' },
+      { id: 'uno', name: 'UNO', emoji: '🎴' },
+      { id: 'go-fish', name: 'Go Fish', emoji: '🎣' }
+    ];
+    
+    const GAME_EMOJIS = Object.fromEntries(
+      MULTIPLAYER_GAMES.map(game => [game.id, game.emoji])
+    );
+    
+    // State
     let activeServers = [];
     
     // Initialize socket connection for multiplayer
@@ -411,10 +426,9 @@
           <div class="form-group">
             <label>Select Game:</label>
             <select id="serverGameType" class="form-input">
-              <option value="tic-tac-toe">❌⭕ Tic Tac Toe</option>
-              <option value="poker">🃏 Poker</option>
-              <option value="uno">🎴 UNO</option>
-              <option value="go-fish">🎣 Go Fish</option>
+              ${MULTIPLAYER_GAMES.map(game => 
+                `<option value="${game.id}">${game.emoji} ${game.name}</option>`
+              ).join('')}
             </select>
           </div>
           <div class="form-group">
@@ -473,9 +487,8 @@
     function refreshServers() {
       if (socket) {
         // Request servers for all multiplayer games
-        const multiplayerGames = ['tic-tac-toe', 'poker', 'uno', 'go-fish'];
-        multiplayerGames.forEach(game => {
-          socket.emit('get-rooms', { gameType: game });
+        MULTIPLAYER_GAMES.forEach(game => {
+          socket.emit('get-rooms', { gameType: game.id });
         });
       }
     }
@@ -518,20 +531,13 @@
       countEl.textContent = activeServers.length + ' Active';
       
       container.innerHTML = activeServers.map(server => {
-        const gameEmojis = {
-          'tic-tac-toe': '❌⭕',
-          'poker': '🃏',
-          'uno': '🎴',
-          'go-fish': '🎣'
-        };
-        
         const statusClass = server.status === 'playing' ? 'playing' : 'waiting';
         const statusText = server.status === 'playing' ? 'In Progress' : 'Waiting';
         
         return `
           <div class="server-card ${statusClass}">
             <div class="server-header">
-              <div class="server-game">${gameEmojis[server.gameType] || '🎮'} ${server.settings?.name || 'Unnamed Server'}</div>
+              <div class="server-game">${GAME_EMOJIS[server.gameType] || '🎮'} ${server.settings?.name || 'Unnamed Server'}</div>
               <div class="server-status ${statusClass}">${statusText}</div>
             </div>
             <div class="server-info">
@@ -561,10 +567,10 @@
       // Small delay to ensure socket is connected
       setTimeout(() => {
         refreshServers();
-      }, 1000);
+      }, SOCKET_CONNECTION_DELAY);
       
       // Refresh servers every 10 seconds
-      setInterval(refreshServers, 10000);
+      setInterval(refreshServers, SERVER_REFRESH_INTERVAL);
     });
   </script>
 </body>
