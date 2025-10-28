@@ -37,16 +37,6 @@ else
     cd duckmath && git pull && cd ..
 fi
 
-# Clone Seraph Games
-echo "🎮 Cloning Seraph unblocked games..."
-if [ ! -d "games/seraph" ]; then
-    cd games
-    git clone https://github.com/a456pur/seraph.git seraph
-    cd ..
-else
-    cd games/seraph && git pull && cd ../..
-fi
-
 # Clone and build Radon Games
 echo "⚡ Cloning and building Radon Games..."
 
@@ -174,7 +164,6 @@ echo "  • https://$DOMAIN/ - Landing page"
 echo "  • https://$DOMAIN/ghub - Game Hub"
 echo "  • https://$DOMAIN/duckmath - DuckMath games"
 echo "  • https://$DOMAIN/radon-g3mes - Radon Games (200+ games)"
-echo "  • https://$DOMAIN/seraph - Seraph Games (200+ unblocked games)"
 echo ""
 echo "🔧 Useful Commands:"
 echo "  • pm2 status - Check server status"
