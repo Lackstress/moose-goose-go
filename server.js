@@ -544,8 +544,18 @@ function injectRadonInterceptor(html) {
         // Intercept fetch requests to fix proxy and API calls
         const originalFetch = window.fetch;
         window.fetch = function(url, options) {
-          if (typeof url === 'string' && url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('/api') && !url.startsWith('http') && !url.startsWith('//')) {
-            url = basePath + url;
+          if (typeof url === 'string') {
+            // Fix root-relative paths for APIs, search, and other endpoints
+            if (url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('/api') && !url.startsWith('/search') && !url.startsWith('http') && !url.startsWith('//')) {
+              url = basePath + url;
+            }
+            // Handle special case for search and API endpoints
+            if ((url.startsWith('/api') || url.startsWith('/search')) && !url.startsWith(basePath)) {
+              // Only prefix if not already prefixed and not http
+              if (!url.startsWith('http') && !url.startsWith('//') && url.startsWith('/')) {
+                url = basePath + url;
+              }
+            }
           }
           return originalFetch.call(this, url, options);
         };
@@ -553,11 +563,18 @@ function injectRadonInterceptor(html) {
         // Fix XMLHttpRequest for legacy AJAX
         const originalOpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url, ...args) {
-          if (typeof url === 'string' && url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('/api') && !url.startsWith('http') && !url.startsWith('//')) {
-            url = basePath + url;
+          if (typeof url === 'string') {
+            if (url.startsWith('/') && !url.startsWith(basePath) && !url.startsWith('http') && !url.startsWith('//')) {
+              url = basePath + url;
+            }
           }
           return originalOpen.call(this, method, url, ...args);
         };
+
+        // Fix URL redirects for search
+        if (window.location.pathname.includes('/search')) {
+          console.log('[Radon] Search path detected:', window.location.pathname);
+        }
       })();
     </script>
   `;

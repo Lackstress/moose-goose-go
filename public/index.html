@@ -422,30 +422,42 @@
     
     // State
     let activeServers = [];
+    let gameHubSocket = null;
     
-    // Initialize socket connection for multiplayer
-    let socket;
+    // Initialize socket connection for multiplayer (separate from main.js socket)
     if (typeof io !== 'undefined') {
-      socket = io();
+      gameHubSocket = io();
       
-      socket.on('rooms-list', (data) => {
+      gameHubSocket.on('rooms-list', (data) => {
         activeServers = data.rooms || [];
         updateServersList();
       });
       
-      socket.on('room-created', (data) => {
+      gameHubSocket.on('room-created', (data) => {
         if (data.success) {
           showNotification('Server created successfully! 🎮', 'success');
           refreshServers();
+        } else {
+          showNotification(data.error || 'Failed to create server', 'error');
+          console.error('Room creation failed:', data);
         }
       });
       
-      socket.on('room-joined', (data) => {
+      gameHubSocket.on('room-joined', (data) => {
         if (data.success) {
           showNotification('Joined server successfully! 🎮', 'success');
           // Redirect to the game
-          window.location.href = data.room.gameUrl;
+          if (data.room && data.room.gameUrl) {
+            window.location.href = data.room.gameUrl;
+          }
+        } else {
+          showNotification(data.error || 'Failed to join server', 'error');
         }
+      });
+
+      gameHubSocket.on('error', (data) => {
+        console.error('Socket error:', data);
+        showNotification(data.message || 'Connection error', 'error');
       });
     }
     
@@ -496,38 +508,44 @@
     }
     
     function createServer() {
+      if (!gameHubSocket) {
+        showNotification('Connection error. Please refresh the page.', 'error');
+        return;
+      }
+
       const gameType = document.getElementById('serverGameType').value;
       const serverName = document.getElementById('serverName').value || currentUser.username + "'s Server";
       const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
       const isPrivate = document.getElementById('isPrivate').checked;
       
-      if (socket) {
-        socket.emit('create-room', {
-          gameType,
-          playerData: {
-            userId: currentUser.id,
-            username: currentUser.username,
-            coins: userCoins
-          },
-          settings: {
-            name: serverName,
-            maxPlayers,
-            isPrivate
-          }
-        });
-        
-        closeModal();
-      } else {
-        showNotification('Connection error. Please refresh the page.', 'error');
-      }
+      console.log('Creating server with:', { gameType, serverName, maxPlayers, isPrivate });
+      
+      gameHubSocket.emit('create-room', {
+        gameType,
+        playerData: {
+          userId: currentUser.id,
+          username: currentUser.username,
+          coins: userCoins
+        },
+        settings: {
+          name: serverName,
+          maxPlayers,
+          isPrivate
+        }
+      });
+      
+      closeModal();
     }
     
     function refreshServers() {
-      if (socket) {
+      if (gameHubSocket) {
+        console.log('Refreshing servers...');
         // Request servers for all multiplayer games
         MULTIPLAYER_GAMES.forEach(game => {
-          socket.emit('get-rooms', { gameType: game.id });
+          gameHubSocket.emit('get-rooms', { gameType: game.id });
         });
+      } else {
+        console.warn('Socket not ready for server refresh');
       }
     }
     
@@ -538,8 +556,8 @@
         return;
       }
       
-      if (socket) {
-        socket.emit('join-room', {
+      if (gameHubSocket) {
+        gameHubSocket.emit('join-room', {
           roomId,
           playerData: {
             userId: currentUser.id,
@@ -547,6 +565,8 @@
             coins: userCoins
           }
         });
+      } else {
+        showNotification('Connection error. Please refresh the page.', 'error');
       }
     }
     

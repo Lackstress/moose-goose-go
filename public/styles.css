@@ -318,6 +318,150 @@ body.dark-theme {
   transform: translateX(4px);
 }
 
+/* Fullscreen Modal for Games */
+.fullscreen-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  background: var(--bg-dark);
+  flex-direction: column;
+}
+
+.fullscreen-modal.active {
+  display: flex;
+}
+
+.fullscreen-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: var(--bg-dark-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.fullscreen-modal-header h2 {
+  color: var(--text-primary);
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.fullscreen-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s;
+}
+
+.fullscreen-close-btn:hover {
+  color: var(--accent-purple);
+}
+
+.fullscreen-modal-content {
+  flex: 1;
+  overflow: auto;
+  padding: 2rem;
+}
+
+.fullscreen-game-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  padding: 2rem;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.fullscreen-game-card .card-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15));
+  border-radius: 12px;
+}
+
+.fullscreen-game-card .game-icon {
+  font-size: 5rem;
+}
+
+.fullscreen-game-card .card-content {
+  padding: 0;
+}
+
+.fullscreen-game-card h3 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.fullscreen-game-card .game-desc {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin-bottom: 2rem;
+}
+
+.fullscreen-game-card .game-tags {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.fullscreen-game-card .tag {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.fullscreen-game-card .play-btn {
+  margin: 1rem 0;
+  font-size: 1.2rem;
+  padding: 1.5rem 2rem;
+}
+
+/* Fullscreen toggle button */
+.fullscreen-btn {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background: var(--accent-purple);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  z-index: 10;
+}
+
+.fullscreen-btn:hover {
+  background: var(--accent-blue);
+  transform: scale(1.1);
+}
+
+.game-card-modern {
+  position: relative;
+}
+
 /* Footer */
 .footer-dark {
   background: var(--bg-dark-secondary);
@@ -1044,8 +1188,8 @@ html {
 
 /* Improved container scrolling */
 .container-dark {
-  overflow-y: auto;
-  max-height: calc(100vh - 80px);
+  overflow-y: visible;
+  max-height: none;
 }
 
 /* Responsive adjustments for server section */
