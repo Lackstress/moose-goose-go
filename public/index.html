@@ -21,10 +21,37 @@
     <section class="hero-section">
       <div class="hero-content">
         <h1 class="hero-title">Welcome to GameHub</h1>
-        <p class="hero-subtitle">Premium collection of 14 handcrafted games with betting & rewards</p>
+        <p class="hero-subtitle">Premium collection of 16 handcrafted games with betting & rewards</p>
       </div>
       <div id="userInfo" class="user-banner">
         <p>🎯 Login or Register to unlock betting, rewards & leaderboards!</p>
+      </div>
+    </section>
+
+    <!-- Multiplayer Server Selection Section -->
+    <section class="server-section">
+      <div class="section-header">
+        <h2><span class="section-icon">🎮</span> Multiplayer Servers</h2>
+        <span class="section-count" id="serverCount">0 Active</span>
+      </div>
+      
+      <div class="server-controls">
+        <button class="create-server-btn" onclick="showCreateServerModal()">
+          <span class="btn-icon">➕</span>
+          <span>Create Server</span>
+        </button>
+        <button class="refresh-servers-btn" onclick="refreshServers()">
+          <span class="btn-icon">🔄</span>
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      <div class="servers-container" id="serversContainer">
+        <div class="no-servers-message">
+          <div class="no-servers-icon">🎯</div>
+          <h3>No Active Servers</h3>
+          <p>Be the first to create a multiplayer game server!</p>
+        </div>
       </div>
     </section>
 
@@ -221,7 +248,7 @@
     <section class="games-section-dark">
       <div class="section-header">
         <h2><span class="section-icon">🎰</span> Casino & Betting</h2>
-        <span class="section-count">5 Games</span>
+        <span class="section-count">7 Games</span>
       </div>
       <div class="games-grid-modern">
         <div class="game-card-modern casino">
@@ -318,6 +345,44 @@
             <span class="btn-arrow">→</span>
           </a>
         </div>
+
+        <div class="game-card-modern casino">
+          <div class="card-banner">
+            <span class="game-icon">🎰</span>
+            <span class="difficulty easy">Easy</span>
+          </div>
+          <div class="card-content">
+            <h3>Slots</h3>
+            <p class="game-desc">Spin the reels! Match symbols for huge wins!</p>
+            <div class="game-tags">
+              <span class="tag">Casino</span>
+              <span class="tag">Luck</span>
+            </div>
+          </div>
+          <a href="/games/slots.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
+        </div>
+
+        <div class="game-card-modern casino">
+          <div class="card-banner">
+            <span class="game-icon">🚀</span>
+            <span class="difficulty medium">Medium</span>
+          </div>
+          <div class="card-content">
+            <h3>Rocket</h3>
+            <p class="game-desc">Ride the rocket! Cash out before it crashes!</p>
+            <div class="game-tags">
+              <span class="tag">Casino</span>
+              <span class="tag">Crash</span>
+            </div>
+          </div>
+          <a href="/games/rocket.html" class="play-btn">
+            <span>Play Now</span>
+            <span class="btn-arrow">→</span>
+          </a>
+        </div>
       </div>
     </section>
   </main>
@@ -334,10 +399,217 @@
   <div id="notificationContainer" class="notification-container"></div>
 
   <footer class="footer-dark">
-    <p>🎮 GameHub © 2025 | Play Responsibly | 14 Premium Games</p>
+    <p>🎮 GameHub © 2025 | Play Responsibly | 16 Premium Games</p>
   </footer>
 
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="js/main.js"></script>
+  <script>
+    // Multiplayer Server Management - Constants
+    const SOCKET_CONNECTION_DELAY = 1000; // ms to wait for socket connection
+    const SERVER_REFRESH_INTERVAL = 10000; // ms between server list refreshes
+    
+    const MULTIPLAYER_GAMES = [
+      { id: 'tic-tac-toe', name: 'Tic Tac Toe', emoji: '❌⭕' },
+      { id: 'poker', name: 'Poker', emoji: '🃏' },
+      { id: 'uno', name: 'UNO', emoji: '🎴' },
+      { id: 'go-fish', name: 'Go Fish', emoji: '🎣' }
+    ];
+    
+    const GAME_EMOJIS = Object.fromEntries(
+      MULTIPLAYER_GAMES.map(game => [game.id, game.emoji])
+    );
+    
+    // State
+    let activeServers = [];
+    
+    // Initialize socket connection for multiplayer
+    let socket;
+    if (typeof io !== 'undefined') {
+      socket = io();
+      
+      socket.on('rooms-list', (data) => {
+        activeServers = data.rooms || [];
+        updateServersList();
+      });
+      
+      socket.on('room-created', (data) => {
+        if (data.success) {
+          showNotification('Server created successfully! 🎮', 'success');
+          refreshServers();
+        }
+      });
+      
+      socket.on('room-joined', (data) => {
+        if (data.success) {
+          showNotification('Joined server successfully! 🎮', 'success');
+          // Redirect to the game
+          window.location.href = data.room.gameUrl;
+        }
+      });
+    }
+    
+    function showCreateServerModal() {
+      if (!currentUser) {
+        showNotification('Please login to create a server', 'error');
+        showLoginModal();
+        return;
+      }
+      
+      const modalContent = `
+        <div class="modal-header">
+          <h2>🎮 Create Multiplayer Server</h2>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Select Game:</label>
+            <select id="serverGameType" class="form-input">
+              ${MULTIPLAYER_GAMES.map(game => 
+                `<option value="${game.id}">${game.emoji} ${game.name}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Server Name:</label>
+            <input type="text" id="serverName" class="form-input" placeholder="My Awesome Server" maxlength="30">
+          </div>
+          <div class="form-group">
+            <label>Max Players:</label>
+            <select id="maxPlayers" class="form-input">
+              <option value="2">2 Players</option>
+              <option value="3">3 Players</option>
+              <option value="4" selected>4 Players</option>
+              <option value="6">6 Players</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="isPrivate"> Private Server (Invite only)
+            </label>
+          </div>
+          <button onclick="createServer()" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create Server</button>
+        </div>
+      `;
+      
+      document.getElementById('modalContent').innerHTML = modalContent;
+      document.getElementById('authModal').style.display = 'block';
+    }
+    
+    function createServer() {
+      const gameType = document.getElementById('serverGameType').value;
+      const serverName = document.getElementById('serverName').value || currentUser.username + "'s Server";
+      const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+      const isPrivate = document.getElementById('isPrivate').checked;
+      
+      if (socket) {
+        socket.emit('create-room', {
+          gameType,
+          playerData: {
+            userId: currentUser.id,
+            username: currentUser.username,
+            coins: userCoins
+          },
+          settings: {
+            name: serverName,
+            maxPlayers,
+            isPrivate
+          }
+        });
+        
+        closeModal();
+      } else {
+        showNotification('Connection error. Please refresh the page.', 'error');
+      }
+    }
+    
+    function refreshServers() {
+      if (socket) {
+        // Request servers for all multiplayer games
+        MULTIPLAYER_GAMES.forEach(game => {
+          socket.emit('get-rooms', { gameType: game.id });
+        });
+      }
+    }
+    
+    function joinServer(roomId) {
+      if (!currentUser) {
+        showNotification('Please login to join a server', 'error');
+        showLoginModal();
+        return;
+      }
+      
+      if (socket) {
+        socket.emit('join-room', {
+          roomId,
+          playerData: {
+            userId: currentUser.id,
+            username: currentUser.username,
+            coins: userCoins
+          }
+        });
+      }
+    }
+    
+    function updateServersList() {
+      const container = document.getElementById('serversContainer');
+      const countEl = document.getElementById('serverCount');
+      
+      if (!activeServers || activeServers.length === 0) {
+        container.innerHTML = `
+          <div class="no-servers-message">
+            <div class="no-servers-icon">🎯</div>
+            <h3>No Active Servers</h3>
+            <p>Be the first to create a multiplayer game server!</p>
+          </div>
+        `;
+        countEl.textContent = '0 Active';
+        return;
+      }
+      
+      countEl.textContent = activeServers.length + ' Active';
+      
+      container.innerHTML = activeServers.map(server => {
+        const statusClass = server.status === 'playing' ? 'playing' : 'waiting';
+        const statusText = server.status === 'playing' ? 'In Progress' : 'Waiting';
+        
+        return `
+          <div class="server-card ${statusClass}">
+            <div class="server-header">
+              <div class="server-game">${GAME_EMOJIS[server.gameType] || '🎮'} ${server.settings?.name || 'Unnamed Server'}</div>
+              <div class="server-status ${statusClass}">${statusText}</div>
+            </div>
+            <div class="server-info">
+              <div class="server-players">
+                <span class="info-icon">👥</span>
+                <span>${server.players.length}/${server.maxPlayers}</span>
+              </div>
+              <div class="server-host">
+                <span class="info-icon">👑</span>
+                <span>${server.hostName || 'Host'}</span>
+              </div>
+            </div>
+            <button 
+              class="join-server-btn" 
+              onclick="joinServer('${server.id}')"
+              ${server.status === 'playing' || server.players.length >= server.maxPlayers ? 'disabled' : ''}
+            >
+              ${server.status === 'playing' ? '⏸️ In Progress' : server.players.length >= server.maxPlayers ? '🔒 Full' : '▶️ Join Server'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    // Load servers on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      // Small delay to ensure socket is connected
+      setTimeout(() => {
+        refreshServers();
+      }, SOCKET_CONNECTION_DELAY);
+      
+      // Refresh servers every 10 seconds
+      setInterval(refreshServers, SERVER_REFRESH_INTERVAL);
+    });
+  </script>
 </body>
 </html>
