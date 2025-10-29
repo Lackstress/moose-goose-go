@@ -835,9 +835,17 @@ io.on('connection', (socket) => {
   socket.on('create-room', (data) => {
     try {
       const { gameType, playerData, settings } = data;
-      const room = multiplayerManager.createRoom(gameType, socket.id, { settings });
+      const room = multiplayerManager.createRoom(gameType, socket.id, { settings, maxPlayers: settings?.maxPlayers || 4 });
       const result = multiplayerManager.addPlayerToRoom(room.id, socket.id, playerData);
+      
+      // Send success to the creator
       socket.emit('room-created', result);
+      
+      // Broadcast room list update to all clients
+      const rooms = multiplayerManager.getRoomsList(gameType);
+      io.emit('rooms-list-update', { gameType, rooms });
+      
+      console.log('Room created:', room.id, 'by', playerData.username);
     } catch (error) {
       console.error('Error in create-room:', error);
       socket.emit('error', { message: 'Failed to create room' });
@@ -849,7 +857,17 @@ io.on('connection', (socket) => {
     try {
       const { roomId, playerData } = data;
       const result = multiplayerManager.addPlayerToRoom(roomId, socket.id, playerData);
+      
+      // Send result to the joiner
       socket.emit('room-joined', result);
+      
+      if (result.success && result.room) {
+        // Broadcast update to all clients
+        const gameType = result.room.gameType;
+        const rooms = multiplayerManager.getRoomsList(gameType);
+        io.emit('rooms-list-update', { gameType, rooms });
+        console.log('Player joined room:', roomId);
+      }
     } catch (error) {
       console.error('Error in join-room:', error);
       socket.emit('error', { message: 'Failed to join room' });

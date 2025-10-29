@@ -421,9 +421,15 @@ class MultiplayerManager {
     const room = this.rooms.get(roomId);
     if (!room) return null;
 
+    // Get host information
+    const hostPlayer = room.players.find(p => p.socketId === room.host);
+    const hostName = hostPlayer?.username || 'Unknown Host';
+
     return {
       id: room.id,
       gameType: room.gameType,
+      hostName,
+      maxPlayers: room.maxPlayers,
       players: room.players.map(p => ({
         username: p.username,
         avatar: p.avatar,
@@ -432,7 +438,8 @@ class MultiplayerManager {
       })),
       status: room.status,
       spectatorCount: room.spectators.size,
-      settings: room.settings
+      settings: room.settings,
+      gameUrl: `/games/${room.gameType}.html`
     };
   }
 
