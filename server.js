@@ -665,6 +665,30 @@ app.get('/radon-g3mes/cdn/*', async (req, res) => {
   }
 });
 
+// Radon Games search route - handle search functionality
+app.get('/radon-g3mes/search', (req, res) => {
+  const fs = require('fs');
+  const distPath = path.join(__dirname, '..', 'radon-games', 'dist', 'index.html');
+  
+  if (!fs.existsSync(distPath)) {
+    return res.status(404).send('Radon Games not available');
+  }
+  
+  let html = fs.readFileSync(distPath, 'utf8');
+  
+  // Rewrite asset paths
+  html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
+  html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
+  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/)/g, 'href="/radon-g3mes/');
+  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/)/g, 'src="/radon-g3mes/');
+  
+  // Inject interceptor script
+  html = injectRadonInterceptor(html);
+  
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
+
 // Radon Games catch-all for client-side routing (must be after static files)
 app.get('/radon-g3mes/*', (req, res) => {
   const fs = require('fs');
