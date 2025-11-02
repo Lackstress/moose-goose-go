@@ -195,6 +195,64 @@
       50% { transform: scale(1.02); }
     }
 
+    .hub-controls {
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      transition: 0.3s;
+      margin-right: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 2px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    input:checked + .slider {
+      background-color: #10b981;
+      border-color: #10b981;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    .toggle-label {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
     .platform-btn {
       display: inline-block;
       padding: 1.2rem 2.8rem;
@@ -361,7 +419,14 @@
           <li>User Accounts & Leaderboards</li>
           <li>Real-time Multiplayer Lobbies</li>
         </ul>
-        <a href="/ghub" class="platform-btn">Play GameHub →</a>
+        <div class="hub-controls">
+          <label class="toggle-switch">
+            <input type="checkbox" id="cloak-ghub" onchange="toggleCloak('ghub', this.checked)">
+            <span class="slider"></span>
+            <span class="toggle-label">Hide URL</span>
+          </label>
+        </div>
+        <a href="/ghub" class="platform-btn" id="btn-ghub">Play GameHub →</a>
       </div>
 
       <!-- DuckMath Card -->
@@ -379,7 +444,14 @@
           <li>No Login Required</li>
           <li>Always Updated</li>
         </ul>
-        <a href="/duckmath" class="platform-btn">Play DuckMath →</a>
+        <div class="hub-controls">
+          <label class="toggle-switch">
+            <input type="checkbox" id="cloak-duckmath" onchange="toggleCloak('duckmath', this.checked)">
+            <span class="slider"></span>
+            <span class="toggle-label">Hide URL</span>
+          </label>
+        </div>
+        <a href="/duckmath" class="platform-btn" id="btn-duckmath">Play DuckMath →</a>
       </div>
 
       <!-- Radon Games Card -->
@@ -397,7 +469,14 @@
           <li>Modern Dark UI</li>
           <li>No Ads or Tracking</li>
         </ul>
-        <a href="/radon-g3mes" class="platform-btn">Access Radon →</a>
+        <div class="hub-controls">
+          <label class="toggle-switch">
+            <input type="checkbox" id="cloak-radon" onchange="toggleCloak('radon', this.checked)">
+            <span class="slider"></span>
+            <span class="toggle-label">Hide URL</span>
+          </label>
+        </div>
+        <a href="/radon-g3mes" class="platform-btn" id="btn-radon">Access Radon →</a>
       </div>
     </div>
 
@@ -405,5 +484,138 @@
       <p>🌟 Enjoy unlimited gaming with GameHub, DuckMath & Radon Portal 🌟</p>
     </div>
   </div>
+
+  <script>
+    // Tab cloaking functionality
+    let cloakedTabs = {};
+    let originalTitles = {};
+
+    function toggleCloak(hub, enabled) {
+      if (enabled) {
+        // Store current state
+        cloakedTabs[hub] = true;
+        
+        // Update button to open in new window with cloaking
+        const btn = document.getElementById(`btn-${hub}`);
+        const href = btn.getAttribute('href');
+        btn.setAttribute('href', '#');
+        btn.setAttribute('onclick', `openCloakedTab('${hub}', '${href}')`);
+        
+        // Show notification
+        showNotification(`🔒 URL hiding enabled for ${hub.toUpperCase()}`);
+      } else {
+        // Disable cloaking
+        delete cloakedTabs[hub];
+        
+        // Restore normal link
+        const btn = document.getElementById(`btn-${hub}`);
+        const href = btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || `/${hub === 'radon' ? 'radon-g3mes' : hub}`;
+        btn.setAttribute('href', href);
+        btn.removeAttribute('onclick');
+        
+        showNotification(`🔓 URL hiding disabled for ${hub.toUpperCase()}`);
+      }
+    }
+
+    function openCloakedTab(hub, url) {
+      // Create a new blank window
+      const newWindow = window.open('about:blank', '_blank');
+      
+      if (newWindow) {
+        // Set up the cloaked page
+        newWindow.document.open();
+        newWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Google Classroom</title>
+            <link rel="icon" href="https://ssl.gstatic.com/classroom/favicon.png">
+            <style>
+              * { margin: 0; padding: 0; }
+              body, html { width: 100%; height: 100%; overflow: hidden; }
+              iframe { width: 100%; height: 100%; border: none; }
+            </style>
+          </head>
+          <body>
+            <iframe src="${url}" frameborder="0" allowfullscreen></iframe>
+          </body>
+          </html>
+        `);
+        newWindow.document.close();
+        
+        showNotification(`🔒 ${hub.toUpperCase()} tab cloaked as Google Classroom`);
+      } else {
+        showNotification(`⚠️ Please allow pop-ups to use URL hiding`);
+      }
+    }
+
+    function showNotification(message) {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+        font-weight: 500;
+      `;
+      notification.textContent = message;
+      
+      // Add animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      document.body.appendChild(notification);
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+    }
+
+    // Load saved preferences
+    document.addEventListener('DOMContentLoaded', function() {
+      const savedCloaks = localStorage.getItem('hubCloaks');
+      if (savedCloaks) {
+        const cloaks = JSON.parse(savedCloaks);
+        Object.keys(cloaks).forEach(hub => {
+          const toggle = document.getElementById(`cloak-${hub}`);
+          if (toggle && cloaks[hub]) {
+            toggle.checked = true;
+            toggleCloak(hub, true);
+          }
+        });
+      }
+    });
+
+    // Save preferences when toggles change
+    document.addEventListener('change', function(e) {
+      if (e.target.id && e.target.id.startsWith('cloak-')) {
+        const hub = e.target.id.replace('cloak-', '');
+        const cloaks = JSON.parse(localStorage.getItem('hubCloaks') || '{}');
+        cloaks[hub] = e.target.checked;
+        localStorage.setItem('hubCloaks', JSON.stringify(cloaks));
+      }
+    });
+  </script>
 </body>
 </html>
