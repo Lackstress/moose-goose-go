@@ -490,6 +490,13 @@
     let cloakedTabs = {};
     let originalTitles = {};
 
+    // Store original URLs for each hub
+    const hubUrls = {
+      'ghub': '/ghub',
+      'duckmath': '/duckmath',
+      'radon': '/radon-g3mes'
+    };
+
     function toggleCloak(hub, enabled) {
       if (enabled) {
         // Store current state
@@ -498,8 +505,9 @@
         // Update button to open in new window with cloaking
         const btn = document.getElementById(`btn-${hub}`);
         const href = btn.getAttribute('href');
-        btn.setAttribute('href', '#');
-        btn.setAttribute('onclick', `openCloakedTab('${hub}', '${href}')`);
+        btn.setAttribute('data-original-href', href); // Store original
+        btn.setAttribute('href', 'javascript:void(0)');
+        btn.setAttribute('onclick', `openCloakedTab('${hub}', '${href}'); return false;`);
         
         // Show notification
         showNotification(`🔒 URL hiding enabled for ${hub.toUpperCase()}`);
@@ -509,9 +517,10 @@
         
         // Restore normal link
         const btn = document.getElementById(`btn-${hub}`);
-        const href = btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || `/${hub === 'radon' ? 'radon-g3mes' : hub}`;
-        btn.setAttribute('href', href);
+        const originalHref = btn.getAttribute('data-original-href') || hubUrls[hub];
+        btn.setAttribute('href', originalHref);
         btn.removeAttribute('onclick');
+        btn.removeAttribute('data-original-href');
         
         showNotification(`🔓 URL hiding disabled for ${hub.toUpperCase()}`);
       }
@@ -522,30 +531,17 @@
       const newWindow = window.open('about:blank', '_blank');
       
       if (newWindow) {
+        // Convert relative URL to absolute
+        const absoluteUrl = url.startsWith('http') ? url : window.location.origin + url;
+        
         // Set up the cloaked page
         newWindow.document.open();
-        newWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Google Classroom</title>
-            <link rel="icon" href="https://ssl.gstatic.com/classroom/favicon.png">
-            <style>
-              * { margin: 0; padding: 0; }
-              body, html { width: 100%; height: 100%; overflow: hidden; }
-              iframe { width: 100%; height: 100%; border: none; }
-            </style>
-          </head>
-          <body>
-            <iframe src="${url}" frameborder="0" allowfullscreen></iframe>
-          </body>
-          </html>
-        `);
+        newWindow.document.write('<!DOCTYPE html><html><head><title>Google Classroom</title><link rel="icon" href="https://ssl.gstatic.com/classroom/favicon.png"><style>* { margin: 0; padding: 0; } body, html { width: 100%; height: 100%; overflow: hidden; } iframe { width: 100%; height: 100%; border: none; }</style></head><body><iframe src="' + absoluteUrl + '" frameborder="0" allowfullscreen></iframe></body></html>');
         newWindow.document.close();
         
-        showNotification(`🔒 ${hub.toUpperCase()} tab cloaked as Google Classroom`);
+        showNotification('🔒 ' + hub.toUpperCase() + ' tab cloaked as Google Classroom');
       } else {
-        showNotification(`⚠️ Please allow pop-ups to use URL hiding`);
+        showNotification('⚠️ Please allow pop-ups to use URL hiding');
       }
     }
 

@@ -472,6 +472,14 @@ function injectRadonInterceptor(html) {
             }
           });
           
+          // Fix all iframe sources (CRITICAL FOR GAMES)
+          document.querySelectorAll('iframe[src]').forEach(iframe => {
+            const src = iframe.getAttribute('src');
+            if (src && src.startsWith('/') && !src.startsWith(basePath) && !src.startsWith('http') && !src.startsWith('//')) {
+              iframe.setAttribute('src', basePath + src);
+            }
+          });
+          
           // Fix form actions
           document.querySelectorAll('form[action]').forEach(form => {
             const action = form.getAttribute('action');
@@ -582,53 +590,7 @@ function injectRadonInterceptor(html) {
   return html.replace('</body>', interceptorScript + '</body>');
 }
 
-// Radon Games - serve from radon-games/dist folder
-app.get('/radon-g3mes', (req, res) => {
-  const fs = require('fs');
-  const distPath = path.join(__dirname, '..', 'radon-games', 'dist', 'index.html');
-  
-  // Check if radon-games is built
-  if (!fs.existsSync(distPath)) {
-    return res.status(404).send(`
-      <html>
-        <head><title>Radon Games Not Installed</title></head>
-        <body style="font-family: Arial; padding: 50px; text-align: center;">
-          <h1>🎮 Radon Games Not Available</h1>
-          <p>Radon Games are not installed on this server.</p>
-          <p><a href="/ghub">← Back to Game Hub</a></p>
-        </body>
-      </html>
-    `);
-  }
-  
-  let html = fs.readFileSync(distPath, 'utf8');
-  
-  // Rewrite asset paths to include /radon-g3mes prefix
-  // First handle /assets/ paths
-  html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
-  html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
-  
-  // Then handle other root paths, but exclude already-prefixed paths and external URLs
-  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/)/g, 'href="/radon-g3mes/');
-  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/)/g, 'src="/radon-g3mes/');
-  
-  // Inject interceptor script
-  html = injectRadonInterceptor(html);
-  
-  res.setHeader('Content-Type', 'text/html');
-  res.send(html);
-});
-
-// Radon Games assets - serve from dist folder
-app.use('/radon-g3mes', express.static(path.join(__dirname, '..', 'radon-games', 'dist')));
-
-// Radon Games proxy dependencies - serve BEFORE catch-all route
-app.use('/radon-g3mes/baremux', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'baremux')));
-app.use('/radon-g3mes/libcurl', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'libcurl')));
-app.use('/radon-g3mes/epoxy', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'epoxy')));
-app.use('/radon-g3mes/scram', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'scram')));
-
-// Radon Games CDN proxy - proxy game files from radon.games
+// Radon Games CDN proxy - MUST BE FIRST to intercept CDN requests
 app.get('/radon-g3mes/cdn/*', async (req, res) => {
   const cdnPath = req.path.replace('/radon-g3mes/cdn/', '');
   const cdnUrl = `https://radon.games/cdn/${cdnPath}`;
@@ -663,6 +625,48 @@ app.get('/radon-g3mes/cdn/*', async (req, res) => {
     console.error(`CDN proxy error: ${err.message}`);
     res.status(500).send('Server error');
   }
+});
+
+// Radon Games proxy dependencies - serve BEFORE catch-all route
+app.use('/radon-g3mes/baremux', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'baremux')));
+app.use('/radon-g3mes/libcurl', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'libcurl')));
+app.use('/radon-g3mes/epoxy', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'epoxy')));
+app.use('/radon-g3mes/scram', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'scram')));
+
+// Radon Games assets - serve ONLY /assets/ folder, not everything
+app.use('/radon-g3mes/assets', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'assets')));
+
+// Radon Games main route - serve index.html
+app.get('/radon-g3mes', (req, res) => {
+  const fs = require('fs');
+  const distPath = path.join(__dirname, '..', 'radon-games', 'dist', 'index.html');
+  
+  if (!fs.existsSync(distPath)) {
+    return res.status(404).send(`
+      <html>
+        <head><title>Radon Games Not Installed</title></head>
+        <body style="font-family: Arial; padding: 50px; text-align: center;">
+          <h1>🎮 Radon Games Not Available</h1>
+          <p>Radon Games are not installed on this server.</p>
+          <p><a href="/ghub">← Back to Game Hub</a></p>
+        </body>
+      </html>
+    `);
+  }
+  
+  let html = fs.readFileSync(distPath, 'utf8');
+  
+  // Rewrite asset paths
+  html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
+  html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
+  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/)/g, 'href="/radon-g3mes/');
+  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/)/g, 'src="/radon-g3mes/');
+  
+  // Inject interceptor script
+  html = injectRadonInterceptor(html);
+  
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
 });
 
 // Radon Games search route - handle search functionality
