@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNO - Debug Mode</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    body {
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .game-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .game-modes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .mode-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .mode-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    .mode-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    .mode-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .mode-description {
+      color: var(--text-secondary);
+      margin-bottom: 15px;
+    }
+    .mode-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s ease;
+    }
+    .mode-btn:hover {
+      background: var(--accent-purple);
+    }
+    .game-area {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 20px;
+      display: none;
+    }
+    .debug-panel {
+      background: var(--bg-dark-secondary);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      font-family: monospace;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h1>🎴 UNO - Debug Mode</h1>
+    <p>Testing game mode functionality with debug output...</p>
+    
+    <div id="modeSelection" class="game-modes">
+      <div class="mode-card">
+        <span class="mode-icon">🤖</span>
+        <div class="mode-title">vs Computer</div>
+        <div class="mode-description">Play against AI opponents</div>
+        <button class="mode-btn" onclick="startComputerGame()">Play Now</button>
+      </div>
+
+      <div class="mode-card">
+        <span class="mode-icon">👥</span>
+        <div class="mode-title">Local Multiplayer</div>
+        <div class="mode-description">Play with friends on same device</div>
+        <button class="mode-btn" onclick="startLocalGame()">Play Now</button>
+      </div>
+
+      <div class="mode-card">
+        <span class="mode-icon">🌐</span>
+        <div class="mode-title">Online Multiplayer</div>
+        <div class="mode-description">Compete with players worldwide</div>
+        <button class="mode-btn" onclick="startOnlineGame()">Find Match</button>
+      </div>
+
+      <div class="mode-card">
+        <span class="mode-icon">⚡</span>
+        <div class="mode-title">Turbo Mode</div>
+        <div class="mode-description">Fast-paced games with timers</div>
+        <button class="mode-btn" onclick="startTurboGame()">Turbo Mode</button>
+      </div>
+    </div>
+
+    <div id="gameArea" class="game-area">
+      <h2>🎮 Game Started!</h2>
+      <p><strong>Mode:</strong> <span id="currentMode"></span></p>
+      <p><strong>Status:</strong> <span id="gameStatus"></span></p>
+      <p><strong>Game State:</strong> <span id="gameState"></span></p>
+      <button onclick="resetGame()">Reset Game</button>
+    </div>
+
+    <div id="debugPanel" class="debug-panel">
+      <strong>Debug Output:</strong><br>
+      <div id="debugOutput">Waiting for actions...</div>
+    </div>
+  </div>
+
+  <script>
+    // Debug logging
+    function debug(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      const debugOutput = document.getElementById('debugOutput');
+      debugOutput.innerHTML += `<br>[${timestamp}] ${message}`;
+      debugOutput.scrollTop = debugOutput.scrollHeight;
+      console.log(message);
+    }
+
+    // Game state
+    let gameState = {
+      mode: null,
+      active: false,
+      cards: []
+    };
+
+    // Game mode functions
+    function startComputerGame() {
+      debug('🎯 startComputerGame() called');
+      try {
+        gameState.mode = 'computer';
+        gameState.active = true;
+        
+        document.getElementById('modeSelection').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'block';
+        document.getElementById('currentMode').textContent = 'vs Computer';
+        document.getElementById('gameStatus').textContent = 'Initializing AI opponent...';
+        document.getElementById('gameState').textContent = 'Active: ' + gameState.active;
+        
+        debug('✅ Computer mode started successfully');
+        debug('🎮 Game area displayed');
+        
+        // Simulate game initialization
+        setTimeout(() => {
+          document.getElementById('gameStatus').textContent = 'AI opponent ready!';
+          debug('🤖 AI opponent initialized');
+        }, 1000);
+        
+      } catch (error) {
+        debug(`❌ ERROR in startComputerGame: ${error.message}`);
+      }
+    }
+
+    function startLocalGame() {
+      debug('🎯 startLocalGame() called');
+      try {
+        gameState.mode = 'local';
+        gameState.active = true;
+        
+        document.getElementById('modeSelection').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'block';
+        document.getElementById('currentMode').textContent = 'Local Multiplayer';
+        document.getElementById('gameStatus').textContent = 'Waiting for players...';
+        document.getElementById('gameState').textContent = 'Active: ' + gameState.active;
+        
+        debug('✅ Local multiplayer mode started successfully');
+        
+      } catch (error) {
+        debug(`❌ ERROR in startLocalGame: ${error.message}`);
+      }
+    }
+
+    function startOnlineGame() {
+      debug('🎯 startOnlineGame() called');
+      try {
+        gameState.mode = 'online';
+        gameState.active = true;
+        
+        document.getElementById('modeSelection').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'block';
+        document.getElementById('currentMode').textContent = 'Online Multiplayer';
+        document.getElementById('gameStatus').textContent = 'Finding match...';
+        document.getElementById('gameState').textContent = 'Active: ' + gameState.active;
+        
+        debug('✅ Online multiplayer mode started successfully');
+        
+      } catch (error) {
+        debug(`❌ ERROR in startOnlineGame: ${error.message}`);
+      }
+    }
+
+    function startTurboMode() {
+      debug('🎯 startTurboMode() called');
+      try {
+        gameState.mode = 'turbo';
+        gameState.active = true;
+        
+        document.getElementById('modeSelection').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'block';
+        document.getElementById('currentMode').textContent = 'Turbo Mode';
+        document.getElementById('gameStatus').textContent = 'Fast game starting...';
+        document.getElementById('gameState').textContent = 'Active: ' + gameState.active;
+        
+        debug('✅ Turbo mode started successfully');
+        
+      } catch (error) {
+        debug(`❌ ERROR in startTurboMode: ${error.message}`);
+      }
+    }
+
+    function resetGame() {
+      debug('🔄 Resetting game...');
+      gameState.mode = null;
+      gameState.active = false;
+      
+      document.getElementById('modeSelection').style.display = 'grid';
+      document.getElementById('gameArea').style.display = 'none';
+      
+      debug('✅ Game reset complete');
+    }
+
+    // Initialize
+    window.addEventListener('load', () => {
+      debug('🚀 Page loaded successfully');
+      debug('📝 Game mode functions ready');
+      debug('🎯 Click any game mode button to test');
+    });
+
+    // Test if functions exist
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (typeof startComputerGame === 'function') {
+          debug('✅ startComputerGame function exists');
+        } else {
+          debug('❌ startComputerGame function NOT found');
+        }
+        
+        if (typeof startLocalGame === 'function') {
+          debug('✅ startLocalGame function exists');
+        } else {
+          debug('❌ startLocalGame function NOT found');
+        }
+        
+        if (typeof startOnlineGame === 'function') {
+          debug('✅ startOnlineGame function exists');
+        } else {
+          debug('❌ startOnlineGame function NOT found');
+        }
+        
+        if (typeof startTurboMode === 'function') {
+          debug('✅ startTurboMode function exists');
+        } else {
+          debug('❌ startTurboMode function NOT found');
+        }
+      }, 100);
+    });
+  </script>
+</body>
+</html>

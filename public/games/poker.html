@@ -3,50 +3,283 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Poker</title>
+  <title>Enhanced Poker Multiplayer</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    .game-info {
-      display: flex;
-      justify-content: space-around;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 1rem;
-      border-radius: 8px;
-      margin: 1rem 0;
-      flex-wrap: wrap;
-      gap: 1rem;
+    .game-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: var(--bg-card);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
 
-    .info-item {
+    .game-header {
       text-align: center;
+      margin-bottom: 2rem;
     }
 
-    .info-label {
-      font-size: 0.9rem;
-      color: #666;
-      font-weight: 600;
+    .game-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ef4444, #dc2626, #b91c1c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
     }
 
-    .info-value {
+    .game-modes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .mode-card {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mode-card:hover {
+      transform: translateY(-5px);
+      border-color: #ef4444;
+      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+    }
+
+    .mode-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .mode-title {
       font-size: 1.5rem;
       font-weight: bold;
-      color: #667eea;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .mode-description {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .mode-btn {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+
+    .mode-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
     }
 
     .game-area {
-      background: linear-gradient(135deg, #2d5016 0%, #1a3d0a 100%);
-      padding: 2rem;
+      display: none;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr 300px;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Left Panel */
+    .left-panel {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .panel-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .balance-card {
+      background: linear-gradient(135deg, #10b981, #059669);
       border-radius: 12px;
-      margin: 2rem 0;
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .balance-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 0.5rem;
+    }
+
+    .balance-amount {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .bet-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .section-label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .bet-input {
+      width: 100%;
+      padding: 0.8rem;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .bet-chips {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .bet-chip {
+      padding: 0.6rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: 2px solid white;
+      border-radius: 20px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .bet-chip:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .game-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .control-btn {
+      padding: 1rem;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #10b981, #059669);
       color: white;
     }
 
-    .table-area {
-      text-align: center;
-      margin: 2rem 0;
+    .btn-fold {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+    }
+
+    .control-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .control-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Center Panel */
+    .center-panel {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
       padding: 2rem;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .game-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--text-primary);
+    }
+
+    .poker-table {
+      background: linear-gradient(135deg, #2d5016, #1a3d0a);
+      border-radius: 20px;
+      padding: 2rem;
+      margin: 2rem 0;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 3px solid #8b4513;
+    }
+
+    .table-info {
+      text-align: center;
+      color: white;
+      margin-bottom: 1.5rem;
+    }
+
+    .pot-display {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #fbbf24;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
     .poker-hand {
@@ -60,7 +293,7 @@
     .card {
       width: 110px;
       height: 160px;
-      border-radius: 8px;
+      border-radius: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -93,11 +326,11 @@
     }
 
     .card-red {
-      background: linear-gradient(135deg, #f87171 0%, #dc2626 50%, #991b1b 100%);
+      background: linear-gradient(135deg, #f87171, #dc2626, #991b1b);
     }
 
     .card-black {
-      background: linear-gradient(135deg, #4b5563 0%, #1f2937 50%, #111827 100%);
+      background: linear-gradient(135deg, #4b5563, #1f2937, #111827);
     }
 
     .card.hold {
@@ -106,20 +339,16 @@
       transform: translateY(-12px) scale(1.08);
     }
 
-    .held-cards {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-    }
-
-    .held-card {
-      padding: 0.5rem 1rem;
-      background: #fbbf24;
-      color: #333;
-      border-radius: 6px;
+    .hand-rank {
+      text-align: center;
+      font-size: 1.5rem;
       font-weight: bold;
+      color: #fbbf24;
+      margin: 1rem 0;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
     .game-status {
@@ -128,181 +357,309 @@
       font-weight: bold;
       margin-bottom: 2rem;
       padding: 1.5rem;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 8px;
-      min-height: 3rem;
-      color: #333;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--text-primary);
     }
 
-    .hand-rank {
-      text-align: center;
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: #fbbf24;
-      margin: 1rem 0;
-      padding: 1rem;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 8px;
-    }
-
-    .controls {
-      text-align: center;
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin: 2rem 0;
-    }
-
-    .bet-section {
-      background: #fef3c7;
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      border-left: 4px solid #fbbf24;
-      color: #333;
-    }
-
-    .bet-input {
+    .held-cards {
       display: flex;
       gap: 0.5rem;
       justify-content: center;
       flex-wrap: wrap;
-      align-items: center;
+      margin: 1rem 0;
     }
 
-    .vs-area {
-      text-align: center;
-      margin: 1rem 0;
-      padding: 1rem;
-      background: rgba(0, 0, 0, 0.3);
+    .held-card {
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #333;
       border-radius: 8px;
-      color: white;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    /* Right Panel */
+    .right-panel {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .multiplayer-section {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+
+    .opponent-info {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .opponent-name {
+      font-weight: bold;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .opponent-status {
+      font-size: 1.2rem;
+      color: #ef4444;
+    }
+
+    .history-section {
+      margin-top: 1.5rem;
+    }
+
+    .history-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .history-hand {
+      font-weight: bold;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .history-details {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .power-ups {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .power-up {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .power-up:hover {
+      transform: translateY(-2px);
+      border-color: #ef4444;
+    }
+
+    .power-up.active {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .power-up-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .power-up-name {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      font-weight: bold;
+    }
+
+    .power-up-cost {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
     }
 
     .instruction {
       text-align: center;
-      color: white;
+      color: var(--text-secondary);
       font-size: 0.95rem;
       margin: 1rem 0;
       line-height: 1.6;
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--bg-card);
       padding: 1rem;
-      border-radius: 8px;
+      border-radius: 12px;
+      border: 2px solid var(--border-color);
     }
 
-    .bet-chip {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: 2px solid white;
-      padding: 0.6rem 1.2rem;
-      margin: 0.3rem;
-      border-radius: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 0.95rem;
-    }
-
-    .bet-chip:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .quick-bet-section {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 1rem;
-      padding: 1rem;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px;
-    }
-
-    .quick-bet-label {
-      width: 100%;
-      text-align: center;
-      color: white;
-      font-weight: bold;
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
+    @media (max-width: 1200px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
-<body>
-  <header>
+<body class="dark-theme">
+  <header class="header-dark">
     <div class="header-container">
-      <div class="logo"><h1>♠️ POKER ♥️</h1></div>
+      <div class="logo"><h1>♠️ ENHANCED POKER ♥️</h1></div>
       <div id="authSection" class="auth-buttons"></div>
     </div>
   </header>
 
-  <main class="container">
-    <div class="game-container">
+  <main class="container-dark">
+    <div class="game-wrapper">
       <div class="game-header">
-        <h1>Poker - Texas Hold'em Style</h1>
-        <a href="/" class="btn">Back to Lobby</a>
+        <h1 class="game-title">Enhanced Poker Multiplayer</h1>
+        <p style="color: var(--text-secondary);">Texas Hold'em style poker with enhanced features!</p>
       </div>
 
-      <div class="game-info">
-        <div class="info-item">
-          <div class="info-label">💰 Coins</div>
-          <div class="info-value" id="coinDisplay">1000</div>
+      <!-- Game Mode Selection -->
+      <div id="modeSelection" class="game-modes">
+        <div class="mode-card">
+          <span class="mode-icon">🎮</span>
+          <div class="mode-title">Video Poker</div>
+          <div class="mode-description">Classic 5-card draw poker with enhanced graphics</div>
+          <button class="mode-btn" onclick="startVideoPoker()">Play Video Poker</button>
         </div>
-        <div class="info-item">
-          <div class="info-label">💵 Pot</div>
-          <div class="info-value" id="potDisplay">0</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">📊 Wins</div>
-          <div class="info-value" id="winsDisplay">0</div>
-        </div>
-      </div>
 
-      <div id="bettingPhase">
-        <h2>Place Your Bet</h2>
-        <div class="bet-section">
-          <div class="bet-input">
-            <input type="number" id="betAmount" min="25" max="1000" value="100" style="padding: 0.7rem; border-radius: 6px; border: 2px solid #667eea; width: 120px; font-weight: bold;" />
-            <button onclick="startGameWithBet()" class="btn">Start Hand</button>
-          </div>
-          <div class="quick-bet-section">
-            <div class="quick-bet-label">Quick Bet: (Tap chip to select)</div>
-            <button onclick="setBet(25)" class="bet-chip" style="background: linear-gradient(135deg, #e0f2fe 0%, #0284c7 100%); color: white;">25 💰</button>
-            <button onclick="setBet(50)" class="bet-chip" style="background: linear-gradient(135deg, #dcfce7 0%, #22c55e 100%); color: white;">50 💰</button>
-            <button onclick="setBet(100)" class="bet-chip" style="background: linear-gradient(135deg, #fef3c7 0%, #ca8a04 100%); color: white;">100 💰</button>
-            <button onclick="setBet(250)" class="bet-chip" style="background: linear-gradient(135deg, #fee2e2 0%, #ef4444 100%); color: white;">250 💰</button>
-            <button onclick="setBet(500)" class="bet-chip" style="background: linear-gradient(135deg, #f5d4fd 0%, #d946ef 100%); color: white;">500 💰</button>
-            <button onclick="setBet(1000)" class="bet-chip" style="background: linear-gradient(135deg, #fce7f3 0%, #ec4899 100%); color: white;">1000 💰</button>
-          </div>
+        <div class="mode-card">
+          <span class="mode-icon">⚡</span>
+          <div class="mode-title">Quick Draw</div>
+          <div class="mode-description">Fast-paced poker with instant results</div>
+          <button class="mode-btn" onclick="startQuickDraw()">Quick Draw</button>
+        </div>
+
+        <div class="mode-card">
+          <span class="mode-icon">👥</span>
+          <div class="mode-title">Multiplayer Battle</div>
+          <div class="mode-description">Compete against other players</div>
+          <button class="mode-btn" onclick="startMultiplayer()">Find Match</button>
+        </div>
+
+        <div class="mode-card">
+          <span class="mode-icon">🏆</span>
+          <div class="mode-title">Tournament Mode</div>
+          <div class="mode-description">High stakes tournament play</div>
+          <button class="mode-btn" onclick="startTournament()">Tournament</button>
         </div>
       </div>
 
-      <div id="gamePhase" style="display: none;">
-        <div class="game-area">
-          <div class="game-status" id="gameStatus">🎮 Your Hand</div>
+      <!-- Game Area -->
+      <div id="gameArea" class="game-area">
+        <div class="game-layout">
+          <!-- Left Panel -->
+          <div class="left-panel">
+            <div class="panel-title">💰 Game Settings</div>
+            
+            <div class="balance-card">
+              <div class="balance-label">BALANCE</div>
+              <div class="balance-amount">$<span id="balance">1000</span></div>
+            </div>
 
-          <div class="instruction">
-            Click cards to hold them. Final hand value determines winnings.<br>
-            <strong>Hands:</strong> Royal Flush > Straight Flush > Four of a Kind > Full House > Flush > Straight > Three of a Kind > Two Pair > Pair > High Card
+            <div class="bet-section">
+              <label class="section-label">BET AMOUNT</label>
+              <input type="number" id="betAmount" class="bet-input" value="25" min="25" max="1000" step="25">
+              <div class="bet-chips">
+                <button class="bet-chip" onclick="setBet(25)">$25</button>
+                <button class="bet-chip" onclick="setBet(50)">$50</button>
+                <button class="bet-chip" onclick="setBet(100)">$100</button>
+                <button class="bet-chip" onclick="setBet(250)">$250</button>
+                <button class="bet-chip" onclick="setBet(500)">$500</button>
+                <button class="bet-chip" onclick="setBet(1000)">$1000</button>
+              </div>
+            </div>
+
+            <div class="game-controls">
+              <button class="control-btn btn-start" id="startBtn" onclick="startGame()">
+                🎮 START HAND
+              </button>
+              <button class="control-btn btn-fold" id="foldBtn" onclick="foldHand()" style="display: none;">
+                🔄 FOLD
+              </button>
+              <button class="control-btn btn-secondary" onclick="backToMenu()">
+                🏠 MENU
+              </button>
+            </div>
           </div>
 
-          <div class="table-area">
-            <div class="hand-rank" id="handRank">Evaluating...</div>
-            <div class="held-cards" id="heldCards"></div>
-            <h3>Your Cards:</h3>
-            <div class="poker-hand" id="playerHand"></div>
+          <!-- Center Panel -->
+          <div class="center-panel">
+            <div class="game-stats">
+              <div class="stat-card">
+                <div class="stat-label">🏆 Wins</div>
+                <div class="stat-value" id="winsCount">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">💰 Pot</div>
+                <div class="stat-value" id="potAmount">$0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">📊 Win Rate</div>
+                <div class="stat-value" id="winRate">0%</div>
+              </div>
+            </div>
+
+            <div class="poker-table">
+              <div class="table-info">
+                <div class="pot-display">POT: $<span id="potDisplay">0</span></div>
+              </div>
+
+              <div class="game-status" id="gameStatus">Place your bet to start</div>
+
+              <div class="instruction">
+                Click cards to hold them. Final hand value determines winnings.<br>
+                <strong>Hands:</strong> Royal Flush > Straight Flush > Four of a Kind > Full House > Flush > Straight > Three of a Kind > Two Pair > Pair > High Card
+              </div>
+
+              <div class="hand-rank" id="handRank" style="display: none;">Evaluating...</div>
+              <div class="held-cards" id="heldCards"></div>
+              
+              <h3 style="color: white; text-align: center; margin-bottom: 1rem;">Your Cards:</h3>
+              <div class="poker-hand" id="playerHand"></div>
+            </div>
           </div>
 
-          <div class="vs-area">
-            🤖 Opponent is evaluating their hand...
-          </div>
+          <!-- Right Panel -->
+          <div class="right-panel">
+            <div class="panel-title">📊 Game Info</div>
+            
+            <div class="multiplayer-section" id="multiplayerSection">
+              <div class="opponent-info">
+                <div class="opponent-name" id="opponentName">Waiting...</div>
+                <div class="opponent-status" id="opponentStatus">Ready to play</div>
+              </div>
+            </div>
 
-          <div class="controls">
-            <button onclick="evaluateHand()" class="btn" id="evalBtn">EVALUATE HAND</button>
-            <button onclick="playAgain()" class="btn" id="playAgainBtn" style="display: none;">PLAY AGAIN</button>
-            <button onclick="quitGame()" class="btn" style="background: #ef4444;">QUIT</button>
+            <div class="history-section">
+              <div class="panel-title">📈 Hand History</div>
+              <div class="history-list" id="historyList">
+                <p style="text-align: center; color: var(--text-secondary); padding: 1rem;">No hands played yet</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Power-ups -->
+        <div class="power-ups">
+          <div class="power-up" onclick="activatePowerUp('redraw')">
+            <div class="power-up-icon">🔄</div>
+            <div class="power-up-name">Redraw</div>
+            <div class="power-up-cost">50 coins</div>
+          </div>
+          <div class="power-up" onclick="activatePowerUp('hint')">
+            <div class="power-up-icon">💡</div>
+            <div class="power-up-name">Hint</div>
+            <div class="power-up-cost">75 coins</div>
+          </div>
+          <div class="power-up" onclick="activatePowerUp('bonus')">
+            <div class="power-up-icon">⭐</div>
+            <div class="power-up-name">Bonus</div>
+            <div class="power-up-cost">100 coins</div>
           </div>
         </div>
       </div>
@@ -321,20 +678,158 @@
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="/js/main.js"></script>
   <script>
+    // Enhanced Game State
+    let gameState = {
+      mode: null,
+      balance: 1000,
+      currentBet: 25,
+      wins: 0,
+      totalHands: 0,
+      playerCards: [],
+      heldCardIndices: [],
+      gameActive: false,
+      powerUps: {
+        redraw: false,
+        hint: false,
+        bonus: false
+      },
+      multiplayer: {
+        roomId: null,
+        opponent: null,
+        opponentHand: null
+      }
+    };
+
+    // Socket is already declared in main.js, just make sure it's initialized
+    if (!socket) {
+      socket = io();
+    }
     const suits = ['♠', '♥', '♦', '♣'];
     const ranks = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
     const rankValues = { 'A': 14, 'K': 13, 'Q': 12, 'J': 11, '10': 10, '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2 };
 
-    let playerCards = [];
-    let heldCardIndices = [];
-    let currentBet = 0;
-    let gameRunning = false;
-    let wins = 0;
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      setupSocketListeners();
+      updateDisplay();
+    });
+
+    function setupSocketListeners() {
+      socket.on('match-found', (data) => {
+        console.log('Poker match found:', data);
+        gameState.mode = 'multiplayer';
+        gameState.multiplayer.roomId = data.roomId;
+        gameState.multiplayer.opponent = data.opponent;
+        
+        document.getElementById('modeSelection').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'block';
+        document.getElementById('multiplayerSection').style.display = 'block';
+        document.getElementById('opponentName').textContent = data.opponent.username;
+        
+        showNotification('🎮 Opponent found! Get ready to compete!', 'success');
+      });
+
+      socket.on('game-action', (data) => {
+        handleMultiplayerAction(data);
+      });
+
+      socket.on('error', (data) => {
+        showNotification(data.message || 'An error occurred', 'error');
+      });
+    }
 
     function updateAuthUI() {
       document.getElementById('authSection').innerHTML = currentUser
         ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
         : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+
+    function startVideoPoker() {
+      gameState.mode = 'video-poker';
+      document.getElementById('modeSelection').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      document.getElementById('multiplayerSection').style.display = 'none';
+    }
+
+    function startQuickDraw() {
+      gameState.mode = 'quick-draw';
+      document.getElementById('modeSelection').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      document.getElementById('multiplayerSection').style.display = 'none';
+      showNotification('⚡ Quick draw mode! Instant results!', 'info');
+    }
+
+    function startMultiplayer() {
+      if (!currentUser) {
+        showNotification('Please login to play multiplayer', 'error');
+        showLoginModal();
+        return;
+      }
+
+      socket.emit('find-match', {
+        gameType: 'poker',
+        playerData: {
+          userId: currentUser.id,
+          username: currentUser.username,
+          coins: userCoins
+        }
+      });
+    }
+
+    function startTournament() {
+      gameState.mode = 'tournament';
+      document.getElementById('modeSelection').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      document.getElementById('multiplayerSection').style.display = 'none';
+      document.getElementById('betAmount').value = 100;
+      showNotification('🏆 Tournament mode! High stakes competition!', 'warning');
+    }
+
+    function setBet(amount) {
+      document.getElementById('betAmount').value = amount;
+    }
+
+    function startGame() {
+      const betAmount = parseInt(document.getElementById('betAmount').value);
+      
+      if (betAmount < 25) {
+        showNotification('Minimum bet is $25', 'error');
+        return;
+      }
+      
+      if (betAmount > gameState.balance) {
+        showNotification('Not enough coins!', 'error');
+        return;
+      }
+
+      gameState.currentBet = betAmount;
+      gameState.balance -= betAmount;
+      gameState.totalHands++;
+      gameState.gameActive = true;
+      
+      updateCoins(-betAmount, 'poker', 'bet');
+
+      const deck = createDeck();
+      gameState.playerCards = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+      gameState.heldCardIndices = [];
+
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('foldBtn').style.display = 'block';
+      document.getElementById('gameStatus').textContent = 'Select cards to hold';
+      document.getElementById('potDisplay').textContent = betAmount;
+
+      renderHand();
+      updateDisplay();
+
+      // Send game start to server in multiplayer
+      if (gameState.mode === 'multiplayer' && gameState.multiplayer.roomId) {
+        socket.emit('game-action', {
+          action: 'game-start',
+          roomId: gameState.multiplayer.roomId,
+          betAmount: betAmount
+        });
+      }
     }
 
     function createDeck() {
@@ -354,67 +849,43 @@
       return deck;
     }
 
-    function setBet(amount) {
-      document.getElementById('betAmount').value = amount;
-    }
-
-    function startGameWithBet() {
-      const amount = parseInt(document.getElementById('betAmount').value) || 100;
-      if (amount < 25) {
-        showNotification('Minimum bet is 25 coins', 'error');
-        return;
-      }
-      if (amount > userCoins) {
-        showNotification('Not enough coins!', 'error');
-        return;
-      }
-
-      currentBet = amount;
-      updateCoins(-amount, 'poker', 'bet');
-      startGame();
-    }
-
-    function startGame() {
-      gameRunning = true;
-      const deck = createDeck();
-      playerCards = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
-      heldCardIndices = [];
-
-      document.getElementById('bettingPhase').style.display = 'none';
-      document.getElementById('gamePhase').style.display = 'block';
-      document.getElementById('potDisplay').textContent = currentBet;
-      renderHand();
-    }
-
     function renderHand() {
       const handDiv = document.getElementById('playerHand');
       handDiv.innerHTML = '';
 
-      playerCards.forEach((card, index) => {
+      gameState.playerCards.forEach((card, index) => {
         const cardEl = document.createElement('div');
         const suit = card[card.length - 1];
-        cardEl.className = `card ${(suit === '♥' || suit === '♦') ? 'card-red' : 'card-black'} ${heldCardIndices.includes(index) ? 'hold' : ''}`;
+        cardEl.className = `card ${(suit === '♥' || suit === '♦') ? 'card-red' : 'card-black'} ${gameState.heldCardIndices.includes(index) ? 'hold' : ''}`;
         cardEl.textContent = card;
         cardEl.onclick = () => toggleHold(index);
         handDiv.appendChild(cardEl);
       });
 
       const heldDiv = document.getElementById('heldCards');
-      heldDiv.innerHTML = heldCardIndices.map(i => `<div class="held-card">${playerCards[i]}</div>`).join('');
+      heldDiv.innerHTML = gameState.heldCardIndices.map(i => `<div class="held-card">${gameState.playerCards[i]}</div>`).join('');
     }
 
     function toggleHold(index) {
-      const idx = heldCardIndices.indexOf(index);
+      if (!gameState.gameActive) return;
+      
+      const idx = gameState.heldCardIndices.indexOf(index);
       if (idx === -1) {
-        heldCardIndices.push(index);
+        gameState.heldCardIndices.push(index);
       } else {
-        heldCardIndices.splice(idx, 1);
+        gameState.heldCardIndices.splice(idx, 1);
       }
       renderHand();
     }
 
+    function foldHand() {
+      if (!gameState.gameActive) return;
+      
+      evaluateHand();
+    }
+
     function evaluateHand() {
-      const rank = getHandRank(playerCards);
+      const rank = getHandRank(gameState.playerCards);
       const handNames = {
         'royal-flush': { name: 'Royal Flush!', mult: 250 },
         'straight-flush': { name: 'Straight Flush!', mult: 50 },
@@ -429,22 +900,46 @@
       };
 
       const handInfo = handNames[rank] || { name: 'High Card', mult: 0.5 };
-      const payout = Math.floor(currentBet * handInfo.mult);
+      let payout = Math.floor(gameState.currentBet * handInfo.mult);
+      
+      // Apply bonus power-up
+      if (gameState.powerUps.bonus) {
+        payout = Math.floor(payout * 1.5);
+        gameState.powerUps.bonus = false;
+        document.querySelectorAll('.power-up')[2].classList.remove('active');
+        showNotification('⭐ Bonus multiplier activated!', 'success');
+      }
 
       document.getElementById('handRank').textContent = handInfo.name;
-      document.getElementById('evalBtn').style.display = 'none';
-      document.getElementById('playAgainBtn').style.display = 'inline-block';
+      document.getElementById('handRank').style.display = 'block';
+      document.getElementById('gameStatus').textContent = handInfo.name;
 
       if (payout > 0) {
-        wins++;
+        gameState.wins++;
+        gameState.balance += payout;
         updateCoins(payout, 'poker', 'win');
-        showNotification(`${handInfo.name} - +${payout} coins! 🏆`, 'success');
+        showNotification(`${handInfo.name} - +$${payout}! 🏆`, 'success');
       } else {
         showNotification('High card. Try again!', 'info');
       }
 
-      document.getElementById('coinDisplay').textContent = userCoins;
-      document.getElementById('winsDisplay').textContent = wins;
+      addToHistory(gameState.currentBet, handInfo.name, payout);
+      
+      gameState.gameActive = false;
+      document.getElementById('foldBtn').style.display = 'none';
+      document.getElementById('startBtn').style.display = 'block';
+
+      updateDisplay();
+
+      // Send result to server in multiplayer
+      if (gameState.mode === 'multiplayer' && gameState.multiplayer.roomId) {
+        socket.emit('game-action', {
+          action: 'hand-result',
+          roomId: gameState.multiplayer.roomId,
+          handRank: rank,
+          payout: payout
+        });
+      }
     }
 
     function getHandRank(cards) {
@@ -472,32 +967,150 @@
 
     function checkStraight(values) {
       if (values[0] - values[4] === 4) return true;
-      if (values.join(',') === '14,5,4,3,2') return true; // Wheel
+      if (values.join(',') === '14,5,4,3,2') return true;
       return false;
     }
 
-    function playAgain() {
-      document.getElementById('gamePhase').style.display = 'none';
-      document.getElementById('bettingPhase').style.display = 'block';
-      document.getElementById('evalBtn').style.display = 'inline-block';
-      document.getElementById('playAgainBtn').style.display = 'none';
-      document.getElementById('potDisplay').textContent = 0;
+    function activatePowerUp(type) {
+      const costs = { redraw: 50, hint: 75, bonus: 100 };
+      
+      if (gameState.powerUps[type]) {
+        showNotification('Power-up already active!', 'error');
+        return;
+      }
+      
+      if (gameState.balance < costs[type]) {
+        showNotification('Not enough coins!', 'error');
+        return;
+      }
+      
+      if (!gameState.gameActive && type !== 'bonus') {
+        showNotification('Start the game first!', 'error');
+        return;
+      }
+      
+      updateCoins(-costs[type], 'poker', 'powerup');
+      gameState.powerUps[type] = true;
+      
+      // Visual feedback
+      event.target.closest('.power-up').classList.add('active');
+      
+      switch(type) {
+        case 'redraw':
+          // Redraw non-held cards
+          const deck = createDeck();
+          for (let i = 0; i < 5; i++) {
+            if (!gameState.heldCardIndices.includes(i)) {
+              gameState.playerCards[i] = deck.pop();
+            }
+          }
+          renderHand();
+          gameState.powerUps.redraw = false;
+          event.target.closest('.power-up').classList.remove('active');
+          break;
+          
+        case 'hint':
+          // Highlight best cards to hold
+          const bestHold = getBestHold(gameState.playerCards);
+          gameState.heldCardIndices = bestHold;
+          renderHand();
+          setTimeout(() => {
+            gameState.powerUps.hint = false;
+            event.target.closest('.power-up').classList.remove('active');
+          }, 3000);
+          break;
+          
+        case 'bonus':
+          // Bonus stays active until hand evaluation
+          break;
+      }
+      
+      showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} activated!`, 'success');
     }
 
-    function quitGame() {
-      gameRunning = false;
-      document.getElementById('gamePhase').style.display = 'none';
-      document.getElementById('bettingPhase').style.display = 'block';
-      document.getElementById('evalBtn').style.display = 'inline-block';
-      document.getElementById('playAgainBtn').style.display = 'none';
-      document.getElementById('potDisplay').textContent = 0;
-      showNotification(`Session ended! Total wins: ${wins} 🎰`, 'success');
+    function getBestHold(cards) {
+      // Simple hint logic - hold pairs, three of a kind, etc.
+      const ranks_arr = cards.map(c => c.slice(0, -1));
+      const counts = {};
+      ranks_arr.forEach(r => counts[r] = (counts[r] || 0) + 1);
+      
+      const holdIndices = [];
+      for (let i = 0; i < cards.length; i++) {
+        const rank = ranks_arr[i];
+        if (counts[rank] >= 2) {
+          holdIndices.push(i);
+        }
+      }
+      
+      return holdIndices;
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      updateAuthUI();
-      document.getElementById('coinDisplay').textContent = userCoins;
-    });
+    function backToMenu() {
+      gameState.gameActive = false;
+      gameState.playerCards = [];
+      gameState.heldCardIndices = [];
+      
+      document.getElementById('modeSelection').style.display = 'grid';
+      document.getElementById('gameArea').style.display = 'none';
+      document.getElementById('multiplayerSection').style.display = 'none';
+      document.getElementById('handRank').style.display = 'none';
+      document.getElementById('playerHand').innerHTML = '';
+      document.getElementById('heldCards').innerHTML = '';
+      document.getElementById('gameStatus').textContent = 'Place your bet to start';
+      
+      // Reset power-ups
+      Object.keys(gameState.powerUps).forEach(key => {
+        gameState.powerUps[key] = false;
+      });
+      document.querySelectorAll('.power-up').forEach(el => el.classList.remove('active'));
+      
+      // Leave multiplayer room if in one
+      if (gameState.mode === 'multiplayer' && gameState.multiplayer.roomId) {
+        socket.emit('leave-room', {
+          roomId: gameState.multiplayer.roomId
+        });
+      }
+    }
+
+    function updateDisplay() {
+      document.getElementById('balance').textContent = gameState.balance;
+      document.getElementById('winsCount').textContent = gameState.wins;
+      document.getElementById('potAmount').textContent = '$' + gameState.currentBet;
+      
+      const winRate = gameState.totalHands > 0 ? Math.round((gameState.wins / gameState.totalHands) * 100) : 0;
+      document.getElementById('winRate').textContent = winRate + '%';
+    }
+
+    function addToHistory(bet, hand, payout) {
+      const historyList = document.getElementById('historyList');
+      
+      if (historyList.querySelector('p')) {
+        historyList.innerHTML = '';
+      }
+
+      const profit = payout - bet;
+      const isWin = profit > 0;
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.innerHTML = `
+        <div class="history-hand">${hand}</div>
+        <div class="history-details">🕐 ${timeStr} | Bet: $${bet} | ${isWin ? 'Won: $' + payout : 'Lost'}</div>
+      `;
+      
+      historyList.insertBefore(item, historyList.firstChild);
+
+      while (historyList.children.length > 10) {
+        historyList.removeChild(historyList.lastChild);
+      }
+    }
+
+    function handleMultiplayerAction(data) {
+      console.log('Multiplayer action received:', data);
+      // Handle multiplayer game actions
+    }
   </script>
 </body>
 </html>

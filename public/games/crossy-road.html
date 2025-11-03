@@ -3,110 +3,526 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crossy Road</title>
+  <title>Enhanced Crossy Road Multiplayer</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    #gameCanvas {
+    .game-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: var(--bg-card);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .game-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .game-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #22c55e, #16a34a, #15803d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
+    }
+
+    .game-modes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .mode-card {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mode-card:hover {
+      transform: translateY(-5px);
+      border-color: #22c55e;
+      box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
+    }
+
+    .mode-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
       display: block;
-      margin: 1rem auto;
-      background: #87ceeb;
-      border: 3px solid #667eea;
-      border-radius: 8px;
+    }
+
+    .mode-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .mode-description {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .mode-btn {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+
+    .mode-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 20px rgba(34, 197, 94, 0.4);
+    }
+
+    .game-area {
+      display: none;
+    }
+
+    .game-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: #22c55e;
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      color: var(--text-primary);
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .betting-section {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .betting-title {
+      text-align: center;
+      color: var(--text-primary);
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      font-size: 1.3rem;
+    }
+
+    .bet-amount {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .amount-btn {
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .amount-btn:hover {
+      transform: translateY(-2px);
+      border-color: #22c55e;
+    }
+
+    .amount-btn.active {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-color: #22c55e;
+      color: white;
+    }
+
+    .custom-bet {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .bet-input {
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      width: 150px;
+    }
+
+    .game-canvas-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    #gameCanvas {
+      background: linear-gradient(135deg, #87ceeb, #6bb6d6);
+      border: 3px solid #22c55e;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       max-width: 100%;
       height: auto;
     }
 
-    .betting-area {
+    .game-controls {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .control-btn {
+      padding: 1rem 2rem;
+      margin: 0.5rem;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+      border: 2px solid var(--border-color);
+    }
+
+    .control-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .instructions {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .instructions h3 {
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+
+    .control-keys {
       display: flex;
-      gap: 1rem;
       justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
       flex-wrap: wrap;
-      margin: 1rem 0;
+    }
+
+    .key {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      color: var(--text-primary);
     }
 
     .game-status {
       text-align: center;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       font-weight: bold;
-      color: #667eea;
-      margin: 1rem 0;
+      margin: 2rem 0;
+      padding: 1.5rem;
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
     }
 
-    .instructions {
-      background: #f3f4f6;
-      padding: 1rem;
-      border-radius: 8px;
-      margin: 1rem 0;
-      text-align: center;
-    }
+    .status-playing { color: #22c55e; }
+    .status-gameover { color: #ef4444; }
+    .status-win { color: #10b981; }
 
     .result-message {
       text-align: center;
-      font-size: 1.2rem;
-      margin: 1rem 0;
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin: 2rem 0;
+      padding: 1.5rem;
+      border-radius: 12px;
+      animation: resultAppear 0.5s ease-out;
     }
 
-    .result-win { color: #10b981; }
-    .result-lose { color: #ef4444; }
+    @keyframes resultAppear {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .result-win {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 163, 74, 0.2));
+      color: #22c55e;
+      border: 2px solid #22c55e;
+    }
+
+    .result-lose {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+      color: #ef4444;
+      border: 2px solid #ef4444;
+    }
+
+    .multiplayer-section {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      display: none;
+    }
+
+    .leaderboard {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .leaderboard-title {
+      text-align: center;
+      color: var(--text-primary);
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+
+    .leaderboard-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem;
+      background: var(--bg-card);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      transition: all 0.3s;
+    }
+
+    .leaderboard-item:hover {
+      transform: translateX(5px);
+      background: var(--bg-card-hover);
+    }
+
+    .leaderboard-rank {
+      font-weight: bold;
+      color: #22c55e;
+      margin-right: 1rem;
+    }
+
+    .leaderboard-name {
+      flex: 1;
+      color: var(--text-primary);
+    }
+
+    .leaderboard-score {
+      font-weight: bold;
+      color: var(--text-primary);
+    }
+
+    @media (max-width: 768px) {
+      .game-modes {
+        grid-template-columns: 1fr;
+      }
+
+      .game-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      #gameCanvas {
+        max-width: 100%;
+        height: auto;
+      }
+    }
   </style>
 </head>
-<body>
-  <header>
+<body class="dark-theme">
+  <header class="header-dark">
     <div class="header-container">
-      <div class="logo"><h1>🚗 CROSSY ROAD</h1></div>
+      <div class="logo"><h1>🚗 ENHANCED CROSSY ROAD</h1></div>
       <div id="authSection" class="auth-buttons"></div>
     </div>
   </header>
 
-  <main class="container">
-    <div class="game-container">
+  <main class="container-dark">
+    <div class="game-wrapper">
       <div class="game-header">
-        <h1>Crossy Road - Dodge & Survive!</h1>
-        <a href="/" class="btn">Back to Lobby</a>
+        <h1 class="game-title">Enhanced Crossy Road Multiplayer</h1>
+        <p style="color: var(--text-secondary);">Dodge traffic and compete for high scores!</p>
       </div>
 
-      <div class="game-stats">
-        <div class="stat">
-          <div class="stat-label">💰 Coins</div>
-          <div class="stat-value" id="coinDisplay">1000</div>
+      <!-- Game Mode Selection -->
+      <div id="modeSelection" class="game-modes">
+        <div class="mode-card">
+          <span class="mode-icon">🎮</span>
+          <div class="mode-title">Classic Mode</div>
+          <div class="mode-description">Traditional crossy road gameplay with enhanced graphics</div>
+          <button class="mode-btn" onclick="startClassicMode()">Play Classic</button>
         </div>
-        <div class="stat">
-          <div class="stat-label">💵 Your Bet</div>
-          <div class="stat-value" id="betDisplay">0</div>
+
+        <div class="mode-card">
+          <span class="mode-icon">⚡</span>
+          <div class="mode-title">Speed Run</div>
+          <div class="mode-description">Race against time to reach the highest distance</div>
+          <button class="mode-btn" onclick="startSpeedRun()">Speed Run</button>
         </div>
-        <div class="stat">
-          <div class="stat-label">📊 Distance</div>
-          <div class="stat-value" id="distanceDisplay">0</div>
+
+        <div class="mode-card">
+          <span class="mode-icon">👥</span>
+          <div class="mode-title">Multiplayer Battle</div>
+          <div class="mode-description">Compete against other players in real-time</div>
+          <button class="mode-btn" onclick="startMultiplayer()">Find Match</button>
+        </div>
+
+        <div class="mode-card">
+          <span class="mode-icon">🏆</span>
+          <div class="mode-title">Endless Mode</div>
+          <div class="mode-description">Test your skills in infinite gameplay</div>
+          <button class="mode-btn" onclick="startEndless()">Endless Mode</button>
         </div>
       </div>
 
-      <div id="bettingPhase">
-        <h2>Place Your Bet (Higher = Better Rewards!)</h2>
-        <div class="betting-area">
-          <input type="number" id="betAmount" min="10" max="500" value="50" />
-          <button onclick="startGame()" class="btn">Start Game</button>
+      <!-- Game Area -->
+      <div id="gameArea" class="game-area">
+        <div class="game-stats">
+          <div class="stat-card">
+            <div class="stat-label">💰 Coins</div>
+            <div class="stat-value" id="coinDisplay">1000</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">💵 Current Bet</div>
+            <div class="stat-value" id="betDisplay">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">📊 Distance</div>
+            <div class="stat-value" id="distanceDisplay">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">⏱️ Time</div>
+            <div class="stat-value" id="timeDisplay">0:00</div>
+          </div>
         </div>
-        <div class="betting-area">
-          <button onclick="setBet(50)" class="btn secondary">50</button>
-          <button onclick="setBet(100)" class="btn secondary">100</button>
-          <button onclick="setBet(250)" class="btn secondary">250</button>
-        </div>
-      </div>
 
-      <div id="gamePhase" style="display: none;">
+        <!-- Multiplayer Section -->
+        <div id="multiplayerSection" class="multiplayer-section">
+          <div class="opponent-info">
+            <div class="player-card">
+              <div class="player-name">You</div>
+              <div class="player-distance" id="playerDistance">0m</div>
+            </div>
+            <div class="vs-text">VS</div>
+            <div class="player-card">
+              <div class="player-name" id="opponentName">Waiting...</div>
+              <div class="player-distance" id="opponentDistance">0m</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Betting Section -->
+        <div id="bettingSection" class="betting-section">
+          <div class="betting-title">💰 Place Your Bet (Higher = Better Rewards!)</div>
+          <div class="bet-amount">
+            <button class="amount-btn active" onclick="setBet(50)">50</button>
+            <button class="amount-btn" onclick="setBet(100)">100</button>
+            <button class="amount-btn" onclick="setBet(250)">250</button>
+            <button class="amount-btn" onclick="setBet(500)">500</button>
+          </div>
+          <div class="custom-bet">
+            <input type="number" id="customBetAmount" class="bet-input" min="10" max="1000" value="50" />
+            <button class="control-btn btn-primary" onclick="startGame()">Start Game</button>
+          </div>
+        </div>
+
+        <!-- Instructions -->
         <div class="instructions">
-          <p>Use ARROW KEYS or A/D to move left/right</p>
-          <p>Avoid cars and reach further distance for bigger rewards!</p>
+          <h3>🎮 How to Play</h3>
+          <p>Use arrow keys or A/D to move left/right and dodge traffic!</p>
+          <p>The further you go, the higher your multiplier and rewards!</p>
+          <div class="control-keys">
+            <div class="key">← A</div>
+            <div class="key">→ D</div>
+            <div class="key">↑ W</div>
+            <div class="key">↓ S</div>
+          </div>
         </div>
 
-        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        <!-- Game Canvas -->
+        <div class="game-canvas-container">
+          <canvas id="gameCanvas" width="400" height="600"></canvas>
+        </div>
 
-        <div class="game-status" id="gameStatus"></div>
+        <!-- Game Status -->
+        <div class="game-status" id="gameStatus">Ready to play!</div>
         <div id="resultMessage" class="result-message"></div>
 
-        <div class="controls">
-          <button onclick="resetGame()" class="btn" id="resetBtn" style="display: none;">Play Again</button>
+        <!-- Controls -->
+        <div class="game-controls">
+          <button id="pauseBtn" class="control-btn btn-secondary" onclick="togglePause()" style="display: none;">Pause</button>
+          <button id="resetBtn" class="control-btn btn-primary" onclick="resetGame()" style="display: none;">Play Again</button>
+          <button class="control-btn btn-secondary" onclick="backToMenu()">Menu</button>
         </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div id="leaderboard" class="leaderboard" style="display: none;">
+        <div class="leaderboard-title">🏆 High Scores</div>
+        <ul class="leaderboard-list" id="leaderboardList"></ul>
       </div>
     </div>
   </main>
@@ -123,66 +539,161 @@
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="/js/main.js"></script>
   <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const gridSize = 40;
+    // Enhanced Game State
+    let gameState = {
+      mode: null,
+      canvas: null,
+      ctx: null,
+      gridSize: 40,
+      player: { x: 4, y: 14 },
+      cars: [],
+      distance: 0,
+      timeElapsed: 0,
+      gameActive: false,
+      isPaused: false,
+      currentBet: 0,
+      keys: {},
+      timer: null,
+      animationId: null,
+      multiplayer: {
+        roomId: null,
+        opponent: null,
+        opponentDistance: 0
+      },
+      highScore: localStorage.getItem('crossyroadHighScore') || 0
+    };
 
-    let player = { x: 4, y: 14 };
-    let cars = [];
-    let distance = 0;
-    let gameActive = false;
-    let currentBet = 0;
-    let keys = {};
+    // Socket is already declared in main.js, just make sure it's initialized
+    if (!socket) {
+      socket = io();
+    }
 
-    // Game states
-    let gameState = 'betting';
-
-    // Input handling
-    document.addEventListener('keydown', (e) => {
-      keys[e.key] = true;
-      if (gameActive) {
-        if ((e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') && player.x > 0) {
-          player.x--;
-        }
-        if ((e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') && player.x < 9) {
-          player.x++;
-        }
-      }
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      gameState.canvas = document.getElementById('gameCanvas');
+      gameState.ctx = gameState.canvas.getContext('2d');
+      updateAuthUI();
+      setupSocketListeners();
+      setupEventListeners();
+      initializeCanvas();
     });
 
-    document.addEventListener('keyup', (e) => {
-      keys[e.key] = false;
-    });
+    function setupSocketListeners() {
+      socket.on('match-found', (data) => {
+        console.log('Crossy Road match found:', data);
+        gameState.mode = 'multiplayer';
+        gameState.multiplayer.roomId = data.roomId;
+        gameState.multiplayer.opponent = data.opponent;
+        
+        document.getElementById('modeSelection').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'block';
+        document.getElementById('multiplayerSection').style.display = 'block';
+        document.getElementById('opponentName').textContent = data.opponent.username;
+        
+        showNotification('🎮 Opponent found! Get ready to race!', 'success');
+      });
 
-    class Car {
-      constructor(lane, direction) {
-        this.lane = lane;
-        this.direction = direction; // 1 for right, -1 for left
-        this.x = direction > 0 ? -1 : 10;
-        this.width = 1.5;
+      socket.on('game-action', (data) => {
+        handleMultiplayerAction(data);
+      });
+
+      socket.on('error', (data) => {
+        showNotification(data.message || 'An error occurred', 'error');
+      });
+    }
+
+    function setupEventListeners() {
+      document.addEventListener('keydown', (e) => {
+        gameState.keys[e.key] = true;
+        handleInput(e.key);
+      });
+
+      document.addEventListener('keyup', (e) => {
+        gameState.keys[e.key] = false;
+      });
+    }
+
+    function handleInput(key) {
+      if (!gameState.gameActive || gameState.isPaused) return;
+
+      if ((key === 'ArrowLeft' || key === 'a' || key === 'A') && gameState.player.x > 0) {
+        gameState.player.x--;
       }
-
-      update() {
-        this.x += this.direction * 0.15;
+      if ((key === 'ArrowRight' || key === 'd' || key === 'D') && gameState.player.x < 9) {
+        gameState.player.x++;
       }
-
-      draw() {
-        ctx.fillStyle = ['#ef4444', '#3b82f6', '#10b981'][Math.floor(Math.random() * 3)];
-        ctx.fillRect(
-          this.x * gridSize,
-          this.lane * gridSize,
-          this.width * gridSize,
-          gridSize - 5
-        );
+      if ((key === 'ArrowUp' || key === 'w' || key === 'W') && gameState.player.y > 0) {
+        gameState.player.y--;
       }
-
-      isOffscreen() {
-        return this.x > 11 || this.x < -2;
+      if ((key === 'ArrowDown' || key === 's' || key === 'S') && gameState.player.y < 14) {
+        gameState.player.y++;
       }
     }
 
+    function updateAuthUI() {
+      document.getElementById('authSection').innerHTML = currentUser
+        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
+        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+
+    function startClassicMode() {
+      gameState.mode = 'classic';
+      document.getElementById('modeSelection').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      document.getElementById('multiplayerSection').style.display = 'none';
+      document.getElementById('bettingSection').style.display = 'block';
+      document.getElementById('leaderboard').style.display = 'block';
+      
+      loadLeaderboard();
+    }
+
+    function startSpeedRun() {
+      gameState.mode = 'speedrun';
+      document.getElementById('modeSelection').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      document.getElementById('multiplayerSection').style.display = 'none';
+      document.getElementById('bettingSection').style.display = 'block';
+      document.getElementById('leaderboard').style.display = 'block';
+      
+      loadLeaderboard();
+    }
+
+    function startMultiplayer() {
+      if (!currentUser) {
+        showNotification('Please login to play multiplayer', 'error');
+        showLoginModal();
+        return;
+      }
+
+      socket.emit('find-match', {
+        gameType: 'crossyroad',
+        playerData: {
+          userId: currentUser.id,
+          username: currentUser.username,
+          coins: userCoins
+        }
+      });
+    }
+
+    function startEndless() {
+      gameState.mode = 'endless';
+      document.getElementById('modeSelection').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      document.getElementById('multiplayerSection').style.display = 'none';
+      document.getElementById('bettingSection').style.display = 'block';
+      document.getElementById('leaderboard').style.display = 'block';
+      
+      loadLeaderboard();
+    }
+
+    function setBet(amount) {
+      document.getElementById('customBetAmount').value = amount;
+      document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
     function startGame() {
-      const bet = parseInt(document.getElementById('betAmount').value);
+      const bet = parseInt(document.getElementById('customBetAmount').value);
 
       if (bet < 10) {
         showNotification('Minimum bet is 10 coins', 'error');
@@ -194,67 +705,119 @@
         return;
       }
 
-      currentBet = bet;
+      gameState.currentBet = bet;
       updateCoins(-bet, 'crossyroad', 'bet');
+
       document.getElementById('betDisplay').textContent = bet;
+      document.getElementById('bettingSection').style.display = 'none';
+      document.getElementById('pauseBtn').style.display = 'inline-block';
 
-      document.getElementById('bettingPhase').style.display = 'none';
-      document.getElementById('gamePhase').style.display = 'block';
-
-      gameActive = true;
-      player = { x: 4, y: 14 };
-      cars = [];
-      distance = 0;
-      gameState = 'playing';
-
+      initializeGame();
+      startTimer();
       gameLoop();
     }
 
+    function initializeGame() {
+      gameState.player = { x: 4, y: 14 };
+      gameState.cars = [];
+      gameState.distance = 0;
+      gameState.timeElapsed = 0;
+      gameState.gameActive = true;
+      gameState.isPaused = false;
+
+      updateDisplay();
+      updateStatus('🎮 Game Started!', 'playing');
+    }
+
+    function initializeCanvas() {
+      gameState.ctx.fillStyle = '#87ceeb';
+      gameState.ctx.fillRect(0, 0, gameState.canvas.width, gameState.canvas.height);
+    }
+
+    function startTimer() {
+      gameState.timer = setInterval(() => {
+        if (!gameState.isPaused && gameState.gameActive) {
+          gameState.timeElapsed++;
+          updateTimer();
+        }
+      }, 1000);
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(gameState.timeElapsed / 60);
+      const seconds = gameState.timeElapsed % 60;
+      document.getElementById('timeDisplay').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
     function gameLoop() {
+      if (!gameState.gameActive) return;
+
       update();
       draw();
-
-      if (gameActive) {
-        requestAnimationFrame(gameLoop);
-      }
+      gameState.animationId = requestAnimationFrame(gameLoop);
     }
 
     function update() {
-      // Spawn cars
-      if (Math.random() < 0.02) {
+      if (gameState.isPaused) return;
+
+      // Spawn cars based on difficulty
+      const spawnRate = gameState.mode === 'speedrun' ? 0.03 : 
+                       gameState.mode === 'endless' ? 0.01 : 0.02;
+      
+      if (Math.random() < spawnRate) {
         const lane = Math.floor(Math.random() * 12);
         const direction = Math.random() < 0.5 ? 1 : -1;
-        cars.push(new Car(lane, direction));
+        gameState.cars.push(new Car(lane, direction));
       }
 
       // Update cars
-      cars = cars.filter(car => !car.isOffscreen());
-      cars.forEach(car => car.update());
+      gameState.cars = gameState.cars.filter(car => !car.isOffscreen());
+      gameState.cars.forEach(car => car.update());
 
       // Check collisions
-      cars.forEach(car => {
-        if (player.y === car.lane &&
-            player.x * gridSize < (car.x + car.width) * gridSize &&
-            (player.x + 1) * gridSize > car.x * gridSize) {
-          endGame(false);
+      gameState.cars.forEach(car => {
+        if (checkCollision(gameState.player, car)) {
+          endGame();
         }
       });
 
-      // Player moves forward
-      if (distance % 50 === 0 && distance > 0) {
-        player.y--;
-        if (player.y < 0) {
-          player.y = 0;
+      // Update distance
+      if (gameState.mode !== 'endless' && gameState.distance % 50 === 0 && gameState.distance > 0) {
+        gameState.player.y--;
+        if (gameState.player.y < 0) {
+          gameState.player.y = 0;
         }
       }
 
-      distance++;
-      document.getElementById('distanceDisplay').textContent = Math.floor(distance / 10);
+      gameState.distance++;
+      document.getElementById('distanceDisplay').textContent = Math.floor(gameState.distance / 10);
+
+      // Send update to server in multiplayer
+      if (gameState.mode === 'multiplayer' && gameState.multiplayer.roomId) {
+        socket.emit('game-action', {
+          action: 'update',
+          roomId: gameState.multiplayer.roomId,
+          distance: Math.floor(gameState.distance / 10)
+        });
+      }
+    }
+
+    function checkCollision(player, car) {
+      return player.y === car.lane &&
+             player.x * gameState.gridSize < (car.x + car.width) * gameState.gridSize &&
+             (player.x + 1) * gameState.gridSize > car.x * gameState.gridSize;
     }
 
     function draw() {
-      // Sky
-      ctx.fillStyle = '#87ceeb';
+      const ctx = gameState.ctx;
+      const canvas = gameState.canvas;
+      const gridSize = gameState.gridSize;
+
+      // Sky gradient
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#87ceeb');
+      gradient.addColorStop(1, '#6bb6d6');
+      ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Ground tiles
@@ -266,7 +829,7 @@
         ctx.strokeRect(0, i * gridSize, canvas.width, gridSize);
       }
 
-      // Road
+      // Road with lanes
       for (let i = 4; i < 12; i++) {
         ctx.fillStyle = '#333';
         ctx.fillRect(0, i * gridSize, canvas.width, gridSize);
@@ -282,71 +845,189 @@
       }
 
       // Draw cars
-      cars.forEach(car => car.draw());
+      gameState.cars.forEach(car => car.draw());
 
-      // Draw player
+      // Draw player (chicken character)
       ctx.fillStyle = '#fbbf24';
       ctx.fillRect(
-        player.x * gridSize + 5,
-        player.y * gridSize + 5,
+        gameState.player.x * gridSize + 5,
+        gameState.player.y * gridSize + 5,
         gridSize - 10,
         gridSize - 10
       );
 
-      // Eyes
+      // Player details (eyes and beak)
       ctx.fillStyle = '#000';
-      ctx.fillRect(player.x * gridSize + 10, player.y * gridSize + 10, 5, 5);
-      ctx.fillRect(player.x * gridSize + 25, player.y * gridSize + 10, 5, 5);
+      ctx.fillRect(gameState.player.x * gridSize + 10, gameState.player.y * gridSize + 10, 5, 5);
+      ctx.fillRect(gameState.player.x * gridSize + 25, gameState.player.y * gridSize + 10, 5, 5);
+      
+      // Beak
+      ctx.fillStyle = '#ff6b35';
+      ctx.fillRect(gameState.player.x * gridSize + 17, gameState.player.y * gridSize + 20, 6, 3);
     }
 
-    function endGame(won) {
-      gameActive = false;
-      const distTraveled = Math.floor(distance / 10);
-      const multiplier = Math.max(1, Math.floor(distTraveled / 10));
-      const winnings = currentBet * multiplier;
-      const profit = winnings - currentBet;
+    function endGame() {
+      gameState.gameActive = false;
+      clearInterval(gameState.timer);
+      cancelAnimationFrame(gameState.animationId);
 
-      document.getElementById('gameStatus').textContent = `Game Over! Distance: ${distTraveled}`;
-      document.getElementById('resultMessage').textContent = `You earned ${winnings} coins! (+${profit})`;
-      document.getElementById('resultMessage').className = 'result-message result-win';
+      const distTraveled = Math.floor(gameState.distance / 10);
+      const multiplier = Math.max(1, Math.floor(distTraveled / 10));
+      const winnings = gameState.currentBet * multiplier;
+      const profit = winnings - gameState.currentBet;
+
+      updateStatus('🎮 Game Over!', 'gameover');
+      
+      const resultMsg = document.getElementById('resultMessage');
+      resultMsg.innerHTML = `
+        <div>🎮 Game Over!</div>
+        <div>Distance: ${distTraveled}m</div>
+        <div>Multiplier: ${multiplier}x</div>
+        <div>🎉 You earned ${winnings} coins! (+${profit})</div>
+      `;
+      resultMsg.className = 'result-message result-win';
 
       updateCoins(winnings, 'crossyroad', 'win');
-      document.getElementById('coinDisplay').textContent = userCoins;
-      document.getElementById('resetBtn').style.display = 'inline-block';
+      updateDisplay();
 
-      showNotification(`Great job! You earned ${winnings} coins!`, 'success');
+      document.getElementById('resetBtn').style.display = 'inline-block';
+      document.getElementById('pauseBtn').style.display = 'none';
+
+      // Update high score
+      if (distTraveled > gameState.highScore) {
+        gameState.highScore = distTraveled;
+        localStorage.setItem('crossyroadHighScore', gameState.highScore);
+        showNotification(`🏆 New high score: ${distTraveled}m!`, 'success');
+      }
+
+      // Send result to server in multiplayer
+      if (gameState.mode === 'multiplayer' && gameState.multiplayer.roomId) {
+        socket.emit('game-action', {
+          action: 'game-over',
+          roomId: gameState.multiplayer.roomId,
+          distance: distTraveled
+        });
+      }
+    }
+
+    function togglePause() {
+      gameState.isPaused = !gameState.isPaused;
+      const pauseBtn = document.getElementById('pauseBtn');
+      pauseBtn.textContent = gameState.isPaused ? 'Resume' : 'Pause';
+      
+      if (gameState.isPaused) {
+        updateStatus('⏸️ Game Paused', 'playing');
+      } else {
+        updateStatus('🎮 Playing...', 'playing');
+      }
     }
 
     function resetGame() {
-      gameState = 'betting';
-      currentBet = 0;
-      distance = 0;
-      cars = [];
-
-      document.getElementById('bettingPhase').style.display = 'block';
-      document.getElementById('gamePhase').style.display = 'none';
-      document.getElementById('gameStatus').textContent = '';
-      document.getElementById('resultMessage').textContent = '';
-      document.getElementById('betDisplay').textContent = '0';
+      document.getElementById('bettingSection').style.display = 'block';
       document.getElementById('resetBtn').style.display = 'none';
+      document.getElementById('pauseBtn').style.display = 'none';
+      document.getElementById('resultMessage').innerHTML = '';
+      document.getElementById('resultMessage').className = 'result-message';
+      
+      initializeCanvas();
     }
 
-    function setBet(amount) {
-      document.getElementById('betAmount').value = amount;
+    function backToMenu() {
+      gameState.gameActive = false;
+      clearInterval(gameState.timer);
+      cancelAnimationFrame(gameState.animationId);
+      
+      document.getElementById('modeSelection').style.display = 'grid';
+      document.getElementById('gameArea').style.display = 'none';
+      document.getElementById('multiplayerSection').style.display = 'none';
+      document.getElementById('leaderboard').style.display = 'none';
+      
+      // Leave multiplayer room if in one
+      if (gameState.mode === 'multiplayer' && gameState.multiplayer.roomId) {
+        socket.emit('leave-room', {
+          roomId: gameState.multiplayer.roomId
+        });
+      }
     }
 
-    function updateAuthUI() {
-      document.getElementById('authSection').innerHTML = currentUser
-        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
-        : '<button onclick="showLoginModal()" class="btn">Login</button>';
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      updateAuthUI();
+    function updateDisplay() {
       document.getElementById('coinDisplay').textContent = userCoins;
-      ctx.fillStyle = '#87ceeb';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    });
+      document.getElementById('distanceDisplay').textContent = Math.floor(gameState.distance / 10);
+    }
+
+    function updateStatus(text, status) {
+      const statusEl = document.getElementById('gameStatus');
+      statusEl.textContent = text;
+      statusEl.className = `game-status status-${status}`;
+    }
+
+    function handleMultiplayerAction(data) {
+      console.log('Multiplayer action received:', data);
+      // Handle multiplayer game actions
+    }
+
+    function loadLeaderboard() {
+      // Load leaderboard from server or local storage
+      const leaderboard = [
+        { name: 'Player1', score: 150 },
+        { name: 'Player2', score: 120 },
+        { name: 'Player3', score: 80 }
+      ];
+      
+      updateLeaderboard(leaderboard);
+    }
+
+    function updateLeaderboard(leaderboard) {
+      const list = document.getElementById('leaderboardList');
+      list.innerHTML = leaderboard.map((entry, index) => `
+        <li class="leaderboard-item">
+          <span class="leaderboard-rank">#${index + 1}</span>
+          <span class="leaderboard-name">${entry.name}</span>
+          <span class="leaderboard-score">${entry.score}m</span>
+        </li>
+      `).join('');
+    }
+
+    // Car class
+    class Car {
+      constructor(lane, direction) {
+        this.lane = lane;
+        this.direction = direction;
+        this.x = direction > 0 ? -1 : 10;
+        this.width = 1.5;
+        this.color = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'][Math.floor(Math.random() * 4)];
+      }
+
+      update() {
+        this.x += this.direction * 0.15;
+      }
+
+      draw() {
+        const ctx = gameState.ctx;
+        const gridSize = gameState.gridSize;
+        
+        ctx.fillStyle = this.color;
+        ctx.fillRect(
+          this.x * gridSize,
+          this.lane * gridSize,
+          this.width * gridSize,
+          gridSize - 5
+        );
+        
+        // Car windows
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(
+          this.x * gridSize + 5,
+          this.lane * gridSize + 5,
+          this.width * gridSize - 10,
+          gridSize - 15
+        );
+      }
+
+      isOffscreen() {
+        return this.x > 11 || this.x < -2;
+      }
+    }
   </script>
 </body>
 </html>

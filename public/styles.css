@@ -723,24 +723,33 @@ main {
 .modal {
   display: none;
   position: fixed;
-  z-index: 1000;
+  z-index: 10000;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
 }
 
 .modal-content {
   background-color: white;
-  margin: 5% auto;
+  margin: 3% auto;
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: 16px;
   width: 90%;
-  max-width: 400px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   animation: slideIn 0.3s ease-out;
+  position: relative;
+}
+
+/* Larger modal for create server */
+.modal-content:has(.create-server-modal) {
+  max-width: 900px;
 }
 
 @keyframes slideIn {
@@ -804,30 +813,48 @@ main {
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 2000;
+  z-index: 9999;
   max-width: 400px;
+  pointer-events: none;
 }
 
 .notification {
   background: white;
+  color: #1f2937;
   padding: 1rem 1.5rem;
-  border-radius: 8px;
+  border-radius: 12px;
   margin-bottom: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   border-left: 4px solid var(--primary);
   animation: slideInRight 0.3s ease-out;
+  font-weight: 500;
+  font-size: 0.95rem;
+  pointer-events: auto;
+  min-width: 250px;
 }
 
 .notification.success {
   border-left-color: var(--success);
+  background: #f0fdf4;
+  color: #166534;
 }
 
 .notification.error {
   border-left-color: var(--danger);
+  background: #fef2f2;
+  color: #991b1b;
 }
 
 .notification.warning {
   border-left-color: var(--warning);
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.notification.info {
+  border-left-color: var(--accent-blue);
+  background: #eff6ff;
+  color: #1e40af;
 }
 
 .notification.fade-out {

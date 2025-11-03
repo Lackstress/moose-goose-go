@@ -1,457 +1,629 @@
-/**
- * Enhanced Multiplayer Manager for GameHub
- * Handles rooms, matchmaking, chat, spectators, and game state
- */
+const { v4: uuidv4 } = require('uuid');
 
 class MultiplayerManager {
   constructor(io) {
     this.io = io;
-    this.rooms = new Map(); // roomId => Room object
-    this.players = new Map(); // socketId => Player object
-    this.queue = new Map(); // gameType => Queue of waiting players
-    this.spectators = new Map(); // roomId => Set of spectator socketIds
+    this.rooms = new Map();
+    this.players = new Map();
+    this.matchmaking = new Map(); // gameType -> queue of players
+    this.gameStates = new Map(); // roomId -> game state
+    this.recentCreations = new Map(); // userId -> timestamp of last room creation
+    
+    this.setupEventHandlers();
   }
 
-  // Create a new game room
-  createRoom(gameType, hostSocketId, options = {}) {
-    const roomId = `${gameType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+  setupEventHandlers() {
+    this.io.on('connection', (socket) => {
+      console.log(`Player connected: ${socket.id}`);
+      
+      // Room management
+      socket.on('create-room', (data) => this.handleCreateRoom(socket, data));
+      socket.on('join-room', (data) => this.handleJoinRoom(socket, data));
+      socket.on('leave-room', (data) => this.handleLeaveRoom(socket, data));
+      socket.on('get-rooms', (data) => this.handleGetRooms(socket, data));
+      
+      // Matchmaking
+      socket.on('find-match', (data) => this.handleFindMatch(socket, data));
+      socket.on('cancel-matchmaking', (data) => this.handleCancelMatchmaking(socket, data));
+      
+      // Game actions
+      socket.on('game-action', (data) => this.handleGameAction(socket, data));
+      socket.on('game-chat', (data) => this.handleGameChat(socket, data));
+      
+      // Connection handling
+      socket.on('disconnect', () => this.handleDisconnect(socket));
+    });
+  }
+
+  // Room Management
+  handleCreateRoom(socket, data) {
+    try {
+      const { gameType, playerData, settings = {} } = data;
+      
+      if (!gameType || !playerData) {
+        socket.emit('error', { message: 'Missing required data' });
+        return;
+      }
+
+      // Anti-spam: prevent user from creating multiple rooms in quick succession
+      const userId = playerData.userId;
+      const lastCreation = this.recentCreations.get(userId) || 0;
+      const now = Date.now();
+      
+      if (now - lastCreation < 2000) { // 2 second cooldown
+        socket.emit('error', { message: 'Please wait before creating another server' });
+        return;
+      }
+      
+      this.recentCreations.set(userId, now);
+
+      const roomId = uuidv4();
+      const room = {
+        id: roomId,
+        gameType,
+        host: playerData,
+        players: [playerData],
+        settings: {
+          name: settings.name || `${playerData.username}'s Room`,
+          maxPlayers: settings.maxPlayers || 2,
+          isPrivate: settings.isPrivate || false,
+          ...settings
+        },
+        status: 'waiting',
+        createdAt: new Date(),
+        gameState: null
+      };
+
+      this.rooms.set(roomId, room);
+      this.players.set(socket.id, { socketId: socket.id, ...playerData, roomId });
+
+      socket.join(roomId);
+      socket.emit('room-created', { success: true, room });
+      this.broadcastRoomsUpdate();
+
+      console.log(`Room created: ${roomId} by ${playerData.username}`);
+    } catch (error) {
+      console.error('Error creating room:', error);
+      socket.emit('error', { message: 'Failed to create room' });
+    }
+  }
+
+  handleJoinRoom(socket, data) {
+    try {
+      const { roomId, playerData } = data;
+      
+      if (!roomId || !playerData) {
+        socket.emit('error', { message: 'Missing required data' });
+        return;
+      }
+
+      const room = this.rooms.get(roomId);
+      if (!room) {
+        socket.emit('error', { message: 'Room not found' });
+        return;
+      }
+
+      if (room.players.length >= room.settings.maxPlayers) {
+        socket.emit('error', { message: 'Room is full' });
+        return;
+      }
+
+      if (room.players.some(p => p.userId === playerData.userId)) {
+        socket.emit('error', { message: 'Already in this room' });
+        return;
+      }
+
+      // Add player to room
+      room.players.push(playerData);
+      this.players.set(socket.id, { socketId: socket.id, ...playerData, roomId });
+
+      socket.join(roomId);
+      socket.emit('room-joined', { success: true, room });
+      
+      // Notify all players in room
+      this.io.to(roomId).emit('room-updated', room);
+
+      // Start game if room is full
+      if (room.players.length === room.settings.maxPlayers) {
+        this.startGame(roomId);
+      }
+
+      this.broadcastRoomsUpdate();
+      console.log(`Player ${playerData.username} joined room ${roomId}`);
+    } catch (error) {
+      console.error('Error joining room:', error);
+      socket.emit('error', { message: 'Failed to join room' });
+    }
+  }
+
+  handleLeaveRoom(socket, data) {
+    try {
+      const player = this.players.get(socket.id);
+      if (!player || !player.roomId) return;
+
+      const roomId = player.roomId;
+      const room = this.rooms.get(roomId);
+      if (!room) return;
+
+      // Remove player from room
+      room.players = room.players.filter(p => p.socketId !== socket.id);
+      this.players.delete(socket.id);
+
+      socket.leave(roomId);
+      socket.emit('room-left', { success: true });
+
+      // Notify remaining players
+      this.io.to(roomId).emit('room-updated', room);
+
+      // Handle room empty or game interruption
+      if (room.players.length === 0) {
+        this.rooms.delete(roomId);
+        this.gameStates.delete(roomId);
+      } else if (room.status === 'playing') {
+        // Handle player disconnect during game
+        this.handlePlayerDisconnectGame(roomId, player);
+      }
+
+      this.broadcastRoomsUpdate();
+      console.log(`Player left room ${roomId}`);
+    } catch (error) {
+      console.error('Error leaving room:', error);
+    }
+  }
+
+  handleGetRooms(socket, data) {
+    try {
+      const { gameType } = data;
+      let rooms = Array.from(this.rooms.values());
+
+      // Filter by game type if specified
+      if (gameType) {
+        rooms = rooms.filter(room => room.gameType === gameType);
+      }
+
+      // Don't include private rooms in public list
+      rooms = rooms.filter(room => !room.settings.isPrivate);
+
+      socket.emit('rooms-list', { rooms });
+    } catch (error) {
+      console.error('Error getting rooms:', error);
+      socket.emit('error', { message: 'Failed to get rooms' });
+    }
+  }
+
+  // Matchmaking
+  handleFindMatch(socket, data) {
+    try {
+      const { gameType, playerData } = data;
+      
+      if (!gameType || !playerData) {
+        socket.emit('error', { message: 'Missing required data' });
+        return;
+      }
+
+      // Add to matchmaking queue
+      if (!this.matchmaking.has(gameType)) {
+        this.matchmaking.set(gameType, []);
+      }
+
+      const queue = this.matchmaking.get(gameType);
+      
+      // Check if player is already in queue
+      if (queue.some(p => p.userId === playerData.userId)) {
+        socket.emit('error', { message: 'Already in matchmaking' });
+        return;
+      }
+
+      queue.push({ socketId: socket.id, ...playerData });
+      this.players.set(socket.id, { socketId: socket.id, ...playerData, matchmaking: true });
+
+      socket.emit('matchmaking-joined', { gameType });
+
+      // Try to find a match
+      this.tryFindMatch(gameType);
+      
+      console.log(`Player ${playerData.username} joined matchmaking for ${gameType}`);
+    } catch (error) {
+      console.error('Error in matchmaking:', error);
+      socket.emit('error', { message: 'Failed to join matchmaking' });
+    }
+  }
+
+  handleCancelMatchmaking(socket, data) {
+    try {
+      const player = this.players.get(socket.id);
+      if (!player || !player.matchmaking) return;
+
+      // Remove from all matchmaking queues
+      for (const [gameType, queue] of this.matchmaking.entries()) {
+        const index = queue.findIndex(p => p.socketId === socket.id);
+        if (index !== -1) {
+          queue.splice(index, 1);
+          if (queue.length === 0) {
+            this.matchmaking.delete(gameType);
+          }
+          break;
+        }
+      }
+
+      delete player.matchmaking;
+      socket.emit('matchmaking-left', { success: true });
+      
+      console.log(`Player cancelled matchmaking`);
+    } catch (error) {
+      console.error('Error cancelling matchmaking:', error);
+    }
+  }
+
+  tryFindMatch(gameType) {
+    const queue = this.matchmaking.get(gameType);
+    if (!queue || queue.length < 2) return;
+
+    // Get first two players for simple matchmaking
+    const player1 = queue.shift();
+    const player2 = queue.shift();
+
+    // Create a room for them
+    const roomId = uuidv4();
     const room = {
       id: roomId,
       gameType,
-      host: hostSocketId,
-      players: [],
-      maxPlayers: options.maxPlayers || 2,
-      status: 'waiting', // waiting, playing, finished
-      gameState: {},
-      spectators: new Set(),
-      chat: [],
-      createdAt: Date.now(),
-      settings: options.settings || {}
+      host: player1,
+      players: [player1, player2],
+      settings: {
+        name: 'Matchmade Game',
+        maxPlayers: 2,
+        isPrivate: true
+      },
+      status: 'playing',
+      createdAt: new Date(),
+      gameState: null
     };
 
     this.rooms.set(roomId, room);
-    return room;
-  }
-
-  // Add player to room
-  addPlayerToRoom(roomId, socketId, playerData) {
-    const room = this.rooms.get(roomId);
-    if (!room) return { success: false, error: 'Room not found' };
     
-    if (room.players.length >= room.maxPlayers) {
-      return { success: false, error: 'Room is full' };
-    }
+    // Update player data
+    delete player1.matchmaking;
+    delete player2.matchmaking;
+    player1.roomId = roomId;
+    player2.roomId = roomId;
 
-    const player = {
-      socketId,
-      userId: playerData.userId,
-      username: playerData.username,
-      avatar: playerData.avatar || '👤',
-      coins: playerData.coins || 1000,
-      joinedAt: Date.now(),
-      ready: false
-    };
+    // Join sockets to room
+    this.io.sockets.sockets.get(player1.socketId)?.join(roomId);
+    this.io.sockets.sockets.get(player2.socketId)?.join(roomId);
 
-    room.players.push(player);
-    this.players.set(socketId, { roomId, player });
+    // Notify players
+    this.io.to(player1.socketId).emit('match-found', { room, opponent: player2 });
+    this.io.to(player2.socketId).emit('match-found', { room, opponent: player1 });
 
-    // Join socket room
-    this.io.sockets.sockets.get(socketId)?.join(roomId);
+    // Start the game
+    this.startGame(roomId);
 
-    // Notify all players in room
-    this.io.to(roomId).emit('room-update', this.getRoomData(roomId));
-
-    // Auto-start if room is full
-    if (room.players.length === room.maxPlayers) {
-      this.startGame(roomId);
-    }
-
-    return { success: true, room: this.getRoomData(roomId) };
+    console.log(`Match found for ${gameType}: ${player1.username} vs ${player2.username}`);
   }
 
-  // Remove player from room
-  removePlayerFromRoom(socketId) {
-    const playerData = this.players.get(socketId);
-    if (!playerData) return;
-
-    const { roomId } = playerData;
-    const room = this.rooms.get(roomId);
-    if (!room) return;
-
-    // Remove player
-    room.players = room.players.filter(p => p.socketId !== socketId);
-    this.players.delete(socketId);
-
-    // Leave socket room
-    this.io.sockets.sockets.get(socketId)?.leave(roomId);
-
-    // If room is empty or game was in progress, end the game
-    if (room.players.length === 0) {
-      this.rooms.delete(roomId);
-    } else {
-      if (room.status === 'playing') {
-        this.endGame(roomId, 'player_left');
-      }
-      this.io.to(roomId).emit('room-update', this.getRoomData(roomId));
-    }
-  }
-
-  // Matchmaking - find or create a game
-  findMatch(gameType, socketId, playerData) {
-    // Check if player is already in a room
-    if (this.players.has(socketId)) {
-      const { roomId } = this.players.get(socketId);
-      return { success: false, error: 'Already in a room', roomId };
-    }
-
-    // Look for available room
-    for (const [roomId, room] of this.rooms) {
-      if (room.gameType === gameType && 
-          room.status === 'waiting' && 
-          room.players.length < room.maxPlayers) {
-        return this.addPlayerToRoom(roomId, socketId, playerData);
-      }
-    }
-
-    // No available room, create new one
-    const room = this.createRoom(gameType, socketId);
-    return this.addPlayerToRoom(room.id, socketId, playerData);
-  }
-
-  // Start the game
+  // Game Management
   startGame(roomId) {
     const room = this.rooms.get(roomId);
     if (!room) return;
 
     room.status = 'playing';
-    room.startedAt = Date.now();
+    room.gameState = this.initializeGameState(room.gameType, room.players);
 
-    // Initialize game state based on game type
-    switch(room.gameType) {
-      case 'tic-tac-toe':
-        room.gameState = {
-          board: Array(9).fill(null),
-          currentPlayer: 0,
-          winner: null
-        };
-        break;
-      
-      case 'uno':
-        room.gameState = this.initializeUNO(room);
-        break;
-      
-      case 'poker':
-        room.gameState = this.initializePoker(room);
-        break;
-      
-      case 'go-fish':
-        room.gameState = this.initializeGoFish(room);
-        break;
-      
-      case 'plinko-multiplayer':
-        room.gameState = {
-          bets: [],
-          results: []
-        };
-        break;
-    }
-
-    this.io.to(roomId).emit('game-start', {
-      roomId,
-      gameType: room.gameType,
-      players: room.players,
-      gameState: room.gameState
+    // Notify all players
+    this.io.to(roomId).emit('game-started', { 
+      room, 
+      gameState: room.gameState 
     });
+
+    this.broadcastRoomsUpdate();
   }
 
-  // Handle game move
-  handleMove(socketId, moveData) {
-    const playerData = this.players.get(socketId);
-    if (!playerData) return { success: false, error: 'Not in a room' };
-
-    const { roomId } = playerData;
-    const room = this.rooms.get(roomId);
-    if (!room || room.status !== 'playing') {
-      return { success: false, error: 'Game not active' };
-    }
-
-    // Process move based on game type
-    const result = this.processMove(room, socketId, moveData);
-    
-    if (result.success) {
-      // Broadcast move to all players
-      this.io.to(roomId).emit('game-move', {
-        playerId: socketId,
-        move: moveData,
-        gameState: room.gameState
-      });
-
-      // Check for game end
-      if (result.gameEnded) {
-        this.endGame(roomId, result.winner);
-      }
-    }
-
-    return result;
-  }
-
-  // Process move based on game type
-  processMove(room, socketId, moveData) {
-    switch(room.gameType) {
+  initializeGameState(gameType, players) {
+    // Return initial game state based on game type
+    switch (gameType) {
       case 'tic-tac-toe':
-        return this.processTicTacToeMove(room, socketId, moveData);
+        return {
+          board: Array(9).fill(''),
+          currentPlayer: players[0].userId,
+          players: players.map(p => ({ 
+            userId: p.userId, 
+            username: p.username,
+            symbol: p.socketId === players[0].socketId ? 'X' : 'O'
+          })),
+          status: 'playing'
+        };
+      
       case 'uno':
-        return this.processUNOMove(room, socketId, moveData);
+        return {
+          deck: this.createUnoDeck(),
+          discardPile: [],
+          hands: {},
+          currentPlayer: players[0].userId,
+          direction: 1,
+          status: 'playing'
+        };
+      
       case 'poker':
-        return this.processPokerMove(room, socketId, moveData);
+        return {
+          deck: this.createPokerDeck(),
+          communityCards: [],
+          hands: {},
+          pot: 0,
+          currentBet: 0,
+          currentPlayer: players[0].userId,
+          status: 'playing'
+        };
+      
+      default:
+        return { status: 'playing' };
+    }
+  }
+
+  handleGameAction(socket, data) {
+    try {
+      const player = this.players.get(socket.id);
+      if (!player || !player.roomId) {
+        socket.emit('error', { message: 'Not in a game' });
+        return;
+      }
+
+      const room = this.rooms.get(player.roomId);
+      if (!room || room.status !== 'playing') {
+        socket.emit('error', { message: 'Game not active' });
+        return;
+      }
+
+      // Process game action based on game type
+      const processedAction = this.processGameAction(room.gameType, room.gameState, data, player.userId);
+      
+      if (processedAction.success) {
+        room.gameState = processedAction.gameState;
+        
+        // Broadcast to all players in room
+        this.io.to(player.roomId).emit('game-action', {
+          action: data.action,
+          playerId: player.userId,
+          gameState: room.gameState,
+          ...processedAction.data
+        });
+
+        // Check for game end
+        if (processedAction.gameEnd) {
+          this.endGame(player.roomId, processedAction.winner, processedAction.scores);
+        }
+      } else {
+        socket.emit('error', { message: processedAction.error || 'Invalid action' });
+      }
+    } catch (error) {
+      console.error('Error handling game action:', error);
+      socket.emit('error', { message: 'Failed to process action' });
+    }
+  }
+
+  processGameAction(gameType, gameState, action, playerId) {
+    switch (gameType) {
+      case 'tic-tac-toe':
+        return this.processTicTacToeAction(gameState, action, playerId);
+      case 'uno':
+        return this.processUnoAction(gameState, action, playerId);
+      case 'poker':
+        return this.processPokerAction(gameState, action, playerId);
       default:
         return { success: false, error: 'Unknown game type' };
     }
   }
 
-  // Process Tic Tac Toe move
-  processTicTacToeMove(room, socketId, moveData) {
-    const { position } = moveData;
-    const playerIndex = room.players.findIndex(p => p.socketId === socketId);
+  processTicTacToeAction(gameState, action, playerId) {
+    const { index } = action;
     
-    if (playerIndex !== room.gameState.currentPlayer) {
+    if (gameState.currentPlayer !== playerId) {
       return { success: false, error: 'Not your turn' };
     }
-
-    if (room.gameState.board[position] !== null) {
-      return { success: false, error: 'Position already taken' };
+    
+    if (gameState.board[index] !== '') {
+      return { success: false, error: 'Cell already taken' };
     }
 
-    // Make move
-    room.gameState.board[position] = playerIndex;
-    
+    const player = gameState.players.find(p => p.userId === playerId);
+    gameState.board[index] = player.symbol;
+
     // Check for winner
-    const winner = this.checkTicTacToeWinner(room.gameState.board);
-    if (winner !== null) {
-      room.gameState.winner = winner;
-      return { success: true, gameEnded: true, winner: room.players[winner] };
-    }
-
-    // Check for tie
-    if (room.gameState.board.every(cell => cell !== null)) {
-      return { success: true, gameEnded: true, winner: 'tie' };
-    }
-
-    // Next player's turn
-    room.gameState.currentPlayer = (room.gameState.currentPlayer + 1) % room.players.length;
+    const winner = this.checkTicTacToeWinner(gameState.board);
     
-    return { success: true, gameEnded: false };
+    if (winner) {
+      return {
+        success: true,
+        gameState,
+        gameEnd: true,
+        winner: winner.symbol,
+        scores: { [winner.userId]: 1 }
+      };
+    }
+
+    // Check for draw
+    if (gameState.board.every(cell => cell !== '')) {
+      return {
+        success: true,
+        gameState,
+        gameEnd: true,
+        winner: 'draw',
+        scores: {}
+      };
+    }
+
+    // Switch turns
+    gameState.currentPlayer = gameState.players.find(p => p.userId !== playerId).userId;
+    
+    return { success: true, gameState };
   }
 
-  // Check Tic Tac Toe winner
   checkTicTacToeWinner(board) {
-    const lines = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-      [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-      [0, 4, 8], [2, 4, 6] // diagonals
+    const winPatterns = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+      [0, 4, 8], [2, 4, 6] // Diagonals
     ];
 
-    for (const [a, b, c] of lines) {
-      if (board[a] !== null && board[a] === board[b] && board[a] === board[c]) {
-        return board[a];
+    for (const pattern of winPatterns) {
+      const [a, b, c] = pattern;
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        return { symbol: board[a], pattern };
       }
     }
+
     return null;
   }
 
-  // Initialize UNO game
-  initializeUNO(room) {
-    const colors = ['red', 'yellow', 'green', 'blue'];
+  // Chat functionality
+  handleGameChat(socket, data) {
+    try {
+      const player = this.players.get(socket.id);
+      if (!player || !player.roomId) return;
+
+      const room = this.rooms.get(player.roomId);
+      if (!room) return;
+
+      const message = {
+        userId: player.userId,
+        username: player.username,
+        text: data.message,
+        timestamp: new Date()
+      };
+
+      this.io.to(player.roomId).emit('game-chat', message);
+    } catch (error) {
+      console.error('Error handling chat:', error);
+    }
+  }
+
+  // Utility methods
+  createUnoDeck() {
+    const colors = ['red', 'blue', 'green', 'yellow'];
+    const values = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'skip', 'reverse', 'draw2'];
     const deck = [];
 
-    // Create deck
-    colors.forEach(color => {
-      deck.push({ color, value: 0 }); // One 0 per color
-      for (let i = 1; i <= 9; i++) {
-        deck.push({ color, value: i });
-        deck.push({ color, value: i }); // Two of each 1-9
+    for (const color of colors) {
+      for (const value of values) {
+        deck.push({ color, value });
+        if (value !== '0') {
+          deck.push({ color, value }); // Add duplicates except for 0
+        }
       }
-      // Special cards
-      ['skip', 'reverse', '+2'].forEach(special => {
-        deck.push({ color, value: special });
-        deck.push({ color, value: special });
-      });
-    });
+    }
 
-    // Wild cards
+    // Add wild cards
     for (let i = 0; i < 4; i++) {
       deck.push({ color: 'wild', value: 'wild' });
-      deck.push({ color: 'wild', value: '+4' });
+      deck.push({ color: 'wild', value: 'wild4' });
     }
 
-    // Shuffle deck
-    for (let i = deck.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-
-    // Deal cards
-    const hands = room.players.map(() => deck.splice(0, 7));
-    const discardPile = [deck.pop()];
-
-    return {
-      deck,
-      hands,
-      discardPile,
-      currentPlayer: 0,
-      direction: 1,
-      gameMode: room.settings.gameMode || 'classic'
-    };
+    return this.shuffleDeck(deck);
   }
 
-  // Process UNO move
-  processUNOMove(room, socketId, moveData) {
-    // UNO move logic would go here
-    return { success: true, gameEnded: false };
-  }
-
-  // Initialize Poker game
-  initializePoker(room) {
-    // Poker initialization would go here
-    return {
-      pot: 0,
-      communityCards: [],
-      playerHands: [],
-      currentBet: 0,
-      dealer: 0
-    };
-  }
-
-  // Process Poker move
-  processPokerMove(room, socketId, moveData) {
-    // Poker move logic would go here
-    return { success: true, gameEnded: false };
-  }
-
-  // Initialize Go Fish game
-  initializeGoFish(room) {
+  createPokerDeck() {
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
     const deck = [];
-    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-    const suits = ['♠', '♥', '♦', '♣'];
 
-    // Create deck
-    ranks.forEach(rank => {
-      suits.forEach(suit => {
-        deck.push({ rank, suit });
-      });
-    });
-
-    // Shuffle
-    for (let i = deck.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]];
+    for (const suit of suits) {
+      for (const rank of ranks) {
+        deck.push({ suit, rank, value: this.getCardValue(rank) });
+      }
     }
 
-    // Deal 7 cards to each player
-    const hands = room.players.map(() => deck.splice(0, 7));
-
-    return {
-      deck,
-      hands,
-      currentPlayer: 0,
-      books: room.players.map(() => [])
-    };
+    return this.shuffleDeck(deck);
   }
 
-  // End game
-  endGame(roomId, winner) {
+  getCardValue(rank) {
+    if (rank === 'A') return 14;
+    if (rank === 'K') return 13;
+    if (rank === 'Q') return 12;
+    if (rank === 'J') return 11;
+    return parseInt(rank);
+  }
+
+  shuffleDeck(deck) {
+    const shuffled = [...deck];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  endGame(roomId, winner, scores) {
     const room = this.rooms.get(roomId);
     if (!room) return;
 
     room.status = 'finished';
-    room.winner = winner;
-    room.endedAt = Date.now();
-
-    this.io.to(roomId).emit('game-end', {
-      winner,
-      gameState: room.gameState,
-      duration: room.endedAt - room.startedAt
+    
+    this.io.to(roomId).emit('game-ended', { 
+      winner, 
+      scores, 
+      room 
     });
 
-    // Clean up room after 30 seconds
+    // Remove room after a delay
     setTimeout(() => {
       this.rooms.delete(roomId);
-      room.players.forEach(p => this.players.delete(p.socketId));
-    }, 30000);
+      this.gameStates.delete(roomId);
+      this.broadcastRoomsUpdate();
+    }, 30000); // 30 seconds
   }
 
-  // Chat message
-  sendChatMessage(socketId, message) {
-    const playerData = this.players.get(socketId);
-    if (!playerData) return { success: false };
-
-    const { roomId } = playerData;
+  handlePlayerDisconnectGame(roomId, disconnectedPlayer) {
     const room = this.rooms.get(roomId);
-    if (!room) return { success: false };
+    if (!room) return;
 
-    const chatMessage = {
-      playerId: socketId,
-      username: playerData.player.username,
-      message: message.trim(),
-      timestamp: Date.now()
-    };
+    // Notify remaining players
+    this.io.to(roomId).emit('player-disconnected', { 
+      player: disconnectedPlayer 
+    });
 
-    room.chat.push(chatMessage);
-    this.io.to(roomId).emit('chat-message', chatMessage);
-
-    return { success: true };
-  }
-
-  // Add spectator
-  addSpectator(roomId, socketId) {
-    const room = this.rooms.get(roomId);
-    if (!room) return { success: false, error: 'Room not found' };
-
-    room.spectators.add(socketId);
-    this.io.sockets.sockets.get(socketId)?.join(roomId);
-
-    this.io.to(roomId).emit('spectator-joined', { socketId });
-
-    return { success: true, room: this.getRoomData(roomId) };
-  }
-
-  // Get room data for client
-  getRoomData(roomId) {
-    const room = this.rooms.get(roomId);
-    if (!room) return null;
-
-    // Get host information
-    const hostPlayer = room.players.find(p => p.socketId === room.host);
-    const hostName = hostPlayer?.username || 'Unknown Host';
-
-    return {
-      id: room.id,
-      gameType: room.gameType,
-      hostName,
-      maxPlayers: room.maxPlayers,
-      players: room.players.map(p => ({
-        username: p.username,
-        avatar: p.avatar,
-        coins: p.coins,
-        ready: p.ready
-      })),
-      status: room.status,
-      spectatorCount: room.spectators.size,
-      settings: room.settings,
-      gameUrl: `/games/${room.gameType}.html`
-    };
-  }
-
-  // Get all active rooms for a game type
-  getRoomsList(gameType) {
-    const rooms = [];
-    for (const [roomId, room] of this.rooms) {
-      if (room.gameType === gameType && room.status === 'waiting') {
-        rooms.push(this.getRoomData(roomId));
-      }
+    // End game if not enough players
+    if (room.players.length < 2) {
+      this.endGame(roomId, 'abandoned', {});
     }
-    return rooms;
+  }
+
+  handleDisconnect(socket) {
+    try {
+      const player = this.players.get(socket.id);
+      if (!player) return;
+
+      console.log(`Player disconnected: ${socket.id}`);
+
+      // Remove from matchmaking
+      if (player.matchmaking) {
+        this.handleCancelMatchmaking(socket, {});
+      }
+
+      // Leave room if in one
+      if (player.roomId) {
+        this.handleLeaveRoom(socket, {});
+      }
+
+      this.players.delete(socket.id);
+    } catch (error) {
+      console.error('Error handling disconnect:', error);
+    }
+  }
+
+  broadcastRoomsUpdate() {
+    const rooms = Array.from(this.rooms.values()).filter(room => !room.settings.isPrivate);
+    this.io.emit('rooms-list-update', { rooms });
+  }
+
+  // Get room statistics
+  getRoomStats() {
+    const rooms = Array.from(this.rooms.values());
+    return {
+      totalRooms: rooms.length,
+      activeGames: rooms.filter(r => r.status === 'playing').length,
+      waitingRooms: rooms.filter(r => r.status === 'waiting').length,
+      totalPlayers: rooms.reduce((sum, room) => sum + room.players.length, 0)
+    };
   }
 }
 

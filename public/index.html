@@ -5,6 +5,323 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GameHub - Premium Gaming Experience</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Modern Server Creation UI Styles */
+    .create-server-modal {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .server-config-grid {
+      display: grid;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .config-section {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s;
+    }
+
+    .config-section:hover {
+      border-color: #1e40af;
+      box-shadow: 0 4px 20px rgba(30, 64, 175, 0.1);
+    }
+
+    .config-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-primary);
+      font-weight: bold;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .label-icon {
+      font-size: 1.2rem;
+    }
+
+    .game-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .game-option {
+      background: #f3f4f6;
+      border: 2px solid #d1d5db;
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: #1f2937;
+      user-select: none;
+    }
+
+    .game-option:hover {
+      transform: translateY(-2px);
+      border-color: #1e40af;
+      box-shadow: 0 4px 15px rgba(30, 64, 175, 0.2);
+      background: #e5e7eb;
+    }
+
+    .game-option.selected {
+      background: linear-gradient(135deg, #1e40af, #3730a3);
+      border-color: #1e40af;
+      color: white;
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+    }
+
+    .game-emoji {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .game-name {
+      font-size: 0.9rem;
+      font-weight: bold;
+      display: block;
+    }
+
+    .modern-input {
+      width: 100%;
+      padding: 1rem 1rem 1rem 3rem;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    .modern-input:focus {
+      outline: none;
+      border-color: #1e40af;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+
+    .modern-textarea {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 1rem;
+      resize: vertical;
+      transition: all 0.3s;
+    }
+
+    .modern-textarea:focus {
+      outline: none;
+      border-color: #1e40af;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .toggle-group {
+      margin-bottom: 1rem;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      color: var(--text-primary);
+    }
+
+    .toggle-label input[type="checkbox"] {
+      display: none;
+    }
+
+    .toggle-slider {
+      width: 50px;
+      height: 26px;
+      background: var(--border-color);
+      border-radius: 13px;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: all 0.3s;
+    }
+
+    .toggle-label input[type="checkbox"]:checked + .toggle-slider {
+      background: #1e40af;
+    }
+
+    .toggle-label input[type="checkbox"]:checked + .toggle-slider::before {
+      transform: translateX(24px);
+    }
+
+    .toggle-text {
+      font-size: 0.9rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+    }
+
+    .btn-primary-create {
+      background: linear-gradient(135deg, #1e40af, #3730a3);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary-create:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(30, 64, 175, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+      border: 2px solid var(--border-color);
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-secondary:hover {
+      border-color: #1e40af;
+      background: rgba(30, 64, 175, 0.1);
+    }
+
+    .btn-icon {
+      font-size: 1.1rem;
+    }
+
+    /* Server Management Panel */
+    .server-management-panel {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .server-owner-badge {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: inline-block;
+      margin-left: 0.5rem;
+    }
+
+    .server-controls-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .server-controls-btn {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .server-controls-btn:hover {
+      border-color: #1e40af;
+    }
+
+    .server-controls-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.5rem;
+      min-width: 200px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .server-controls-menu.show {
+      display: block;
+    }
+
+    .server-control-item {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: var(--text-primary);
+    }
+
+    .server-control-item:hover {
+      background: var(--bg-card-hover);
+    }
+
+    @media (max-width: 768px) {
+      .input-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .game-selector {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .modal-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
 </head>
 <body class="dark-theme">
   <header class="header-dark">
@@ -440,45 +757,64 @@
     let activeServers = [];
     let gameHubSocket = null;
     
-    // Initialize socket connection for multiplayer (separate from main.js socket)
+    // Initialize socket connection for multiplayer
     if (typeof io !== 'undefined') {
-      gameHubSocket = io();
+      socket = io();
       
-      gameHubSocket.on('rooms-list', (data) => {
+      socket.on('rooms-list', (data) => {
         console.log('Received rooms-list:', data);
-        activeServers = data.rooms || [];
+        // Deduplicate by room ID
+        const roomMap = new Map();
+        (data.rooms || []).forEach(room => {
+          roomMap.set(room.id, room);
+        });
+        activeServers = Array.from(roomMap.values());
         updateServersList();
       });
       
-      gameHubSocket.on('rooms-list-update', (data) => {
+      socket.on('rooms-list-update', (data) => {
         console.log('Received rooms-list-update:', data);
-        activeServers = data.rooms || [];
+        // Deduplicate by room ID
+        const roomMap = new Map();
+        (data.rooms || []).forEach(room => {
+          roomMap.set(room.id, room);
+        });
+        activeServers = Array.from(roomMap.values());
         updateServersList();
       });
       
-      gameHubSocket.on('room-created', (data) => {
+      socket.on('room-created', (data) => {
+        // Reset creation lock
+        isCreatingServer = false;
+        const createBtn = document.querySelector('.btn-primary-create');
+        if (createBtn) {
+          createBtn.disabled = false;
+          createBtn.style.opacity = '1';
+        }
+        
         if (data.success) {
           showNotification('Server created successfully! 🎮', 'success');
-          refreshServers();
+          closeModal();
+          // Don't call refreshServers() - broadcastRoomsUpdate already sends the update
         } else {
           showNotification(data.error || 'Failed to create server', 'error');
           console.error('Room creation failed:', data);
         }
       });
       
-      gameHubSocket.on('room-joined', (data) => {
+      socket.on('room-joined', (data) => {
         if (data.success) {
           showNotification('Joined server successfully! 🎮', 'success');
           // Redirect to the game
-          if (data.room && data.room.gameUrl) {
-            window.location.href = data.room.gameUrl;
+          if (data.room && data.room.gameType) {
+            openGameInContainer(`/games/${data.room.gameType}.html`);
           }
         } else {
           showNotification(data.error || 'Failed to join server', 'error');
         }
       });
 
-      gameHubSocket.on('error', (data) => {
+      socket.on('error', (data) => {
         console.error('Socket error:', data);
         showNotification(data.message || 'Connection error', 'error');
       });
@@ -492,68 +828,222 @@
       }
       
       const modalContent = `
-        <div class="modal-header">
-          <h2>🎮 Create Multiplayer Server</h2>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Select Game:</label>
-            <select id="serverGameType" class="form-input">
-              ${MULTIPLAYER_GAMES.map(game => 
-                `<option value="${game.id}">${game.emoji} ${game.name}</option>`
-              ).join('')}
-            </select>
+        <div class="create-server-modal">
+          <div class="modal-header">
+            <h2>🎮 Create Multiplayer Server</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Set up your custom game server with advanced options</p>
           </div>
-          <div class="form-group">
-            <label>Server Name:</label>
-            <input type="text" id="serverName" class="form-input" placeholder="My Awesome Server" maxlength="30">
+          <div class="modal-body">
+            <div class="server-config-grid">
+              <!-- Game Selection -->
+              <div class="config-section">
+                <label class="config-label">
+                  <span class="label-icon">🎯</span>
+                  Select Game
+                </label>
+                <div class="game-selector">
+                  ${MULTIPLAYER_GAMES.map(game => 
+                    `<div class="game-option" onclick="selectGame('${game.id}', event)" data-game="${game.id}">
+                      <div class="game-emoji">${game.emoji}</div>
+                      <div class="game-name">${game.name}</div>
+                    </div>`
+                  ).join('')}
+                </div>
+                <input type="hidden" id="serverGameType" value="">
+              </div>
+
+              <!-- Basic Settings -->
+              <div class="config-section">
+                <label class="config-label">
+                  <span class="label-icon">⚙️</span>
+                  Server Settings
+                </label>
+                <div class="input-group">
+                  <input type="text" id="serverName" class="modern-input" placeholder="Enter server name..." maxlength="30" value="${currentUser.username}'s Server">
+                  <div class="input-icon">🏷️</div>
+                </div>
+                
+                <div class="input-row">
+                  <div class="input-group">
+                    <select id="maxPlayers" class="modern-input">
+                      <option value="2">2 Players</option>
+                      <option value="3">3 Players</option>
+                      <option value="4" selected>4 Players</option>
+                      <option value="6">6 Players</option>
+                      <option value="8">8 Players</option>
+                    </select>
+                    <div class="input-icon">👥</div>
+                  </div>
+                  
+                  <div class="input-group">
+                    <select id="gameMode" class="modern-input">
+                      <option value="casual">Casual</option>
+                      <option value="competitive">Competitive</option>
+                      <option value="tournament">Tournament</option>
+                    </select>
+                    <div class="input-icon">🏆</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Advanced Settings -->
+              <div class="config-section">
+                <label class="config-label">
+                  <span class="label-icon">🔧</span>
+                  Advanced Options
+                </label>
+                
+                <div class="toggle-group">
+                  <label class="toggle-label">
+                    <input type="checkbox" id="isPrivate">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Private Server (Invite only)</span>
+                  </label>
+                </div>
+
+                <div class="toggle-group">
+                  <label class="toggle-label">
+                    <input type="checkbox" id="allowSpectators" checked>
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Allow Spectators</span>
+                  </label>
+                </div>
+
+                <div class="toggle-group">
+                  <label class="toggle-label">
+                    <input type="checkbox" id="autoStart" checked>
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Auto-start when full</span>
+                  </label>
+                </div>
+
+                <div class="input-group">
+                  <input type="password" id="serverPassword" class="modern-input" placeholder="Server password (optional)">
+                  <div class="input-icon">🔒</div>
+                </div>
+              </div>
+
+              <!-- Server Rules -->
+              <div class="config-section">
+                <label class="config-label">
+                  <span class="label-icon">📋</span>
+                  Server Rules
+                </label>
+                <textarea id="serverRules" class="modern-textarea" placeholder="Enter server rules (optional)..." rows="3"></textarea>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="modal-actions">
+              <button onclick="createServer()" class="btn-primary-create">
+                <span class="btn-icon">🚀</span>
+                Create Server
+              </button>
+              <button onclick="closeModal()" class="btn-secondary">
+                Cancel
+              </button>
+            </div>
           </div>
-          <div class="form-group">
-            <label>Max Players:</label>
-            <select id="maxPlayers" class="form-input">
-              <option value="2">2 Players</option>
-              <option value="3">3 Players</option>
-              <option value="4" selected>4 Players</option>
-              <option value="6">6 Players</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="isPrivate"> Private Server (Invite only)
-            </label>
-          </div>
-          <button onclick="createServer()" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create Server</button>
         </div>
       `;
       
       document.getElementById('modalContent').innerHTML = modalContent;
       document.getElementById('authModal').style.display = 'block';
+      
+      // Initialize first game selection
+      if (MULTIPLAYER_GAMES.length > 0) {
+        selectGame(MULTIPLAYER_GAMES[0].id);
+      }
     }
     
+    function selectGame(gameId, event) {
+      // Prevent event bubbling issues
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      
+      console.log('Selecting game:', gameId);
+      
+      // Clear previous selection
+      document.querySelectorAll('.game-option').forEach(option => {
+        option.classList.remove('selected');
+      });
+      
+      // Select new game
+      const selectedOption = document.querySelector(`[data-game="${gameId}"]`);
+      if (selectedOption) {
+        selectedOption.classList.add('selected');
+        document.getElementById('serverGameType').value = gameId;
+        console.log('Game selected:', gameId);
+      }
+    }
+    
+    let isCreatingServer = false; // Prevent duplicate submissions
+    
     function createServer() {
-      if (!gameHubSocket) {
-        showNotification('Connection error. Please refresh the page.', 'error');
+      if (!currentUser) {
+        showNotification('Please login to create a server', 'error');
+        showLoginModal();
+        return;
+      }
+
+      // Prevent duplicate submissions
+      if (isCreatingServer) {
+        showNotification('Server creation in progress...', 'warning');
         return;
       }
 
       const gameType = document.getElementById('serverGameType').value;
       const serverName = document.getElementById('serverName').value || currentUser.username + "'s Server";
       const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+      const gameMode = document.getElementById('gameMode').value;
       const isPrivate = document.getElementById('isPrivate').checked;
+      const allowSpectators = document.getElementById('allowSpectators').checked;
+      const autoStart = document.getElementById('autoStart').checked;
+      const serverPassword = document.getElementById('serverPassword').value;
+      const serverRules = document.getElementById('serverRules').value;
       
-      console.log('Creating server with:', { gameType, serverName, maxPlayers, isPrivate });
+      if (!gameType) {
+        showNotification('Please select a game', 'error');
+        return;
+      }
       
-      gameHubSocket.emit('create-room', {
-        gameType,
+      console.log('Creating server with:', { 
+        gameType, serverName, maxPlayers, gameMode, isPrivate, 
+        allowSpectators, autoStart, hasPassword: !!serverPassword 
+      });
+      
+      // Set lock and show loading state
+      isCreatingServer = true;
+      showNotification('Creating server...', 'info');
+      
+      // Disable create button during submission
+      const createBtn = document.querySelector('.btn-primary-create');
+      if (createBtn) {
+        createBtn.disabled = true;
+        createBtn.style.opacity = '0.5';
+      }
+      
+      // Create room with enhanced settings
+      socket.emit('create-room', {
+        gameType: gameType,
         playerData: {
           userId: currentUser.id,
           username: currentUser.username,
-          coins: userCoins
+          coins: userCoins,
+          isOwner: true
         },
         settings: {
           name: serverName,
-          maxPlayers,
-          isPrivate
+          maxPlayers: maxPlayers,
+          isPrivate: isPrivate,
+          gameMode: gameMode,
+          allowSpectators: allowSpectators,
+          autoStart: autoStart,
+          password: serverPassword,
+          rules: serverRules,
+          ownerId: currentUser.id
         }
       });
       
@@ -561,12 +1051,10 @@
     }
     
     function refreshServers() {
-      if (gameHubSocket) {
+      if (socket) {
         console.log('Refreshing servers...');
-        // Request servers for all multiplayer games
-        MULTIPLAYER_GAMES.forEach(game => {
-          gameHubSocket.emit('get-rooms', { gameType: game.id });
-        });
+        // Request all servers once (no gameType filter)
+        socket.emit('get-rooms', {});
       } else {
         console.warn('Socket not ready for server refresh');
       }
@@ -579,8 +1067,9 @@
         return;
       }
       
-      if (gameHubSocket) {
-        gameHubSocket.emit('join-room', {
+      if (socket) {
+        showNotification('Joining server...', 'info');
+        socket.emit('join-room', {
           roomId,
           playerData: {
             userId: currentUser.id,
@@ -597,50 +1086,137 @@
       const container = document.getElementById('serversContainer');
       const countEl = document.getElementById('serverCount');
       
-      if (!activeServers || activeServers.length === 0) {
-        container.innerHTML = `
-          <div class="no-servers-message">
-            <div class="no-servers-icon">🎯</div>
-            <h3>No Active Servers</h3>
-            <p>Be the first to create a multiplayer game server!</p>
-          </div>
-        `;
-        countEl.textContent = '0 Active';
-        return;
-      }
+      if (!container || !countEl) return;
       
       countEl.textContent = activeServers.length + ' Active';
       
       container.innerHTML = activeServers.map(server => {
         const statusClass = server.status === 'playing' ? 'playing' : 'waiting';
         const statusText = server.status === 'playing' ? 'In Progress' : 'Waiting';
+        const isOwner = currentUser && server.settings?.ownerId === currentUser.id;
+        const gameInfo = MULTIPLAYER_GAMES.find(g => g.id === server.gameType);
         
         return `
           <div class="server-card ${statusClass}">
             <div class="server-header">
-              <div class="server-game">${GAME_EMOJIS[server.gameType] || '🎮'} ${server.settings?.name || 'Unnamed Server'}</div>
+              <div class="server-game">
+                ${gameInfo?.emoji || '🎮'} ${server.settings?.name || 'Unnamed Server'}
+                ${isOwner ? '<span class="server-owner-badge">OWNER</span>' : ''}
+              </div>
               <div class="server-status ${statusClass}">${statusText}</div>
             </div>
             <div class="server-info">
               <div class="server-players">
                 <span class="info-icon">👥</span>
-                <span>${server.players.length}/${server.maxPlayers}</span>
+                <span>${server.players.length}/${server.settings.maxPlayers || 2}</span>
               </div>
               <div class="server-host">
                 <span class="info-icon">👑</span>
-                <span>${server.hostName || 'Host'}</span>
+                <span>${server.host?.username || 'Host'}</span>
               </div>
+              ${server.settings?.gameMode ? `
+                <div class="server-mode">
+                  <span class="info-icon">🏆</span>
+                  <span>${server.settings.gameMode}</span>
+                </div>
+              ` : ''}
+              ${server.settings?.password ? `
+                <div class="server-locked">
+                  <span class="info-icon">🔒</span>
+                  <span>Private</span>
+                </div>
+              ` : ''}
             </div>
-            <button 
-              class="join-server-btn" 
-              onclick="joinServer('${server.id}')"
-              ${server.status === 'playing' || server.players.length >= server.maxPlayers ? 'disabled' : ''}
-            >
-              ${server.status === 'playing' ? '⏸️ In Progress' : server.players.length >= server.maxPlayers ? '🔒 Full' : '▶️ Join Server'}
-            </button>
+            <div class="server-actions">
+              ${isOwner ? `
+                <div class="server-controls-dropdown">
+                  <button class="server-controls-btn" onclick="toggleServerMenu('${server.id}')">
+                    ⚙️ Manage
+                  </button>
+                  <div id="menu-${server.id}" class="server-controls-menu">
+                    <div class="server-control-item" onclick="startServer('${server.id}')">
+                      ▶️ Start Game
+                    </div>
+                    <div class="server-control-item" onclick="kickPlayer('${server.id}')">
+                      👢 Kick Player
+                    </div>
+                    <div class="server-control-item" onclick="editServerSettings('${server.id}')">
+                      ✏️ Edit Settings
+                    </div>
+                    <div class="server-control-item" onclick="closeServer('${server.id}')">
+                      ❌ Close Server
+                    </div>
+                  </div>
+                </div>
+              ` : `
+                <button 
+                  class="join-server-btn" 
+                  onclick="joinServer('${server.id}')"
+                  ${server.status === 'playing' || server.players.length >= server.maxPlayers ? 'disabled' : ''}
+                >
+                  ${server.status === 'playing' ? '⏸️ In Progress' : server.players.length >= server.maxPlayers ? '🔒 Full' : '▶️ Join Server'}
+                </button>
+              `}
+            </div>
+            ${server.settings?.rules ? `
+              <div class="server-rules">
+                <strong>Rules:</strong> ${server.settings.rules}
+              </div>
+            ` : ''}
           </div>
         `;
       }).join('');
+    }
+    
+    function toggleServerMenu(serverId) {
+      const menu = document.getElementById(`menu-${serverId}`);
+      // Close all other menus
+      document.querySelectorAll('.server-controls-menu').forEach(m => {
+        if (m !== menu) m.classList.remove('show');
+      });
+      // Toggle current menu
+      menu.classList.toggle('show');
+    }
+    
+    function startServer(serverId) {
+      socket.emit('server-action', {
+        action: 'start-game',
+        roomId: serverId,
+        ownerId: currentUser.id
+      });
+      showNotification('Starting game...', 'info');
+      toggleServerMenu(serverId);
+    }
+    
+    function kickPlayer(serverId) {
+      const playerToKick = prompt('Enter username of player to kick:');
+      if (playerToKick) {
+        socket.emit('server-action', {
+          action: 'kick-player',
+          roomId: serverId,
+          ownerId: currentUser.id,
+          targetUsername: playerToKick
+        });
+        showNotification(`Kicking ${playerToKick}...`, 'info');
+      }
+      toggleServerMenu(serverId);
+    }
+    
+    function editServerSettings(serverId) {
+      showNotification('Edit settings feature coming soon!', 'info');
+      toggleServerMenu(serverId);
+    }
+    
+    function closeServer(serverId) {
+      if (confirm('Are you sure you want to close this server? All players will be disconnected.')) {
+        socket.emit('server-action', {
+          action: 'close-server',
+          roomId: serverId,
+          ownerId: currentUser.id
+        });
+        showNotification('Closing server...', 'info');
+      }
+      toggleServerMenu(serverId);
     }
     
     // Load servers on page load

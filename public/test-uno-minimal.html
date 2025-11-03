@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNO Test - Minimal</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    body {
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .test-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .mode-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      margin: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .mode-btn:hover {
+      background: var(--accent-purple);
+    }
+    .game-area {
+      background: var(--bg-card);
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      display: none;
+    }
+    .debug {
+      background: var(--bg-dark-secondary);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🎴 UNO Game Mode Test</h1>
+    <p>Testing if game mode buttons work...</p>
+    
+    <button class="mode-btn" onclick="testComputerMode()">Test vs Computer</button>
+    <button class="mode-btn" onclick="testLocalMode()">Test Local Multiplayer</button>
+    <button class="mode-btn" onclick="testOnlineMode()">Test Online Multiplayer</button>
+    <button class="mode-btn" onclick="testTurboMode()">Test Turbo Mode</button>
+    
+    <div id="gameArea" class="game-area">
+      <h2>Game Started!</h2>
+      <p id="gameModeText"></p>
+      <p id="gameStateText"></p>
+    </div>
+    
+    <div id="debug" class="debug">
+      Debug output will appear here...
+    </div>
+  </div>
+
+  <script>
+    let debugLog = [];
+    
+    function debug(message) {
+      debugLog.push(`[${new Date().toLocaleTimeString()}] ${message}`);
+      updateDebug();
+      console.log(message);
+    }
+    
+    function updateDebug() {
+      document.getElementById('debug').innerHTML = debugLog.join('<br>');
+    }
+    
+    // Test functions
+    function testComputerMode() {
+      debug('Testing Computer Mode...');
+      try {
+        document.getElementById('gameArea').style.display = 'block';
+        document.getElementById('gameModeText').textContent = 'Mode: vs Computer';
+        document.getElementById('gameStateText').textContent = 'AI opponent would be initialized here';
+        debug('✅ Computer Mode: SUCCESS - Game area shown');
+      } catch (error) {
+        debug(`❌ Computer Mode: ERROR - ${error.message}`);
+      }
+    }
+    
+    function testLocalMode() {
+      debug('Testing Local Mode...');
+      try {
+        document.getElementById('gameArea').style.display = 'block';
+        document.getElementById('gameModeText').textContent = 'Mode: Local Multiplayer';
+        document.getElementById('gameStateText').textContent = 'Local multiplayer would start here';
+        debug('✅ Local Mode: SUCCESS - Game area shown');
+      } catch (error) {
+        debug(`❌ Local Mode: ERROR - ${error.message}`);
+      }
+    }
+    
+    function testOnlineMode() {
+      debug('Testing Online Mode...');
+      try {
+        document.getElementById('gameArea').style.display = 'block';
+        document.getElementById('gameModeText').textContent = 'Mode: Online Multiplayer';
+        document.getElementById('gameStateText').textContent = 'Online matchmaking would start here';
+        debug('✅ Online Mode: SUCCESS - Game area shown');
+      } catch (error) {
+        debug(`❌ Online Mode: ERROR - ${error.message}`);
+      }
+    }
+    
+    function testTurboMode() {
+      debug('Testing Turbo Mode...');
+      try {
+        document.getElementById('gameArea').style.display = 'block';
+        document.getElementById('gameModeText').textContent = 'Mode: Turbo';
+        document.getElementById('gameStateText').textContent = 'Turbo mode with timers would start here';
+        debug('✅ Turbo Mode: SUCCESS - Game area shown');
+      } catch (error) {
+        debug(`❌ Turbo Mode: ERROR - ${error.message}`);
+      }
+    }
+    
+    // Initialize
+    window.addEventListener('load', () => {
+      debug('Page loaded successfully');
+      debug('Click buttons to test game modes');
+    });
+  </script>
+</body>
+</html>

@@ -3,82 +3,265 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>European Roulette</title>
+  <title>Enhanced Roulette Multiplayer</title>
+  <link rel="stylesheet" href="/styles.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #0a5c0a;
-      color: #fff;
-      padding: 15px;
-      overflow-x: hidden;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .back-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: #1a4d1a;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      z-index: 1000;
-    }
-    .game-container {
-      max-width: 100%;
+    .game-wrapper {
+      max-width: 1400px;
       margin: 0 auto;
-      padding-top: 60px;
-      flex: 1;
+      padding: 2rem;
+      background: var(--bg-card);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .game-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .game-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ef4444, #f59e0b, #eab308);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+    }
+
+    .game-modes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .mode-card {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mode-card:hover {
+      transform: translateY(-5px);
+      border-color: #ef4444;
+      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+    }
+
+    .mode-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .mode-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .mode-description {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .mode-btn {
+      background: linear-gradient(135deg, #ef4444, #f59e0b);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+
+    .mode-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .game-area {
+      display: none;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr 300px;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Left Panel */
+    .left-panel {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .panel-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .balance-card {
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .balance-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 0.5rem;
+    }
+
+    .balance-amount {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .chip-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .section-label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .chip-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .chip-btn {
+      padding: 0.8rem;
+      border-radius: 50%;
+      border: 3px dashed white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .chip-btn.active {
+      transform: scale(1.2);
+      box-shadow: 0 0 20px currentColor;
+    }
+
+    .chip-1 { background: #ef4444; border-color: #dc2626; }
+    .chip-5 { background: #3b82f6; border-color: #2563eb; }
+    .chip-10 { background: #22c55e; border-color: #16a34a; }
+    .chip-25 { background: #f59e0b; border-color: #d97706; }
+    .chip-100 { background: #8b5cf6; border-color: #7c3aed; }
+
+    .game-controls {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      overflow-y: auto;
+      gap: 0.8rem;
     }
-    .header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .title { 
-      font-size: clamp(28px, 5vw, 42px); 
-      margin-bottom: 15px; 
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); 
-    }
-    .stats-bar {
-      display: flex;
-      justify-content: space-around;
-      background: #1a4d1a;
-      padding: 15px;
+
+    .control-btn {
+      padding: 1rem;
+      border: none;
       border-radius: 12px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
     }
-    .stat-item {
+
+    .btn-spin {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    .btn-clear {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+    }
+
+    .control-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .control-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Center Panel */
+    .center-panel {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .game-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
       text-align: center;
-      flex: 1;
-      min-width: 100px;
     }
-    .stat-label { 
-      font-size: clamp(10px, 2vw, 12px); 
-      opacity: 0.8; 
-      margin-bottom: 5px; 
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
     }
-    .stat-value { 
-      font-size: clamp(16px, 3vw, 24px); 
-      font-weight: bold; 
-      color: #fbbf24; 
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--text-primary);
     }
+
     .wheel-section {
       display: flex;
       justify-content: center;
-      margin: 20px 0;
+      margin: 2rem 0;
       position: relative;
     }
+
     .wheel-pointer {
       position: absolute;
       top: -15px;
@@ -92,19 +275,20 @@
       z-index: 10;
       filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
     }
+
     .wheel-container {
       position: relative;
-      width: 80vw;
-      max-width: 400px;
-      height: 80vw;
-      max-height: 400px;
+      width: 400px;
+      height: 400px;
     }
+
     #wheelCanvas {
       border-radius: 50%;
       box-shadow: 0 0 30px rgba(251, 191, 36, 0.5), inset 0 0 50px rgba(0, 0, 0, 0.8);
       width: 100%;
       height: 100%;
     }
+
     .ball {
       position: absolute;
       width: 20px;
@@ -114,62 +298,36 @@
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
       display: none;
     }
+
     .winning-number {
       text-align: center;
-      font-size: 48px;
+      font-size: 3rem;
       font-weight: bold;
-      margin: 20px 0;
-      padding: 20px;
-      background: #1a4d1a;
+      margin: 2rem 0;
+      padding: 2rem;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
       border-radius: 12px;
       display: none;
     }
+
     .betting-section {
-      background: #0a5c0a;
-      padding: 20px;
-      border-radius: 12px;
-      flex-shrink: 0;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-top: 2rem;
+      width: 100%;
     }
-    .bet-controls {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .chip-btn {
-      width: clamp(50px, 10vw, 60px);
-      height: clamp(50px, 10vw, 60px);
-      border-radius: 50%;
-      border: 4px dashed #fff;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: clamp(12px, 2vw, 14px);
-    }
-    .chip-btn.active { transform: scale(1.2); box-shadow: 0 0 20px currentColor; }
-    .chip-1 { background: #ef4444; border-color: #dc2626; }
-    .chip-5 { background: #3b82f6; border-color: #2563eb; }
-    .chip-10 { background: #22c55e; border-color: #16a34a; }
-    .chip-25 { background: #f59e0b; border-color: #d97706; }
-    .chip-100 { background: #8b5cf6; border-color: #7c3aed; }
+
     .betting-table {
       display: grid;
       grid-template-columns: 40px repeat(12, 1fr);
       gap: 2px;
       max-width: 100%;
-      margin: 0 auto 20px;
-      overflow-x: auto;
+      margin: 0 auto 2rem;
     }
-    @media (max-width: 768px) {
-      .betting-table {
-        grid-template-columns: 30px repeat(12, 1fr);
-        gap: 1px;
-      }
-    }
+
     .bet-cell {
       aspect-ratio: 1;
       display: flex;
@@ -177,46 +335,53 @@
       justify-content: center;
       font-weight: bold;
       cursor: pointer;
-      border: 2px solid #1a4d1a;
+      border: 2px solid var(--border-color);
       position: relative;
       transition: all 0.2s;
       min-height: 40px;
-      font-size: clamp(10px, 2vw, 14px);
+      font-size: 0.9rem;
     }
-    .bet-cell:hover { transform: scale(1.05); box-shadow: 0 0 10px rgba(251, 191, 36, 0.8); }
+
+    .bet-cell:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+    }
+
     .bet-cell.green { background: #22c55e; }
     .bet-cell.red { background: #ef4444; }
     .bet-cell.black { background: #1f2937; }
+
     .outside-bets {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
       max-width: 100%;
-      margin: 20px auto;
+      margin: 2rem auto;
     }
-    @media (max-width: 768px) {
-      .outside-bets {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-      }
-    }
+
     .outside-bet {
-      padding: 15px;
+      padding: 1rem;
       font-weight: bold;
       cursor: pointer;
-      border: 3px solid #1a4d1a;
+      border: 3px solid var(--border-color);
       border-radius: 8px;
       text-align: center;
       transition: all 0.2s;
-      font-size: clamp(12px, 2vw, 14px);
+      font-size: 0.9rem;
     }
-    .outside-bet:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); }
+
+    .outside-bet:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
     .outside-bet.red-bet { background: #ef4444; }
     .outside-bet.black-bet { background: #1f2937; }
     .outside-bet.even-bet { background: #3b82f6; }
     .outside-bet.odd-bet { background: #f59e0b; }
     .outside-bet.low-bet { background: #22c55e; }
     .outside-bet.high-bet { background: #8b5cf6; }
+
     .chip-marker {
       position: absolute;
       top: 50%;
@@ -233,154 +398,474 @@
       font-weight: bold;
       pointer-events: none;
     }
-    .action-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 20px;
-      flex-wrap: wrap;
+
+    /* Right Panel */
+    .right-panel {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
     }
-    .action-btn {
-      padding: clamp(10px, 2vw, 15px) clamp(20px, 5vw, 40px);
-      font-size: clamp(14px, 2.5vw, 18px);
-      font-weight: bold;
-      border: none;
+
+    .multiplayer-section {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
       border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      display: none;
     }
-    .spin-btn { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
-    .clear-btn { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
-    .action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); }
-    .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .opponent-info {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .opponent-name {
+      font-weight: bold;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .opponent-status {
+      font-size: 1.2rem;
+      color: #ef4444;
+    }
+
+    .history-section {
+      margin-top: 1.5rem;
+    }
+
+    .history-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-number {
+      font-size: 1.5rem;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+    }
+
+    .history-number.green { background: #22c55e; color: white; }
+    .history-number.red { background: #ef4444; color: white; }
+    .history-number.black { background: #1f2937; color: white; }
+
+    .history-details {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
     .hot-cold {
       display: flex;
       flex-direction: column;
-      gap: 15px;
-      margin: 20px 0;
+      gap: 1rem;
+      margin-top: 1.5rem;
     }
-    @media (min-width: 768px) {
-      .hot-cold {
-        flex-direction: row;
-      }
-    }
+
     .hot-numbers, .cold-numbers {
-      flex: 1;
-      background: #1a4d1a;
-      padding: 15px;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
       border-radius: 12px;
+      padding: 1rem;
     }
-    .hot-numbers h3 { color: #ef4444; }
-    .cold-numbers h3 { color: #3b82f6; }
+
+    .hot-numbers h3 { color: #ef4444; margin-bottom: 0.5rem; }
+    .cold-numbers h3 { color: #3b82f6; margin-bottom: 0.5rem; }
+
     .number-list {
       display: flex;
-      gap: 8px;
+      gap: 0.5rem;
       flex-wrap: wrap;
-      margin-top: 10px;
     }
+
     .number-badge {
-      padding: 6px 10px;
+      padding: 0.5rem;
       border-radius: 6px;
       font-weight: bold;
       background: rgba(255, 255, 255, 0.1);
-      font-size: clamp(10px, 2vw, 12px);
+      font-size: 0.8rem;
+    }
+
+    .power-ups {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .power-up {
+      background: var(--bg-card-hover);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .power-up:hover {
+      transform: translateY(-2px);
+      border-color: #ef4444;
+    }
+
+    .power-up.active {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .power-up-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .power-up-name {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      font-weight: bold;
+    }
+
+    .power-up-cost {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 1200px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
-<body>
-  <button class="back-btn" onclick="window.location.href='/ghub'">← Back</button>
-  
-  <div class="game-container">
-    <div class="header">
-      <div class="title">🎰 EUROPEAN ROULETTE</div>
+<body class="dark-theme">
+  <header class="header-dark">
+    <div class="header-container">
+      <div class="logo"><h1>🎰 ENHANCED ROULETTE</h1></div>
+      <div id="authSection" class="auth-buttons"></div>
     </div>
+  </header>
 
-    <div class="stats-bar">
-      <div class="stat-item">
-        <div class="stat-label">Balance</div>
-        <div class="stat-value">$<span id="balance">5000</span></div>
+  <main class="container-dark">
+    <div class="game-wrapper">
+      <div class="game-header">
+        <h1 class="game-title">Enhanced Roulette Multiplayer</h1>
+        <p style="color: var(--text-secondary);">Classic European roulette with enhanced features!</p>
       </div>
-      <div class="stat-item">
-        <div class="stat-label">Total Bet</div>
-        <div class="stat-value">$<span id="totalBet">0</span></div>
+
+      <!-- Game Mode Selection -->
+      <div id="modeSelection" class="game-modes">
+        <div class="mode-card">
+          <span class="mode-icon">🎰</span>
+          <div class="mode-title">European Roulette</div>
+          <div class="mode-description">Classic single-zero roulette with authentic gameplay</div>
+          <button class="mode-btn" onclick="startEuropeanMode()">Play European</button>
+        </div>
+
+        <div class="mode-card">
+          <span class="mode-icon">⚡</span>
+          <div class="mode-title">Speed Roulette</div>
+          <div class="mode-description">Fast-paced spins with instant results</div>
+          <button class="mode-btn" onclick="startSpeedMode()">Speed Mode</button>
+        </div>
+
+        <div class="mode-card">
+          <span class="mode-icon">👥</span>
+          <div class="mode-title">Multiplayer Battle</div>
+          <div class="mode-description">Compete against other players</div>
+          <button class="mode-btn" onclick="startMultiplayer()">Find Match</button>
+        </div>
+
+        <div class="mode-card">
+          <span class="mode-icon">💎</span>
+          <div class="mode-title">VIP Table</div>
+          <div class="mode-description">High stakes exclusive table</div>
+          <button class="mode-btn" onclick="startVIPMode()">VIP Table</button>
+        </div>
       </div>
-      <div class="stat-item">
-        <div class="stat-label">Last Win</div>
-        <div class="stat-value">$<span id="lastWin">0</span></div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Spins</div>
-        <div class="stat-value" id="spins">0</div>
+
+      <!-- Game Area -->
+      <div id="gameArea" class="game-area">
+        <div class="game-layout">
+          <!-- Left Panel -->
+          <div class="left-panel">
+            <div class="panel-title">💰 Game Settings</div>
+            
+            <div class="balance-card">
+              <div class="balance-label">BALANCE</div>
+              <div class="balance-amount">$<span id="balance">1000</span></div>
+            </div>
+
+            <div class="chip-section">
+              <label class="section-label">SELECT CHIP VALUE</label>
+              <div class="chip-controls">
+                <button class="chip-btn chip-1 active" onclick="selectChip(1)">$1</button>
+                <button class="chip-btn chip-5" onclick="selectChip(5)">$5</button>
+                <button class="chip-btn chip-10" onclick="selectChip(10)">$10</button>
+                <button class="chip-btn chip-25" onclick="selectChip(25)">$25</button>
+                <button class="chip-btn chip-100" onclick="selectChip(100)">$100</button>
+              </div>
+            </div>
+
+            <div class="game-controls">
+              <button class="control-btn btn-spin" id="spinBtn" onclick="spin()">
+                🎰 SPIN WHEEL
+              </button>
+              <button class="control-btn btn-clear" onclick="clearBets()">
+                🗑️ CLEAR BETS
+              </button>
+            </div>
+          </div>
+
+          <!-- Center Panel -->
+          <div class="center-panel">
+            <div class="game-stats">
+              <div class="stat-card">
+                <div class="stat-label">🏆 Wins</div>
+                <div class="stat-value" id="winsCount">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">💰 Total Bet</div>
+                <div class="stat-value" id="totalBet">$0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">🎯 Last Win</div>
+                <div class="stat-value" id="lastWin">$0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">🔄 Spins</div>
+                <div class="stat-value" id="spins">0</div>
+              </div>
+            </div>
+
+            <div class="wheel-section">
+              <div class="wheel-pointer"></div>
+              <div class="wheel-container">
+                <canvas id="wheelCanvas" width="400" height="400"></canvas>
+                <div class="ball" id="ball"></div>
+              </div>
+            </div>
+
+            <div class="winning-number" id="winningNumber"></div>
+
+            <div class="betting-section">
+              <div class="betting-table" id="bettingTable"></div>
+              
+              <div class="outside-bets">
+                <div class="outside-bet red-bet" onclick="placeBet('red', 1)">RED (1:1)</div>
+                <div class="outside-bet black-bet" onclick="placeBet('black', 1)">BLACK (1:1)</div>
+                <div class="outside-bet even-bet" onclick="placeBet('even', 1)">EVEN (1:1)</div>
+                <div class="outside-bet odd-bet" onclick="placeBet('odd', 1)">ODD (1:1)</div>
+                <div class="outside-bet low-bet" onclick="placeBet('low', 1)">1-18 (1:1)</div>
+                <div class="outside-bet high-bet" onclick="placeBet('high', 1)">19-36 (1:1)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Panel -->
+          <div class="right-panel">
+            <div class="panel-title">📊 Game Info</div>
+            
+            <div class="multiplayer-section" id="multiplayerSection">
+              <div class="opponent-info">
+                <div class="opponent-name" id="opponentName">Waiting...</div>
+                <div class="opponent-status" id="opponentStatus">Ready to play</div>
+              </div>
+            </div>
+
+            <div class="history-section">
+              <div class="panel-title">📈 Spin History</div>
+              <div class="history-list" id="historyList">
+                <p style="text-align: center; color: var(--text-secondary); padding: 1rem;">No spins yet</p>
+              </div>
+            </div>
+
+            <div class="hot-cold">
+              <div class="hot-numbers">
+                <h3>🔥 Hot Numbers</h3>
+                <div class="number-list" id="hotNumbers"></div>
+              </div>
+              <div class="cold-numbers">
+                <h3>❄️ Cold Numbers</h3>
+                <div class="number-list" id="coldNumbers"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Power-ups -->
+        <div class="power-ups">
+          <div class="power-up" onclick="activatePowerUp('lucky')">
+            <div class="power-up-icon">🍀</div>
+            <div class="power-up-name">Lucky</div>
+            <div class="power-up-cost">50 coins</div>
+          </div>
+          <div class="power-up" onclick="activatePowerUp('double')">
+            <div class="power-up-icon">✨</div>
+            <div class="power-up-name">Double Win</div>
+            <div class="power-up-cost">75 coins</div>
+          </div>
+          <div class="power-up" onclick="activatePowerUp('predict')">
+            <div class="power-up-icon">🔮</div>
+            <div class="power-up-name">Predict</div>
+            <div class="power-up-cost">100 coins</div>
+          </div>
+        </div>
       </div>
     </div>
+  </main>
 
-    <div class="wheel-section">
-      <div class="wheel-pointer"></div>
-      <div class="wheel-container">
-        <canvas id="wheelCanvas" width="400" height="400"></canvas>
-        <div class="ball" id="ball"></div>
-      </div>
-    </div>
-
-    <div class="winning-number" id="winningNumber"></div>
-
-    <div class="betting-section">
-      <div class="bet-controls">
-        <button class="chip-btn chip-1 active" onclick="selectChip(1)">$1</button>
-        <button class="chip-btn chip-5" onclick="selectChip(5)">$5</button>
-        <button class="chip-btn chip-10" onclick="selectChip(10)">$10</button>
-        <button class="chip-btn chip-25" onclick="selectChip(25)">$25</button>
-        <button class="chip-btn chip-100" onclick="selectChip(100)">$100</button>
-      </div>
-
-      <div class="betting-table" id="bettingTable"></div>
-      
-      <div class="outside-bets">
-        <div class="outside-bet red-bet" onclick="placeBet('red', 1)">RED (1:1)</div>
-        <div class="outside-bet black-bet" onclick="placeBet('black', 1)">BLACK (1:1)</div>
-        <div class="outside-bet even-bet" onclick="placeBet('even', 1)">EVEN (1:1)</div>
-        <div class="outside-bet odd-bet" onclick="placeBet('odd', 1)">ODD (1:1)</div>
-        <div class="outside-bet low-bet" onclick="placeBet('low', 1)">1-18 (1:1)</div>
-        <div class="outside-bet high-bet" onclick="placeBet('high', 1)">19-36 (1:1)</div>
-      </div>
-
-      <div class="action-buttons">
-        <button class="action-btn spin-btn" id="spinBtn" onclick="spin()">SPIN</button>
-        <button class="action-btn clear-btn" onclick="clearBets()">CLEAR BETS</button>
-      </div>
-    </div>
-
-    <div class="hot-cold">
-      <div class="hot-numbers">
-        <h3>🔥 Hot Numbers</h3>
-        <div class="number-list" id="hotNumbers"></div>
-      </div>
-      <div class="cold-numbers">
-        <h3>❄️ Cold Numbers</h3>
-        <div class="number-list" id="coldNumbers"></div>
-      </div>
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalContent"></div>
     </div>
   </div>
 
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
   <script>
+    // Ensure global variables are defined (fallback if main.js fails)
+    if (typeof currentUser === 'undefined') {
+      window.currentUser = null;
+    }
+    if (typeof userCoins === 'undefined') {
+      window.userCoins = 1000;
+    }
+    
+    // Enhanced Game State
+    let gameState = {
+      mode: null,
+      balance: 1000,
+      currentChip: 1,
+      bets: {},
+      totalBet: 0,
+      wins: 0,
+      spins: 0,
+      history: [],
+      numberCounts: {},
+      spinning: false,
+      powerUps: {
+        lucky: false,
+        double: false,
+        predict: false
+      },
+      multiplayer: {
+        roomId: null,
+        opponent: null,
+        opponentScore: 0
+      }
+    };
+
+    // Socket is already declared in main.js, just make sure it's initialized
+    if (!socket) {
+      socket = io();
+    }
+    
     const redNumbers = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
     const layout = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
-    
-    let balance = 5000;
-    let currentChip = 1;
-    let bets = {};
-    let totalBet = 0;
-    let spins = 0;
-    let history = [];
-    let numberCounts = {};
-    let spinning = false;
 
-    // Initialize wheel
-    const canvas = document.getElementById('wheelCanvas');
-    const ctx = canvas.getContext('2d');
-    drawWheel(0);
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      setupSocketListeners();
+      initializeWheel();
+      updateDisplay();
+    });
+
+    function setupSocketListeners() {
+      socket.on('match-found', (data) => {
+        console.log('Roulette match found:', data);
+        gameState.mode = 'multiplayer';
+        gameState.multiplayer.roomId = data.roomId;
+        gameState.multiplayer.opponent = data.opponent;
+        
+        document.getElementById('modeSelection').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'block';
+        document.getElementById('multiplayerSection').style.display = 'block';
+        document.getElementById('opponentName').textContent = data.opponent.username;
+        
+        showNotification('🎮 Opponent found! Get ready to compete!', 'success');
+      });
+
+      socket.on('game-action', (data) => {
+        handleMultiplayerAction(data);
+      });
+
+      socket.on('error', (data) => {
+        showNotification(data.message || 'An error occurred', 'error');
+      });
+    }
+
+    function updateAuthUI() {
+      document.getElementById('authSection').innerHTML = currentUser
+        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
+        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+
+    function startEuropeanMode() {
+      gameState.mode = 'european';
+      document.getElementById('modeSelection').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      document.getElementById('multiplayerSection').style.display = 'none';
+    }
+
+    function startSpeedMode() {
+      gameState.mode = 'speed';
+      document.getElementById('modeSelection').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      document.getElementById('multiplayerSection').style.display = 'none';
+      showNotification('⚡ Speed mode! Faster spins!', 'info');
+    }
+
+    function startMultiplayer() {
+      if (!currentUser) {
+        showNotification('Please login to play multiplayer', 'error');
+        showLoginModal();
+        return;
+      }
+
+      socket.emit('find-match', {
+        gameType: 'roulette',
+        playerData: {
+          userId: currentUser.id,
+          username: currentUser.username,
+          coins: userCoins
+        }
+      });
+    }
+
+    function startVIPMode() {
+      gameState.mode = 'vip';
+      document.getElementById('modeSelection').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      document.getElementById('multiplayerSection').style.display = 'none';
+      showNotification('💎 VIP mode! High stakes table!', 'warning');
+    }
+
+    function initializeWheel() {
+      const canvas = document.getElementById('wheelCanvas');
+      const ctx = canvas.getContext('2d');
+      drawWheel(0);
+      createBettingTable();
+    }
 
     function drawWheel(rotation) {
+      const canvas = document.getElementById('wheelCanvas');
+      const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, 400, 400);
       const centerX = 200;
       const centerY = 200;
@@ -440,7 +925,6 @@
       ctx.fill();
     }
 
-    // Create betting table
     function createBettingTable() {
       const table = document.getElementById('bettingTable');
       table.innerHTML = '';
@@ -470,66 +954,69 @@
       }
     }
 
-    createBettingTable();
-
     function selectChip(value) {
-      currentChip = value;
+      gameState.currentChip = value;
       document.querySelectorAll('.chip-btn').forEach(btn => btn.classList.remove('active'));
       event.target.classList.add('active');
     }
 
     function placeBet(position, payout) {
-      if (spinning) return;
-      if (balance < currentChip) {
-        alert('Insufficient balance!');
+      if (gameState.spinning) return;
+      if (gameState.balance < gameState.currentChip) {
+        showNotification('Insufficient balance!', 'error');
         return;
       }
       
       const key = String(position);
-      if (!bets[key]) {
-        bets[key] = { amount: 0, payout: payout };
+      if (!gameState.bets[key]) {
+        gameState.bets[key] = { amount: 0, payout: payout };
       }
       
-      bets[key].amount += currentChip;
-      balance -= currentChip;
-      totalBet += currentChip;
+      gameState.bets[key].amount += gameState.currentChip;
+      gameState.balance -= gameState.currentChip;
+      gameState.totalBet += gameState.currentChip;
       
+      updateCoins(-gameState.currentChip, 'roulette', 'bet');
       updateDisplay();
     }
 
     function clearBets() {
-      balance += totalBet;
-      bets = {};
-      totalBet = 0;
+      gameState.balance += gameState.totalBet;
+      gameState.bets = {};
+      gameState.totalBet = 0;
       updateDisplay();
     }
 
-    function updateDisplay() {
-      document.getElementById('balance').textContent = balance;
-      document.getElementById('totalBet').textContent = totalBet;
-    }
-
     function spin() {
-      if (spinning) return;
-      if (totalBet === 0) {
-        alert('Place a bet first!');
+      if (gameState.spinning) return;
+      if (gameState.totalBet === 0) {
+        showNotification('Place a bet first!', 'error');
         return;
       }
       
-      // Update backend for bet if logged in
-      if (typeof updateCoins === 'function') {
-        updateCoins(-totalBet, 'roulette', 'bet');
-      }
-      
-      spinning = true;
+      gameState.spinning = true;
       document.getElementById('spinBtn').disabled = true;
       document.getElementById('winningNumber').style.display = 'none';
       
       const winningNumber = layout[Math.floor(Math.random() * layout.length)];
+      
+      // Apply lucky power-up
+      let finalWinningNumber = winningNumber;
+      if (gameState.powerUps.lucky) {
+        // Try to get a number that would win
+        const betNumbers = Object.keys(gameState.bets).filter(key => !isNaN(key)).map(Number);
+        if (betNumbers.length > 0 && Math.random() < 0.3) {
+          finalWinningNumber = betNumbers[Math.floor(Math.random() * betNumbers.length)];
+          gameState.powerUps.lucky = false;
+          document.querySelectorAll('.power-up')[0].classList.remove('active');
+          showNotification('🍀 Lucky power-up activated!', 'success');
+        }
+      }
+      
       const targetRotation = Math.random() * Math.PI * 2 + Math.PI * 20;
       
       let currentRotation = 0;
-      const duration = 3000;
+      const duration = gameState.mode === 'speed' ? 2000 : 3000;
       const startTime = Date.now();
       
       function animate() {
@@ -543,7 +1030,7 @@
         if (progress < 1) {
           requestAnimationFrame(animate);
         } else {
-          finishSpin(winningNumber);
+          finishSpin(finalWinningNumber);
         }
       }
       
@@ -551,15 +1038,15 @@
     }
 
     function finishSpin(number) {
-      spins++;
-      history.push(number);
-      numberCounts[number] = (numberCounts[number] || 0) + 1;
+      gameState.spins++;
+      gameState.history.push(number);
+      gameState.numberCounts[number] = (gameState.numberCounts[number] || 0) + 1;
       
       let winnings = 0;
       const winMsg = document.getElementById('winningNumber');
       
       // Check bets
-      for (const [key, bet] of Object.entries(bets)) {
+      for (const [key, bet] of Object.entries(gameState.bets)) {
         if (key === String(number)) {
           winnings += bet.amount * (bet.payout + 1);
         } else if (key === 'red' && redNumbers.includes(number)) {
@@ -577,33 +1064,130 @@
         }
       }
       
-      balance += winnings;
-      const profit = winnings - totalBet;
+      // Apply double power-up
+      if (gameState.powerUps.double && winnings > 0) {
+        winnings *= 2;
+        gameState.powerUps.double = false;
+        document.querySelectorAll('.power-up')[1].classList.remove('active');
+        showNotification('✨ Double win activated!', 'success');
+      }
       
-      // Update backend if logged in - only send net profit
-      if (typeof updateCoins === 'function' && winnings > 0) {
+      gameState.balance += winnings;
+      const profit = winnings - gameState.totalBet;
+      
+      if (winnings > 0) {
+        gameState.wins++;
         updateCoins(winnings, 'roulette', 'win');
       }
       
       let color = number === 0 ? '#22c55e' : (redNumbers.includes(number) ? '#ef4444' : '#1f2937');
-      winMsg.innerHTML = `Winning Number: <span style="color: ${color}; font-size: 64px;">${number}</span><br>` +
+      winMsg.innerHTML = `Winning Number: <span style="color: ${color}; font-size: 4rem;">${number}</span><br>` +
                          `${profit > 0 ? 'YOU WIN: $' + profit + ' 🎉' : 'No win this time'}`;
       winMsg.style.display = 'block';
       
-      document.getElementById('lastWin').textContent = winnings;
-      document.getElementById('spins').textContent = spins;
-      
-      bets = {};
-      totalBet = 0;
-      spinning = false;
-      document.getElementById('spinBtn').disabled = false;
-      
+      addToHistory(number, profit);
       updateDisplay();
       updateHotCold();
+      
+      gameState.bets = {};
+      gameState.totalBet = 0;
+      gameState.spinning = false;
+      document.getElementById('spinBtn').disabled = false;
+      
+      // Send result to server in multiplayer
+      if (gameState.mode === 'multiplayer' && gameState.multiplayer.roomId) {
+        socket.emit('game-action', {
+          action: 'spin-result',
+          roomId: gameState.multiplayer.roomId,
+          winningNumber: number,
+          winnings: winnings
+        });
+      }
+    }
+
+    function activatePowerUp(type) {
+      const costs = { lucky: 50, double: 75, predict: 100 };
+      
+      if (gameState.powerUps[type]) {
+        showNotification('Power-up already active!', 'error');
+        return;
+      }
+      
+      if (gameState.balance < costs[type]) {
+        showNotification('Not enough coins!', 'error');
+        return;
+      }
+      
+      updateCoins(-costs[type], 'roulette', 'powerup');
+      gameState.powerUps[type] = true;
+      
+      // Visual feedback
+      event.target.closest('.power-up').classList.add('active');
+      
+      switch(type) {
+        case 'predict':
+          // Show predicted hot number
+          const hotNumbers = Object.entries(gameState.numberCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([num]) => num);
+          if (hotNumbers.length > 0) {
+            const prediction = hotNumbers[Math.floor(Math.random() * hotNumbers.length)];
+            showNotification(`🔮 Predicted hot number: ${prediction}`, 'info');
+          }
+          setTimeout(() => {
+            gameState.powerUps.predict = false;
+            event.target.closest('.power-up').classList.remove('active');
+          }, 5000);
+          break;
+          
+        case 'lucky':
+        case 'double':
+          // These are applied during the game
+          break;
+      }
+      
+      showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} activated!`, 'success');
+    }
+
+    function updateDisplay() {
+      document.getElementById('balance').textContent = gameState.balance;
+      document.getElementById('totalBet').textContent = gameState.totalBet;
+      document.getElementById('winsCount').textContent = gameState.wins;
+      document.getElementById('spins').textContent = gameState.spins;
+    }
+
+    function addToHistory(number, profit) {
+      const historyList = document.getElementById('historyList');
+      
+      if (historyList.querySelector('p')) {
+        historyList.innerHTML = '';
+      }
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      
+      let colorClass = 'green';
+      if (redNumbers.includes(number)) colorClass = 'red';
+      else if (number !== 0) colorClass = 'black';
+      
+      item.innerHTML = `
+        <div class="history-number ${colorClass}">${number}</div>
+        <div class="history-details">🕐 ${timeStr} | ${profit > 0 ? 'Won: $' + profit : 'Lost'}</div>
+      `;
+      
+      historyList.insertBefore(item, historyList.firstChild);
+
+      while (historyList.children.length > 10) {
+        historyList.removeChild(historyList.lastChild);
+      }
     }
 
     function updateHotCold() {
-      const sorted = Object.entries(numberCounts).sort((a, b) => b[1] - a[1]);
+      const sorted = Object.entries(gameState.numberCounts).sort((a, b) => b[1] - a[1]);
       const hot = sorted.slice(0, 5);
       const cold = sorted.slice(-5).reverse();
       
@@ -615,13 +1199,23 @@
         `<div class="number-badge">${num} (${count}x)</div>`
       ).join('');
     }
-  </script>
-  <script src="/js/main.js"></script>
-  <script>
-    // Initialize balance from auth system
-    if (typeof userCoins !== 'undefined') {
-      balance = userCoins;
-      updateDisplay();
+
+    function backToMenu() {
+      document.getElementById('modeSelection').style.display = 'grid';
+      document.getElementById('gameArea').style.display = 'none';
+      document.getElementById('multiplayerSection').style.display = 'none';
+      
+      // Leave multiplayer room if in one
+      if (gameState.mode === 'multiplayer' && gameState.multiplayer.roomId) {
+        socket.emit('leave-room', {
+          roomId: gameState.multiplayer.roomId
+        });
+      }
+    }
+
+    function handleMultiplayerAction(data) {
+      console.log('Multiplayer action received:', data);
+      // Handle multiplayer game actions
     }
   </script>
 </body>
