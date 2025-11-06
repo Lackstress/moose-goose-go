@@ -447,6 +447,21 @@ app.use('/duckmath', (req, res, next) => {
 // DuckMath static file serving
 app.use('/duckmath', express.static(path.join(__dirname, '..', 'duckmath')));
 
+// Helper function to prepare Radon Games HTML with base tag and asset rewrites
+function prepareRadonHtml(html) {
+  // Add base tag for React Router to help with routing
+  html = html.replace('<head>', '<head>\n  <base href="/radon-g3mes/">');
+  
+  // Rewrite asset paths
+  html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
+  html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
+  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/)/g, 'href="/radon-g3mes/');
+  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/)/g, 'src="/radon-g3mes/');
+  
+  // Inject interceptor script
+  return injectRadonInterceptor(html);
+}
+
 // Helper function to inject Radon Games base path interceptor
 function injectRadonInterceptor(html) {
   const interceptorScript = `
@@ -636,6 +651,44 @@ app.use('/radon-g3mes/scram', express.static(path.join(__dirname, '..', 'radon-g
 // Radon Games assets - serve ONLY /assets/ folder, not everything
 app.use('/radon-g3mes/assets', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'assets')));
 
+// Radon Games static files - serve JSON, JS, and other static files BEFORE catch-all
+app.get('/radon-g3mes/games.json', (req, res) => {
+  const filePath = path.join(__dirname, '..', 'radon-games', 'dist', 'games.json');
+  const fs = require('fs');
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'games.json not found' });
+  }
+  res.sendFile(filePath);
+});
+
+app.get('/radon-g3mes/sw.js', (req, res) => {
+  const filePath = path.join(__dirname, '..', 'radon-games', 'dist', 'sw.js');
+  const fs = require('fs');
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('// Service worker not found');
+  }
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(filePath);
+});
+
+app.get('/radon-g3mes/check.svg', (req, res) => {
+  const filePath = path.join(__dirname, '..', 'radon-games', 'dist', 'check.svg');
+  const fs = require('fs');
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('<!-- SVG not found -->');
+  }
+  res.sendFile(filePath);
+});
+
+app.get('/radon-g3mes/favicon.ico', (req, res) => {
+  const filePath = path.join(__dirname, '..', 'radon-games', 'dist', 'favicon.ico');
+  const fs = require('fs');
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).end();
+  }
+  res.sendFile(filePath);
+});
+
 // Radon Games main route - serve index.html
 app.get('/radon-g3mes', (req, res) => {
   const fs = require('fs');
@@ -655,15 +708,7 @@ app.get('/radon-g3mes', (req, res) => {
   }
   
   let html = fs.readFileSync(distPath, 'utf8');
-  
-  // Rewrite asset paths
-  html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
-  html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
-  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/)/g, 'href="/radon-g3mes/');
-  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/)/g, 'src="/radon-g3mes/');
-  
-  // Inject interceptor script
-  html = injectRadonInterceptor(html);
+  html = prepareRadonHtml(html);
   
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
@@ -679,15 +724,7 @@ app.get('/radon-g3mes/search', (req, res) => {
   }
   
   let html = fs.readFileSync(distPath, 'utf8');
-  
-  // Rewrite asset paths
-  html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
-  html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
-  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/)/g, 'href="/radon-g3mes/');
-  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/)/g, 'src="/radon-g3mes/');
-  
-  // Inject interceptor script
-  html = injectRadonInterceptor(html);
+  html = prepareRadonHtml(html);
   
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
@@ -703,15 +740,7 @@ app.get('/radon-g3mes/*', (req, res) => {
   }
   
   let html = fs.readFileSync(distPath, 'utf8');
-  
-  // Rewrite asset paths
-  html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
-  html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
-  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/)/g, 'href="/radon-g3mes/');
-  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/)/g, 'src="/radon-g3mes/');
-  
-  // Inject interceptor script
-  html = injectRadonInterceptor(html);
+  html = prepareRadonHtml(html);
   
   res.setHeader('Content-Type', 'text/html');
   res.send(html);

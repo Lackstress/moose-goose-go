@@ -2,6 +2,21 @@
 
 A unified gaming platform hosting three major game hubs with 200+ games total.
 
+## 📊 Current Status
+
+> **Note:** After setup, check [SETUP-STATUS.md](./SETUP-STATUS.md) for detailed status of all components.
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| **GameHub** | ✅ **FULLY WORKING** | All 16 custom games functional |
+| **Radon Portal** | ⚠️ Partial | Main site loads, routing needs fix |
+| **DuckMath** | ❌ Not Available | Repository not accessible |
+
+**Quick Summary:**
+- ✅ **16 custom games ready to play** at `/ghub`
+- ⚠️ Radon Games cloned but has routing issues
+- ❌ DuckMath repository not found (gracefully handled)
+
 ## 🚀 Quick Start (Localhost)
 
 ### Prerequisites
@@ -23,8 +38,8 @@ node setup-localhost.js
 
 This will:
 - ✅ Install all dependencies
-- ✅ Clone and setup Radon Games
-- ✅ Clone and setup DuckMath
+- ✅ Clone and setup Radon Games (if not already present)
+- ⚠️ Attempt to clone DuckMath (may fail - repo not accessible)
 - ✅ Build all required projects
 - ✅ Start the server on http://localhost:3000
 
