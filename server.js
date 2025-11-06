@@ -636,6 +636,24 @@ app.use('/radon-g3mes/scram', express.static(path.join(__dirname, '..', 'radon-g
 // Radon Games assets - serve ONLY /assets/ folder, not everything
 app.use('/radon-g3mes/assets', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'assets')));
 
+// Radon Games static files - serve JSON, JS, and other static files BEFORE catch-all
+app.get('/radon-g3mes/games.json', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'radon-games', 'dist', 'games.json'));
+});
+
+app.get('/radon-g3mes/sw.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, '..', 'radon-games', 'dist', 'sw.js'));
+});
+
+app.get('/radon-g3mes/check.svg', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'radon-games', 'dist', 'check.svg'));
+});
+
+app.get('/radon-g3mes/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'radon-games', 'dist', 'favicon.ico'));
+});
+
 // Radon Games main route - serve index.html
 app.get('/radon-g3mes', (req, res) => {
   const fs = require('fs');
@@ -655,6 +673,9 @@ app.get('/radon-g3mes', (req, res) => {
   }
   
   let html = fs.readFileSync(distPath, 'utf8');
+  
+  // Add base tag for React Router to help with routing
+  html = html.replace('<head>', '<head>\n  <base href="/radon-g3mes/">');
   
   // Rewrite asset paths
   html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
@@ -680,6 +701,9 @@ app.get('/radon-g3mes/search', (req, res) => {
   
   let html = fs.readFileSync(distPath, 'utf8');
   
+  // Add base tag for React Router to help with routing
+  html = html.replace('<head>', '<head>\n  <base href="/radon-g3mes/">');
+  
   // Rewrite asset paths
   html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
   html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
@@ -703,6 +727,9 @@ app.get('/radon-g3mes/*', (req, res) => {
   }
   
   let html = fs.readFileSync(distPath, 'utf8');
+  
+  // Add base tag for React Router to help with routing
+  html = html.replace('<head>', '<head>\n  <base href="/radon-g3mes/">');
   
   // Rewrite asset paths
   html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
