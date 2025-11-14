@@ -61,8 +61,8 @@ class MultiplayerManager {
       const room = {
         id: roomId,
         gameType,
-        host: playerData,
-        players: [playerData],
+        host: { ...playerData, socketId: socket.id },
+        players: [{ ...playerData, socketId: socket.id }],
         settings: {
           name: settings.name || `${playerData.username}'s Room`,
           maxPlayers: settings.maxPlayers || 2,
@@ -114,7 +114,7 @@ class MultiplayerManager {
       }
 
       // Add player to room
-      room.players.push(playerData);
+      room.players.push({ ...playerData, socketId: socket.id });
       this.players.set(socket.id, { socketId: socket.id, ...playerData, roomId });
 
       socket.join(roomId);
