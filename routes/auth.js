@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database/db');
+const { isAuthenticated } = require('../middleware/auth');
 const router = express.Router();
 
 // Register
@@ -128,7 +129,7 @@ router.post('/reset-coins', (req, res) => {
 });
 
 // Update coins
-router.post('/update-coins', (req, res) => {
+router.post('/update-coins', isAuthenticated, (req, res) => {
   const { userId, amount, gameId, type } = req.body;
 
   db.serialize(() => {
