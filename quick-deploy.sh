@@ -119,27 +119,26 @@ fi
 
 cd radon-games
 
-echo "� Applying configuration patches for /radon-g3mes path..."
+echo "🔧 Applying configuration patches for /radon-g3mes path..."
+
+# Always reset files to ensure clean patching
+git checkout vite.config.ts src/main.tsx 'src/routes/game/$gameid.tsx' src/components/GameCard.tsx 2>/dev/null || true
 
 # Patch vite.config.ts - add base path
-if ! grep -q 'base: "/radon-g3mes/"' vite.config.ts; then
-    sed -i '/export default defineConfig({/a\  base: "/radon-g3mes/",' vite.config.ts
-    echo "  ✓ vite.config.ts patched"
-fi
+sed -i '/export default defineConfig({/a\  base: "/radon-g3mes/",' vite.config.ts
+echo "  ✓ vite.config.ts patched (base: '/radon-g3mes/')"
 
 # Patch src/main.tsx - add basepath to router
-if ! grep -q 'basepath: "/radon-g3mes"' src/main.tsx; then
-    sed -i 's/const router = createRouter({ routeTree, defaultPreload: "viewport" });/const router = createRouter({ routeTree, defaultPreload: "viewport", basepath: "\/radon-g3mes" });/g' src/main.tsx
-    echo "  ✓ src/main.tsx patched"
-fi
+sed -i 's/const router = createRouter({ routeTree, defaultPreload: "viewport" });/const router = createRouter({ routeTree, defaultPreload: "viewport", basepath: "\/radon-g3mes" });/g' src/main.tsx
+echo "  ✓ src/main.tsx patched (basepath: '/radon-g3mes')"
 
 # Patch src/routes/game/$gameid.tsx - change CDN path for game iframes
 sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' 'src/routes/game/$gameid.tsx'
-echo "  ✓ src/routes/game/\$gameid.tsx patched"
+echo "  ✓ src/routes/game/\$gameid.tsx patched (CDN paths)"
 
 # Patch src/components/GameCard.tsx - change CDN path for images
 sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' src/components/GameCard.tsx
-echo "  ✓ src/components/GameCard.tsx patched"
+echo "  ✓ src/components/GameCard.tsx patched (CDN paths)"
 
 echo "📦 Installing Radon Games dependencies (this may take a few minutes)..."
 # Limit memory usage and network concurrency for low-memory VMs
