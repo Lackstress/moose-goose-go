@@ -631,6 +631,22 @@ app.get('/radon-g3mes', (req, res) => {
   res.send(html);
 });
 
+// Radon Games proxy route - web proxy functionality  
+app.get('/radon-g3mes/proxy', (req, res) => {
+  const fs = require('fs');
+  const distPath = path.join(__dirname, '..', 'radon-games', 'dist', 'index.html');
+  
+  if (!fs.existsSync(distPath)) {
+    return res.redirect('/radon-g3mes');
+  }
+  
+  let html = fs.readFileSync(distPath, 'utf8');
+  html = prepareRadonHtml(html);
+  
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
+
 // Radon Games search route - handle search functionality
 app.get('/radon-g3mes/search', (req, res) => {
   const fs = require('fs');
@@ -647,7 +663,23 @@ app.get('/radon-g3mes/search', (req, res) => {
   res.send(html);
 });
 
-// Radon Games catch-all for client-side routing (must be after static files)
+// Radon Games game route - specific game pages
+app.get('/radon-g3mes/game/:gameid', (req, res) => {
+  const fs = require('fs');
+  const distPath = path.join(__dirname, '..', 'radon-games', 'dist', 'index.html');
+  
+  if (!fs.existsSync(distPath)) {
+    return res.redirect('/radon-g3mes');
+  }
+  
+  let html = fs.readFileSync(distPath, 'utf8');
+  html = prepareRadonHtml(html);
+  
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
+
+// Radon Games catch-all for client-side routing (MUST be LAST after all specific routes)
 app.get('/radon-g3mes/*', (req, res) => {
   const fs = require('fs');
   const distPath = path.join(__dirname, '..', 'radon-games', 'dist', 'index.html');
@@ -662,8 +694,6 @@ app.get('/radon-g3mes/*', (req, res) => {
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
 });
-
-// Fallback / supplemental Radon API endpoints (moved above catch-all)
 
 // ===== Secret Media Player =====
 app.get('/media-player', (req, res) => {
