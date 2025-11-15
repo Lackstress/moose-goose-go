@@ -177,7 +177,35 @@ cd "${REPO_DIR}"
 # Step 6/10: Pull latest repo + install deps
 ##############################################
 echo -e "${GREEN}📦 Step 6/10: Pulling latest repository changes...${NC}"
+
+# One-time: Remove games.db from git tracking if it's tracked
+if git ls-files --error-unmatch database/games.db &>/dev/null; then
+    echo -e "${YELLOW}🔧 Removing games.db from git tracking (one-time)...${NC}"
+    if [ -f "database/games.db" ]; then
+        cp database/games.db database/games.db.permanent_backup
+    fi
+    git rm --cached database/games.db 2>/dev/null || true
+    if [ -f "database/games.db.permanent_backup" ]; then
+        mv database/games.db.permanent_backup database/games.db
+    fi
+    echo -e "${GREEN}   ✓ Database will no longer conflict with git${NC}"
+fi
+
+# Preserve games.db before pulling
+echo -e "${YELLOW}🛡️  Preserving database before git pull...${NC}"
+if [ -f "database/games.db" ]; then
+    cp database/games.db database/games.db.backup
+    git stash push -u database/games.db 2>/dev/null || true
+    echo -e "${GREEN}   ✓ Database backed up${NC}"
+fi
+
 git pull --ff-only || true
+
+# Restore games.db after pull
+if [ -f "database/games.db.backup" ]; then
+    mv database/games.db.backup database/games.db
+    echo -e "${GREEN}   ✓ Database restored${NC}"
+fi
 
 echo -e "${GREEN}📦 Installing project dependencies...${NC}"
 npm install

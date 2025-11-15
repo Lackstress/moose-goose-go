@@ -38,7 +38,33 @@ fi
 if [ ! -d "games" ]; then
     git clone https://github.com/Lackstress/games.git && cd games
 else
-    cd games && git pull
+    cd games
+    
+    # One-time: Remove games.db from git tracking if it's tracked
+    if git ls-files --error-unmatch database/games.db &>/dev/null; then
+        echo "🔧 Removing games.db from git tracking (one-time)..."
+        if [ -f "database/games.db" ]; then
+            cp database/games.db database/games.db.permanent_backup
+        fi
+        git rm --cached database/games.db 2>/dev/null || true
+        if [ -f "database/games.db.permanent_backup" ]; then
+            mv database/games.db.permanent_backup database/games.db
+        fi
+        echo "✅ Database will no longer conflict with git"
+    fi
+    
+    # Preserve games.db before pulling
+    echo "🛡️  Preserving database before git pull..."
+    if [ -f "database/games.db" ]; then
+        cp database/games.db database/games.db.backup
+        git stash push -u database/games.db 2>/dev/null || true
+    fi
+    git pull --ff-only
+    # Restore games.db after pull
+    if [ -f "database/games.db.backup" ]; then
+        mv database/games.db.backup database/games.db
+        echo "✅ Database restored"
+    fi
 fi
 
 # Clone DuckMath in parent directory
