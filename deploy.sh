@@ -141,27 +141,24 @@ git reset --hard HEAD || true
 git pull --ff-only || true
 
 echo -e "${YELLOW}   Applying configuration patches for /radon-g3mes path...${NC}"
-# Patch vite.config.ts - add base path if missing
-if ! grep -q 'base: "/radon-g3mes/"' vite.config.ts 2>/dev/null; then
-    sed -i '/export default defineConfig({/a\  base: "/radon-g3mes/",' vite.config.ts || true
-    echo "  ✓ vite.config.ts patched"
-fi
+
+# Always reset files to ensure clean patching
+git checkout vite.config.ts src/main.tsx 'src/routes/game/$gameid.tsx' src/components/GameCard.tsx 2>/dev/null || true
+
+# Patch vite.config.ts - add base path
+sed -i '/export default defineConfig({/a\  base: "/radon-g3mes/",' vite.config.ts || true
+echo "  ✓ vite.config.ts patched (base: '/radon-g3mes/')"
 
 # Patch src/main.tsx - add basepath to router
-if [ -f src/main.tsx ] && ! grep -q 'basepath: "/radon-g3mes"' src/main.tsx; then
-    sed -i 's/const router = createRouter({ routeTree, defaultPreload: "viewport" });/const router = createRouter({ routeTree, defaultPreload: "viewport", basepath: "\/radon-g3mes" });/g' src/main.tsx || true
-    echo "  ✓ src/main.tsx patched"
-fi
+sed -i 's/const router = createRouter({ routeTree, defaultPreload: "viewport" });/const router = createRouter({ routeTree, defaultPreload: "viewport", basepath: "\/radon-g3mes" });/g' src/main.tsx || true
+echo "  ✓ src/main.tsx patched (basepath: '/radon-g3mes')"
 
 # Patch CDN paths used in game pages and cards
-if [ -f 'src/routes/game/$gameid.tsx' ]; then
-  sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' 'src/routes/game/$gameid.tsx' || true
-  echo "  ✓ src/routes/game/$gameid.tsx patched"
-fi
-if [ -f 'src/components/GameCard.tsx' ]; then
-  sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' 'src/components/GameCard.tsx' || true
-  echo "  ✓ src/components/GameCard.tsx patched"
-fi
+sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' 'src/routes/game/$gameid.tsx' || true
+echo "  ✓ src/routes/game/$gameid.tsx patched (CDN paths)"
+
+sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' 'src/components/GameCard.tsx' || true
+echo "  ✓ src/components/GameCard.tsx patched (CDN paths)"
 
 echo -e "${YELLOW}   Installing Radon dependencies (this may take a few minutes)...${NC}"
 NODE_OPTIONS="--max-old-space-size=1024" pnpm install --no-frozen-lockfile --network-concurrency=1
