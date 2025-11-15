@@ -144,7 +144,7 @@ echo "  ✓ src/components/GameCard.tsx patched (CDN paths)"
 
 # Add missing search.tsx route (bug in upstream Radon Games)
 echo "🔍 Installing missing search.tsx route..."
-cp ../radon-search.tsx src/routes/search.tsx
+cp "$REPO_DIR/radon-search.tsx" src/routes/search.tsx
 echo "  ✓ src/routes/search.tsx installed"
 
 echo "📦 Installing Radon Games dependencies (this may take a few minutes)..."
