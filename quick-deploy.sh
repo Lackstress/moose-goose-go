@@ -36,6 +36,11 @@ if [ ! -d "duckmath" ]; then
 else
     cd duckmath && git pull && cd ..
 fi
+# Install DuckMath dependencies only if it is a Node project
+if [ -f "duckmath/package.json" ]; then
+    echo "📦 Installing DuckMath dependencies..."
+    (cd duckmath && npm install)
+fi
 
 # Clone and build Radon Games
 echo "⚡ Cloning and building Radon Games..."
@@ -101,7 +106,13 @@ echo "✅ Radon Games dist folder verified"
 
 cd games
 
-# Install and start
+# Safeguard: never modify existing SQLite database (games.db)
+if [ -f "database/games.db" ]; then
+    echo "🛡  Preserving existing database: database/games.db"
+fi
+
+# Install dependencies for main Game Hub (includes secret media-player deps)
+echo "📦 Installing Game Hub dependencies..."
 npm install
 sudo npm install -g pm2
 

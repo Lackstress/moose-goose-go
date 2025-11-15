@@ -64,9 +64,57 @@ function setupRadonGames() {
   
   if (fs.existsSync(radonPath)) {
     console.log('✅ Radon Games already exists\n');
-    
-    // Install dependencies and build
+    // Apply base path patches to ensure it works from /radon-g3mes
     process.chdir(radonPath);
+    try {
+      const vitePath = path.join(radonPath, 'vite.config.ts');
+      if (fs.existsSync(vitePath)) {
+        let viteCfg = fs.readFileSync(vitePath, 'utf8');
+        if (!/base:\s*['"]\/radon-g3mes\//.test(viteCfg)) {
+          viteCfg = viteCfg.replace(/export\s+default\s+defineConfig\(\{/, match => `${match}\n  base: '/radon-g3mes/',`);
+          fs.writeFileSync(vitePath, viteCfg);
+          console.log('  ✓ Patched vite.config.ts base to /radon-g3mes/');
+        }
+      }
+
+      const mainPath = path.join(radonPath, 'src', 'main.tsx');
+      if (fs.existsSync(mainPath)) {
+        let mainTsx = fs.readFileSync(mainPath, 'utf8');
+        if (!/basepath:\s*['"]\/radon-g3mes['"]/.test(mainTsx)) {
+          mainTsx = mainTsx.replace(
+            /const\s+router\s*=\s*createRouter\(\{\s*routeTree,\s*defaultPreload:\s*['"][^'"]+['"]\s*\}\);/,
+            `const router = createRouter({ routeTree, defaultPreload: 'viewport', basepath: '/radon-g3mes' });`
+          );
+          fs.writeFileSync(mainPath, mainTsx);
+          console.log('  ✓ Patched src/main.tsx router basepath to /radon-g3mes');
+        }
+      }
+
+      // Patch CDN references to go through our server proxy path
+      const gameRoutePath = path.join(radonPath, 'src', 'routes', 'game', '$gameid.tsx');
+      if (fs.existsSync(gameRoutePath)) {
+        let file = fs.readFileSync(gameRoutePath, 'utf8');
+        const replaced = file.replace(/src=\{`\/cdn\//g, "src={`\/radon-g3mes/cdn/");
+        if (replaced !== file) {
+          fs.writeFileSync(gameRoutePath, replaced);
+          console.log('  ✓ Patched src/routes/game/$gameid.tsx CDN path');
+        }
+      }
+
+      const gameCardPath = path.join(radonPath, 'src', 'components', 'GameCard.tsx');
+      if (fs.existsSync(gameCardPath)) {
+        let file = fs.readFileSync(gameCardPath, 'utf8');
+        const replaced = file.replace(/src=\{`\/cdn\//g, "src={`\/radon-g3mes/cdn/");
+        if (replaced !== file) {
+          fs.writeFileSync(gameCardPath, replaced);
+          console.log('  ✓ Patched src/components/GameCard.tsx CDN path');
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️  Failed to apply Radon base/CDN patches:', e.message);
+    }
+
+    // Install dependencies and build
     if (!runCommand('npm install', 'Installing Radon Games dependencies')) {
       return false;
     }
@@ -86,6 +134,50 @@ function setupRadonGames() {
   }
   
   process.chdir(radonPath);
+  // Apply patches after clone
+  try {
+    const vitePath = path.join(radonPath, 'vite.config.ts');
+    if (fs.existsSync(vitePath)) {
+      let viteCfg = fs.readFileSync(vitePath, 'utf8');
+      if (!/base:\s*['"]\/radon-g3mes\//.test(viteCfg)) {
+        viteCfg = viteCfg.replace(/export\s+default\s+defineConfig\(\{/, match => `${match}\n  base: '/radon-g3mes/',`);
+        fs.writeFileSync(vitePath, viteCfg);
+        console.log('  ✓ Patched vite.config.ts base to /radon-g3mes/');
+      }
+    }
+    const mainPath = path.join(radonPath, 'src', 'main.tsx');
+    if (fs.existsSync(mainPath)) {
+      let mainTsx = fs.readFileSync(mainPath, 'utf8');
+      if (!/basepath:\s*['"]\/radon-g3mes['"]/.test(mainTsx)) {
+        mainTsx = mainTsx.replace(
+          /const\s+router\s*=\s*createRouter\(\{\s*routeTree,\s*defaultPreload:\s*['"][^'"]+['"]\s*\}\);/,
+          `const router = createRouter({ routeTree, defaultPreload: 'viewport', basepath: '/radon-g3mes' });`
+        );
+        fs.writeFileSync(mainPath, mainTsx);
+        console.log('  ✓ Patched src/main.tsx router basepath to /radon-g3mes');
+      }
+    }
+    const gameRoutePath = path.join(radonPath, 'src', 'routes', 'game', '$gameid.tsx');
+    if (fs.existsSync(gameRoutePath)) {
+      let file = fs.readFileSync(gameRoutePath, 'utf8');
+      const replaced = file.replace(/src=\{`\/cdn\//g, "src={`\/radon-g3mes/cdn/");
+      if (replaced !== file) {
+        fs.writeFileSync(gameRoutePath, replaced);
+        console.log('  ✓ Patched src/routes/game/$gameid.tsx CDN path');
+      }
+    }
+    const gameCardPath = path.join(radonPath, 'src', 'components', 'GameCard.tsx');
+    if (fs.existsSync(gameCardPath)) {
+      let file = fs.readFileSync(gameCardPath, 'utf8');
+      const replaced = file.replace(/src=\{`\/cdn\//g, "src={`\/radon-g3mes/cdn/");
+      if (replaced !== file) {
+        fs.writeFileSync(gameCardPath, replaced);
+        console.log('  ✓ Patched src/components/GameCard.tsx CDN path');
+      }
+    }
+  } catch (e) {
+    console.warn('⚠️  Failed to apply Radon base/CDN patches:', e.message);
+  }
   if (!runCommand('npm install', 'Installing Radon Games dependencies')) {
     return false;
   }

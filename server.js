@@ -17,6 +17,47 @@ const io = socketIO(server, {
 });
 
 const PORT = process.env.PORT || 3000;
+const { execFile } = require('child_process');
+const { promisify } = require('util');
+const execFileAsync = promisify(execFile);
+
+// ---- YouTube info caching & yt-dlp wrapper (avoids 410 errors) ----
+const ytInfoCache = new Map();
+const YT_INFO_TTL_MS = 5 * 60 * 1000;
+
+async function fetchYoutubeInfoStable(videoUrl) {
+  const cached = ytInfoCache.get(videoUrl);
+  const now = Date.now();
+  if (cached && (now - cached.cachedAt) < YT_INFO_TTL_MS) {
+    return cached.info;
+  }
+  try {
+    const { stdout } = await execFileAsync('yt-dlp', [
+      '--dump-json',
+      '--no-playlist',
+      '--skip-download',
+      videoUrl
+    ], { maxBuffer: 5 * 1024 * 1024 });
+    const raw = JSON.parse(stdout);
+    const info = {
+      videoDetails: { title: raw.title || 'Video', videoId: raw.id },
+      formats: (raw.formats || []).map(f => ({
+        itag: f.format_id,
+        qualityLabel: f.format_note || f.height ? `${f.height}p` : 'unknown',
+        hasVideo: !!f.vcodec && f.vcodec !== 'none',
+        hasAudio: !!f.acodec && f.acodec !== 'none',
+        container: f.ext,
+        url: f.url,
+        bitrate: f.tbr ? f.tbr * 1000 : 0,
+        mimeType: f.vcodec && f.acodec ? `video/${f.ext}` : f.vcodec ? `video/${f.ext}` : `audio/${f.ext}`
+      }))
+    };
+    ytInfoCache.set(videoUrl, { info, cachedAt: Date.now() });
+    return info;
+  } catch (err) {
+    throw new Error(`yt-dlp info fetch failed: ${err.message}`);
+  }
+}
 
 // Initialize Multiplayer Manager
 const multiplayerManager = new MultiplayerManager(io);
@@ -427,12 +468,35 @@ app.use('/radon-g3mes/scram', express.static(path.join(__dirname, '..', 'radon-g
 // Radon Games assets - serve ONLY /assets/ folder, not everything
 app.use('/radon-g3mes/assets', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'assets')));
 
+// ----- Radon fallback helpers -----
+function generateGameList() {
+  const fs = require('fs');
+  const gamesDir = path.join(__dirname, 'public', 'games');
+  if (!fs.existsSync(gamesDir)) return [];
+  return fs.readdirSync(gamesDir)
+    .filter(f => f.endsWith('.html'))
+    .map(f => {
+      const id = f.replace(/\.html$/,'');
+      const title = id.replace(/-/g,' ') // Replace dashes with spaces
+        .replace(/\b\w/g, c => c.toUpperCase()); // Capitalize words
+      return { id, title };
+    });
+}
+
 // Radon Games static files - serve JSON, JS, and other static files BEFORE catch-all
 app.get('/radon-g3mes/games.json', (req, res) => {
   const filePath = path.join(__dirname, '..', 'radon-games', 'dist', 'games.json');
   const fs = require('fs');
   if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: 'games.json not found' });
+    // Return an array to mimic original games.json expectations
+    const list = generateGameList().map(g => ({
+      id: g.id,
+      title: g.title,
+      category: 'fallback',
+      thumbnail: `/radon-g3mes/assets/placeholder.png`,
+      source: 'fallback'
+    }));
+    return res.json(list);
   }
   res.sendFile(filePath);
 });
@@ -471,16 +535,49 @@ app.get('/radon-g3mes', (req, res) => {
   const distPath = path.join(__dirname, '..', 'radon-games', 'dist', 'index.html');
   
   if (!fs.existsSync(distPath)) {
-    return res.status(404).send(`
-      <html>
-        <head><title>Radon Games Not Installed</title></head>
-        <body style="font-family: Arial; padding: 50px; text-align: center;">
-          <h1>🎮 Radon Games Not Available</h1>
-          <p>Radon Games are not installed on this server.</p>
-          <p><a href="/ghub">← Back to Game Hub</a></p>
-        </body>
-      </html>
-    `);
+    const games = generateGameList();
+    return res.status(200).send(`<!DOCTYPE html>
+    <html lang=\"en\">
+    <head>
+      <meta charset=\"UTF-8\" />
+      <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />
+      <title>Radon Portal (Fallback)</title>
+      <style>
+        body {font-family: system-ui, Arial; margin:0; background:#111; color:#eee;}
+        header {padding:20px; background:#222; display:flex; justify-content:space-between; align-items:center;}
+        h1 {margin:0; font-size:1.2rem;}
+        a {color:#6cf; text-decoration:none;}
+        .layout {display:grid; grid-template-columns:300px 1fr; gap:20px; padding:20px;}
+        .panel {background:#1d1d1d; border:1px solid #2e2e2e; border-radius:8px; padding:15px; height:calc(100vh - 100px); overflow:auto;}
+        input[type=text]{width:100%; padding:8px 10px; border-radius:6px; border:1px solid #333; background:#111; color:#eee;}
+        ul {list-style:none; padding:0; margin:10px 0 0;}
+        li {padding:8px 10px; margin:4px 0; background:#242424; border-radius:6px; cursor:pointer; transition:.15s; font-size:.9rem;}
+        li:hover {background:#333;}
+        li.active {background:#6c3; color:#000; font-weight:600;}
+        iframe {width:100%; height:100%; border:0; background:#000;}
+        .empty {opacity:.6; font-size:.9rem; margin-top:10px;}
+        footer {text-align:center; padding:10px; font-size:.7rem; opacity:.5;}
+      </style>
+    </head>
+    <body>
+      <header>
+        <h1>⚡ Radon Portal <small style=\"opacity:.6; font-weight:400;\">Fallback Mode</small></h1>
+        <nav><a href=\"/\">Home</a> · <a href=\"/ghub\">GameHub</a></nav>
+      </header>
+      <div class=\"layout\">
+        <div class=\"panel\">
+          <input type=\"text\" id=\"searchInput\" placeholder=\"Search games... (${games.length})\" />
+          <ul id=\"gameList\"></ul>
+          <div class=\"empty\" id=\"emptyMsg\" style=\"display:none;\">No games match your search.</div>
+        </div>
+        <div class=\"panel\">
+          <iframe id=\"gameFrame\" title=\"Game Frame\" src=\"\" allowfullscreen></iframe>
+        </div>
+      </div>
+      <footer>Radon Portal fallback – original SPA assets missing.</footer>
+      <script src=\"/js/radon-search.js\"></script>
+    </body>
+    </html>`);
   }
   
   let html = fs.readFileSync(distPath, 'utf8');
@@ -496,7 +593,7 @@ app.get('/radon-g3mes/search', (req, res) => {
   const distPath = path.join(__dirname, '..', 'radon-games', 'dist', 'index.html');
   
   if (!fs.existsSync(distPath)) {
-    return res.status(404).send('Radon Games not available');
+    return res.redirect('/radon-g3mes');
   }
   
   let html = fs.readFileSync(distPath, 'utf8');
@@ -520,6 +617,145 @@ app.get('/radon-g3mes/*', (req, res) => {
   
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
+});
+
+// Fallback / supplemental Radon API endpoints
+app.get('/radon-g3mes/api/games', (req, res) => {
+  res.json({ games: generateGameList() });
+});
+app.get('/radon-g3mes/api/search', (req, res) => {
+  const q = (req.query.q || '').toString().toLowerCase();
+  const list = generateGameList();
+  const filtered = q ? list.filter(g => g.title.toLowerCase().includes(q) || g.id.toLowerCase().includes(q)) : list;
+  res.json({ query: q, count: filtered.length, games: filtered });
+});
+
+// ===== Secret Media Player =====
+app.get('/media-player', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'media-player.html'));
+});
+// Stream YouTube video (ad-free)
+app.get('/media-player/stream', async (req, res) => {
+  try {
+    const raw = req.query.url;
+    const itag = req.query.itag;
+    if (!raw) return res.status(400).json({ error: 'Missing url parameter' });
+    const videoUrl = decodeURIComponent(raw);
+    const isYoutube = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(videoUrl);
+    if (!isYoutube) return res.status(400).json({ error: 'Only YouTube URLs supported' });
+    const ytdl = require('ytdl-core');
+    const info = await fetchYoutubeInfoStable(videoUrl);
+
+    function pickBest(formats) {
+      let candidates = formats.filter(f => f.hasVideo && f.hasAudio && (f.container === 'mp4' || /mp4/.test(f.mimeType||'')));
+      if (!candidates.length) candidates = formats.filter(f => f.hasVideo && f.hasAudio);
+      if (!candidates.length) candidates = formats.filter(f => f.hasVideo);
+      candidates.sort((a,b)=>( (b.height||0)-(a.height||0) ) || ((b.bitrate||0)-(a.bitrate||0)) );
+      return candidates[0];
+    }
+
+    let format;
+    if (itag) {
+      format = info.formats.find(f => String(f.itag) === String(itag));
+    }
+    if (!format) {
+      // Try highest combined
+      format = ytdl.chooseFormat(info.formats, { quality: 'highest', filter: 'videoandaudio' });
+      if (!format || format instanceof Error) {
+        format = pickBest(info.formats);
+      }
+    }
+    if (!format) {
+      // Final fallback to itag 18 (baseline mp4 360p)
+      format = info.formats.find(f => f.itag == 18);
+    }
+    if (!format) return res.status(500).json({ error: 'No suitable format found' });
+
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('X-Selected-Itag', format.itag || 'unknown');
+    res.setHeader('X-Selected-Quality', format.qualityLabel || 'unknown');
+
+    // Stream via yt-dlp direct URL (no 410 issues)
+    const https = require('https');
+    const http = require('http');
+    const formatUrl = format.url;
+    if (!formatUrl) return res.status(500).json({ error: 'Format URL not available' });
+    const protocol = formatUrl.startsWith('https') ? https : http;
+    protocol.get(formatUrl, proxyRes => {
+      res.setHeader('Content-Type', proxyRes.headers['content-type'] || 'video/mp4');
+      if (proxyRes.headers['content-length']) res.setHeader('Content-Length', proxyRes.headers['content-length']);
+      proxyRes.pipe(res);
+    }).on('error', err => {
+      console.error('Stream proxy error:', err.message);
+      if (!res.headersSent) res.status(500).json({ error: 'Stream failed', details: err.message });
+    });
+  } catch (err) {
+    console.error('Media stream error:', err.message);
+    if (!res.headersSent) res.status(500).json({ error: 'Failed to stream video', message: err.message });
+  }
+});
+// Download YouTube video
+app.get('/media-player/download', async (req, res) => {
+  try {
+    const raw = req.query.url;
+    if (!raw) return res.status(400).json({ error: 'Missing url parameter' });
+    const url = decodeURIComponent(raw);
+    const isYoutube = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(url);
+    if (!isYoutube) return res.status(400).json({ error: 'Only YouTube URLs supported' });
+    const info = await fetchYoutubeInfoStable(url);
+    const titleSafe = info.videoDetails.title.replace(/[^a-z0-9\-_ ]/gi,'').slice(0,80) || 'video';
+    res.setHeader('Content-Disposition', `attachment; filename="${titleSafe}.mp4"`);
+    res.setHeader('Content-Type', 'video/mp4');
+    const combined = info.formats.filter(f => f.hasVideo && f.hasAudio).sort((a,b)=>b.bitrate-a.bitrate)[0];
+    const format = combined || info.formats.find(f => f.itag == '18');
+    if (!format || !format.url) return res.status(500).json({ error: 'No downloadable format' });
+    const https = require('https');
+    const http = require('http');
+    const protocol = format.url.startsWith('https') ? https : http;
+    protocol.get(format.url, proxyRes => {
+      if (proxyRes.headers['content-length']) res.setHeader('Content-Length', proxyRes.headers['content-length']);
+      proxyRes.pipe(res);
+    }).on('error', e => {
+      console.error('Download error:', e.message);
+      if (!res.headersSent) res.status(500).end();
+    });
+  } catch (err) {
+    console.error('Media download error:', err.message);
+    if (!res.headersSent) res.status(500).json({ error: 'Failed to download video', message: err.message });
+  }
+});
+
+// Expose format info for debugging / quality selection
+app.get('/media-player/info', async (req, res) => {
+  try {
+    const raw = req.query.url;
+    if (!raw) return res.status(400).json({ error: 'Missing url parameter' });
+    const videoUrl = decodeURIComponent(raw);
+    const isYoutube = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(videoUrl);
+    if (!isYoutube) return res.status(400).json({ error: 'Only YouTube URLs supported' });
+    const info = await fetchYoutubeInfoStable(videoUrl);
+    const formats = info.formats
+      .filter(f => f.hasVideo)
+      .map(f => ({
+        itag: f.itag,
+        qualityLabel: f.qualityLabel,
+        container: f.container,
+        hasAudio: !!f.hasAudio,
+        hasVideo: !!f.hasVideo,
+        bitrate: f.bitrate,
+        mimeType: f.mimeType,
+        approxDurationMs: f.approxDurationMs
+      }))
+      .sort((a,b)=>{
+        const hA = parseInt(a.qualityLabel) || 0; const hB = parseInt(b.qualityLabel) || 0;
+        return hB - hA;
+      });
+    res.json({ title: info.videoDetails.title, formats });
+  } catch (err) {
+    console.error('Info fetch error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch info', message: err.message });
+  }
 });
 
 // Static files for games
