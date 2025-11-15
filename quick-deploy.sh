@@ -1,16 +1,32 @@
 #!/bin/bash
 # Ultra-Simple One-Line Installer
-# Usage: curl -sSL https://raw.githubusercontent.com/Lackstress/games/main/quick-deploy.sh | bash
+# Usage: bash quick-deploy.sh
 
-set -e
+set -euo pipefail
 
 echo "🎮 Games Hub - Quick Deploy"
+
+# Check we're in the right directory
+if [ ! -f "server.js" ] || [ ! -f "package.json" ]; then
+    echo "❌ Error: Must run this script from the repository root directory"
+    echo "   (looking for server.js and package.json)"
+    exit 1
+fi
+
 read -p "Domain: " DOMAIN
 read -p "Email: " EMAIL
 
+if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ]; then
+    echo "❌ Domain and email are required"
+    exit 1
+fi
+
+# Get current directory name
+REPO_DIR="$(pwd)"
+
 # Install essentials
 echo "📦 Installing system dependencies..."
-sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx curl
+sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx curl git
 
 # Install yt-dlp for media player
 echo "📦 Installing yt-dlp for media player..."
@@ -34,51 +50,51 @@ else
     echo "✅ Node.js already installed: $(node -v)"
 fi
 
-# Clone or update repo
-if [ ! -d "games" ]; then
-    git clone https://github.com/Lackstress/games.git && cd games
-else
-    cd games
-    
-    # One-time: Remove games.db from git tracking if it's tracked
-    if git ls-files --error-unmatch database/games.db &>/dev/null; then
-        echo "🔧 Removing games.db from git tracking (one-time)..."
-        if [ -f "database/games.db" ]; then
-            cp database/games.db database/games.db.permanent_backup
-        fi
-        git rm --cached database/games.db 2>/dev/null || true
-        if [ -f "database/games.db.permanent_backup" ]; then
-            mv database/games.db.permanent_backup database/games.db
-        fi
-        echo "✅ Database will no longer conflict with git"
-    fi
-    
-    # Preserve games.db before pulling
-    echo "🛡️  Preserving database before git pull..."
+# We're already in the repo directory, just need to pull updates
+echo "📦 Updating repository..."
+
+# One-time: Remove games.db from git tracking if it's tracked
+if git ls-files --error-unmatch database/games.db &>/dev/null 2>&1; then
+    echo "🔧 Removing games.db from git tracking (one-time)..."
     if [ -f "database/games.db" ]; then
-        cp database/games.db database/games.db.backup
-        git stash push -u database/games.db 2>/dev/null || true
+        cp database/games.db database/games.db.permanent_backup
     fi
-    git pull --ff-only
-    # Restore games.db after pull
-    if [ -f "database/games.db.backup" ]; then
-        mv database/games.db.backup database/games.db
-        echo "✅ Database restored"
+    git rm --cached database/games.db 2>/dev/null || true
+    if [ -f "database/games.db.permanent_backup" ]; then
+        mv database/games.db.permanent_backup database/games.db
     fi
+    echo "✅ Database will no longer conflict with git"
+fi
+
+# Preserve games.db before pulling
+echo "🛡️  Preserving database before git pull..."
+if [ -f "database/games.db" ]; then
+    cp database/games.db database/games.db.backup
+fi
+
+# Reset any local changes (except database which we backed up)
+git reset --hard HEAD || true
+git pull --ff-only || git pull --rebase || true
+
+# Restore games.db after pull
+if [ -f "database/games.db.backup" ]; then
+    mv database/games.db.backup database/games.db
+    echo "✅ Database restored"
 fi
 
 # Clone DuckMath in parent directory
 echo "📦 Cloning DuckMath games..."
 cd ..
 if [ ! -d "duckmath" ]; then
-    git clone https://github.com/duckmath/duckmath.github.io.git duckmath
+    git clone https://github.com/duckmath/duckmath.github.io.git duckmath || echo "⚠️  DuckMath clone failed, continuing..."
 else
-    cd duckmath && git pull && cd ..
+    (cd duckmath && git pull --ff-only) || echo "⚠️  DuckMath update failed, continuing..."
 fi
+
 # Install DuckMath dependencies only if it is a Node project
 if [ -f "duckmath/package.json" ]; then
     echo "📦 Installing DuckMath dependencies..."
-    (cd duckmath && npm install)
+    (cd duckmath && npm install) || echo "⚠️  DuckMath npm install failed, continuing..."
 fi
 
 # Clone and build Radon Games
@@ -143,7 +159,8 @@ if [ ! -d "radon-games/dist" ]; then
 fi
 echo "✅ Radon Games dist folder verified"
 
-cd games
+# Return to repo directory
+cd "$REPO_DIR"
 
 # Safeguard: never modify existing SQLite database (games.db)
 if [ -f "database/games.db" ]; then
