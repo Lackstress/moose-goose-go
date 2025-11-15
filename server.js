@@ -529,6 +529,50 @@ app.get('/radon-g3mes/favicon.ico', (req, res) => {
   res.sendFile(filePath);
 });
 
+// Radon supplemental API (must be BEFORE catch-all)
+app.get('/radon-g3mes/api/games', (req, res) => {
+  try {
+    const fs = require('fs');
+    const radonGamesJson = path.join(__dirname, '..', 'radon-games', 'dist', 'games.json');
+    if (fs.existsSync(radonGamesJson)) {
+      const raw = fs.readFileSync(radonGamesJson, 'utf8');
+      const arr = JSON.parse(raw);
+      const games = Array.isArray(arr)
+        ? arr.map(x => ({ id: x.id, title: x.title || x.id }))
+        : [];
+      return res.json({ source: 'radon-dist', count: games.length, games });
+    }
+  } catch (e) {
+    console.warn('Failed reading radon games.json:', e.message);
+  }
+  const fallback = generateGameList();
+  res.json({ source: 'fallback-local', count: fallback.length, games: fallback });
+});
+app.get('/radon-g3mes/api/search', (req, res) => {
+  const q = (req.query.q || '').toString().toLowerCase();
+  let games = [];
+  try {
+    const fs = require('fs');
+    const radonGamesJson = path.join(__dirname, '..', 'radon-games', 'dist', 'games.json');
+    if (fs.existsSync(radonGamesJson)) {
+      const raw = fs.readFileSync(radonGamesJson, 'utf8');
+      const arr = JSON.parse(raw);
+      games = Array.isArray(arr)
+        ? arr.map(x => ({ id: x.id, title: x.title || x.id }))
+        : [];
+    } else {
+      games = generateGameList();
+    }
+  } catch (e) {
+    console.warn('Search using fallback due to error:', e.message);
+    games = generateGameList();
+  }
+  const filtered = q
+    ? games.filter(g => (g.title || '').toLowerCase().includes(q) || (g.id || '').toLowerCase().includes(q))
+    : games;
+  res.json({ query: q, count: filtered.length, games: filtered });
+});
+
 // Radon Games main route - serve index.html
 app.get('/radon-g3mes', (req, res) => {
   const fs = require('fs');
@@ -619,16 +663,7 @@ app.get('/radon-g3mes/*', (req, res) => {
   res.send(html);
 });
 
-// Fallback / supplemental Radon API endpoints
-app.get('/radon-g3mes/api/games', (req, res) => {
-  res.json({ games: generateGameList() });
-});
-app.get('/radon-g3mes/api/search', (req, res) => {
-  const q = (req.query.q || '').toString().toLowerCase();
-  const list = generateGameList();
-  const filtered = q ? list.filter(g => g.title.toLowerCase().includes(q) || g.id.toLowerCase().includes(q)) : list;
-  res.json({ query: q, count: filtered.length, games: filtered });
-});
+// Fallback / supplemental Radon API endpoints (moved above catch-all)
 
 // ===== Secret Media Player =====
 app.get('/media-player', (req, res) => {

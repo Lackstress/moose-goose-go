@@ -4,6 +4,10 @@
  * Universal Setup Script for Localhost
  * Works on both Windows and Linux
  * Sets up all required servers and clones necessary repositories
+ * 
+ * IMPORTANT: This script NEVER modifies or overwrites games.db
+ * The database is auto-created by db.js on first server start
+ * and is preserved across all setup operations.
  */
 
 const { execSync } = require('child_process');
@@ -239,21 +243,34 @@ async function main() {
   checkNodeJS();
   checkGit();
   
-  console.log('Step 2: Installing main project dependencies...\n');
+  console.log('Step 2: Checking database preservation...\n');
+  const dbPath = path.join(__dirname, 'database', 'games.db');
+  if (fs.existsSync(dbPath)) {
+    console.log('🛡️  Preserving existing database: database/games.db');
+    console.log('✅ Database will not be modified or overwritten\n');
+  } else {
+    console.log('ℹ️  No existing database found - will be auto-created on first run\n');
+  }
+  
+  console.log('Step 3: Installing main project dependencies...\n');
   if (!installMainDependencies()) {
     console.error('❌ Setup failed at main dependencies installation');
     process.exit(1);
   }
   
-  console.log('Step 3: Setting up Radon Games...\n');
+  console.log('Step 4: Setting up Radon Games...\n');
   if (!setupRadonGames()) {
     console.error('⚠️  Radon Games setup failed - continuing without it\n');
   }
   
-  console.log('Step 4: Setting up DuckMath...\n');
+  console.log('Step 5: Setting up DuckMath...\n');
   setupDuckMath();
   
   console.log('✅ Setup complete!\n');
+  console.log('📋 Setup Summary:');
+  console.log('  ✓ Dependencies installed');
+  console.log('  ✓ Database preserved (not modified by setup)');
+  console.log('  ✓ External repositories configured\n');
   
   // Ask if user wants to start the server
   console.log('Do you want to start the server now? (Y/n)');
