@@ -142,6 +142,11 @@ echo "  ✓ src/routes/game/\$gameid.tsx patched (CDN paths)"
 sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' src/components/GameCard.tsx
 echo "  ✓ src/components/GameCard.tsx patched (CDN paths)"
 
+# Add missing search.tsx route (bug in upstream Radon Games)
+echo "🔍 Installing missing search.tsx route..."
+cp ../radon-search.tsx src/routes/search.tsx
+echo "  ✓ src/routes/search.tsx installed"
+
 echo "📦 Installing Radon Games dependencies (this may take a few minutes)..."
 # Limit memory usage and network concurrency for low-memory VMs
 NODE_OPTIONS="--max-old-space-size=1024" pnpm install --no-frozen-lockfile --network-concurrency=1
