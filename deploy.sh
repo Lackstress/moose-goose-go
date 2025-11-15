@@ -150,7 +150,7 @@ sed -i '/export default defineConfig({/a\  base: "/radon-g3mes/",' vite.config.t
 echo "  ✓ vite.config.ts patched (base: '/radon-g3mes/')"
 
 # Patch src/main.tsx - add basepath to router
-sed -i 's/const router = createRouter({ routeTree, defaultPreload: "viewport" });/const router = createRouter({ routeTree, defaultPreload: "viewport", basepath: "\/radon-g3mes" });/g' src/main.tsx || true
+sed -i 's/const router = createRouter({ routeTree, defaultPreload: "viewport" });/const router = createRouter({ routeTree, defaultPreload: "viewport", basepath: "\/radon-g3mes" });/' src/main.tsx || true
 echo "  ✓ src/main.tsx patched (basepath: '/radon-g3mes')"
 
 # Patch CDN paths used in game pages and cards

@@ -128,19 +128,11 @@ git checkout vite.config.ts src/main.tsx 'src/routes/game/$gameid.tsx' src/compo
 sed -i '/export default defineConfig({/a\  base: "/radon-g3mes/",' vite.config.ts
 echo "  ✓ vite.config.ts patched (base: '/radon-g3mes/')"
 
-# Patch src/main.tsx - add basepath to router (multiple pattern support)
-# Try to match different possible router creation formats
-if grep -q "const router = createRouter({" src/main.tsx; then
-    # Replace multi-line router creation
-    sed -i '/const router = createRouter({/,/});/{
-        /});/i\  basepath: "/radon-g3mes",
-    }' src/main.tsx
-    # Remove duplicate if already exists
-    sed -i '/basepath:.*basepath:/d' src/main.tsx
-    echo "  ✓ src/main.tsx patched (basepath: '/radon-g3mes')"
-else
-    echo "  ⚠️  Could not find router creation in src/main.tsx"
-fi
+# Patch src/main.tsx - add basepath to router
+# Original: const router = createRouter({ routeTree, defaultPreload: "viewport" });
+# Target:   const router = createRouter({ routeTree, defaultPreload: "viewport", basepath: "/radon-g3mes" });
+sed -i 's/const router = createRouter({ routeTree, defaultPreload: "viewport" });/const router = createRouter({ routeTree, defaultPreload: "viewport", basepath: "\/radon-g3mes" });/' src/main.tsx
+echo "  ✓ src/main.tsx patched (basepath: '/radon-g3mes')"
 
 # Patch src/routes/game/$gameid.tsx - change CDN path for game iframes
 sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' 'src/routes/game/$gameid.tsx'
