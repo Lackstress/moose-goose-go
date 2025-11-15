@@ -678,7 +678,7 @@ app.get('/media-player/stream', async (req, res) => {
     const videoUrl = decodeURIComponent(raw);
     const isYoutube = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(videoUrl);
     if (!isYoutube) return res.status(400).json({ error: 'Only YouTube URLs supported' });
-    const ytdl = require('ytdl-core');
+    
     const info = await fetchYoutubeInfoStable(videoUrl);
 
     function pickBest(formats) {
@@ -694,11 +694,7 @@ app.get('/media-player/stream', async (req, res) => {
       format = info.formats.find(f => String(f.itag) === String(itag));
     }
     if (!format) {
-      // Try highest combined
-      format = ytdl.chooseFormat(info.formats, { quality: 'highest', filter: 'videoandaudio' });
-      if (!format || format instanceof Error) {
-        format = pickBest(info.formats);
-      }
+      format = pickBest(info.formats);
     }
     if (!format) {
       // Final fallback to itag 18 (baseline mp4 360p)

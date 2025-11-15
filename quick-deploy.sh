@@ -12,6 +12,19 @@ read -p "Email: " EMAIL
 echo "📦 Installing system dependencies..."
 sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx curl
 
+# Install yt-dlp for media player
+echo "📦 Installing yt-dlp for media player..."
+if ! command -v yt-dlp &> /dev/null; then
+    sudo apt install -y yt-dlp || sudo pip3 install yt-dlp || {
+        echo "📥 Installing via direct download..."
+        sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+        sudo chmod a+rx /usr/local/bin/yt-dlp
+    }
+    echo "✅ yt-dlp installed"
+else
+    echo "✅ yt-dlp already installed"
+fi
+
 # Install Node.js 20.x (required for React 19)
 if ! command -v node &> /dev/null || [ "$(node -v | cut -d'.' -f1 | tr -d 'v')" -lt 18 ]; then
     echo "📦 Installing Node.js 20.x..."

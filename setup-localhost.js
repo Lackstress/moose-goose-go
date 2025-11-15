@@ -57,6 +57,55 @@ function checkGit() {
   }
 }
 
+// Install yt-dlp for media player
+function installYtDlp() {
+  try {
+    // Check if yt-dlp is already installed
+    execSync('yt-dlp --version', { stdio: 'pipe' });
+    console.log('✅ yt-dlp is already installed\n');
+    return true;
+  } catch {
+    console.log('📦 Installing yt-dlp for media player...');
+    try {
+      if (isWindows) {
+        // Try winget first
+        try {
+          execSync('winget install yt-dlp.yt-dlp', { stdio: 'inherit' });
+          console.log('✅ yt-dlp installed via winget\n');
+          return true;
+        } catch {
+          // Fallback: download directly
+          console.log('  Winget failed, downloading yt-dlp.exe...');
+          const downloadCmd = isWindows 
+            ? 'powershell -Command "Invoke-WebRequest -Uri https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -OutFile yt-dlp.exe"'
+            : 'curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && chmod +x /usr/local/bin/yt-dlp';
+          execSync(downloadCmd, { stdio: 'inherit' });
+          if (isWindows) {
+            // Add to PATH temporarily for this session
+            process.env.PATH = `${__dirname};${process.env.PATH}`;
+          }
+          console.log('✅ yt-dlp downloaded\n');
+          return true;
+        }
+      } else {
+        // Linux: try apt/yum/pip
+        try {
+          execSync('sudo apt install -y yt-dlp || sudo yum install -y yt-dlp || pip3 install yt-dlp', { stdio: 'inherit' });
+          console.log('✅ yt-dlp installed\n');
+          return true;
+        } catch {
+          console.warn('⚠️  Could not auto-install yt-dlp. Please install manually: pip3 install yt-dlp');
+          return false;
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️  Could not install yt-dlp automatically. Media player may not work.');
+      console.warn('   Install manually: winget install yt-dlp OR download from https://github.com/yt-dlp/yt-dlp/releases\n');
+      return false;
+    }
+  }
+}
+
 // Install dependencies for main project
 function installMainDependencies() {
   return runCommand('npm install', 'Installing main project dependencies');
@@ -243,7 +292,10 @@ async function main() {
   checkNodeJS();
   checkGit();
   
-  console.log('Step 2: Checking database preservation...\n');
+  console.log('Step 2: Installing yt-dlp for media player...\n');
+  installYtDlp();
+  
+  console.log('Step 3: Checking database preservation...\n');
   const dbPath = path.join(__dirname, 'database', 'games.db');
   if (fs.existsSync(dbPath)) {
     console.log('🛡️  Preserving existing database: database/games.db');
@@ -252,23 +304,24 @@ async function main() {
     console.log('ℹ️  No existing database found - will be auto-created on first run\n');
   }
   
-  console.log('Step 3: Installing main project dependencies...\n');
+  console.log('Step 4: Installing main project dependencies...\n');
   if (!installMainDependencies()) {
     console.error('❌ Setup failed at main dependencies installation');
     process.exit(1);
   }
   
-  console.log('Step 4: Setting up Radon Games...\n');
+  console.log('Step 5: Setting up Radon Games...\n');
   if (!setupRadonGames()) {
     console.error('⚠️  Radon Games setup failed - continuing without it\n');
   }
   
-  console.log('Step 5: Setting up DuckMath...\n');
+  console.log('Step 6: Setting up DuckMath...\n');
   setupDuckMath();
   
   console.log('✅ Setup complete!\n');
   console.log('📋 Setup Summary:');
   console.log('  ✓ Dependencies installed');
+  console.log('  ✓ yt-dlp installed for media player');
   console.log('  ✓ Database preserved (not modified by setup)');
   console.log('  ✓ External repositories configured\n');
   

@@ -60,6 +60,18 @@ sudo apt install -y nginx
 echo -e "${GREEN}📦 Step 4/8: Installing Certbot...${NC}"
 sudo apt install -y certbot python3-certbot-nginx
 
+# Install yt-dlp for media player
+echo -e "${GREEN}📦 Step 4.5/8: Installing yt-dlp for media player...${NC}"
+if ! command -v yt-dlp &> /dev/null; then
+    sudo apt install -y yt-dlp || sudo pip3 install yt-dlp || {
+        echo -e "${YELLOW}   Installing via direct download...${NC}"
+        sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+        sudo chmod a+rx /usr/local/bin/yt-dlp
+    }
+else
+    echo -e "${GREEN}   ✅ yt-dlp already installed${NC}"
+fi
+
 # Install PM2
 echo -e "${GREEN}📦 Step 5/8: Installing PM2...${NC}"
 sudo npm install -g pm2
