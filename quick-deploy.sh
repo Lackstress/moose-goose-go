@@ -146,6 +146,10 @@ echo "📦 Installing Radon Games dependencies (this may take a few minutes)..."
 # Limit memory usage and network concurrency for low-memory VMs
 NODE_OPTIONS="--max-old-space-size=1024" pnpm install --no-frozen-lockfile --network-concurrency=1
 
+echo "🔨 Generating route tree..."
+# Force regenerate route tree with TypeScript compiler
+NODE_OPTIONS="--max-old-space-size=1024" pnpm exec tsc --noEmit false || echo "⚠️  TSC completed with warnings, continuing..."
+
 echo "🔨 Building Radon Games..."
 # Limit memory usage during build
 NODE_OPTIONS="--max-old-space-size=1024" pnpm run build
