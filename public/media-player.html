@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Secret Media Player</title>
+  <style>
+    :root {color-scheme: dark;}
+    body {font-family: system-ui, Arial; margin:0; background:#0d0d0f; color:#e5e5e5;}
+    header {padding:16px 24px; background:#18181c; display:flex; justify-content:space-between; align-items:center;}
+    h1 {font-size:1.1rem; margin:0; letter-spacing:.5px;}
+    main {display:grid; grid-template-columns:340px 1fr; gap:24px; padding:24px;}
+    @media (max-width:900px){main{grid-template-columns:1fr;}}
+    .card {background:#18181c; border:1px solid #24242a; border-radius:14px; padding:16px;}
+    label {font-size:.75rem; text-transform:uppercase; letter-spacing:.5px; opacity:.7; display:block; margin:12px 0 6px;}
+    input[type=text] {width:100%; padding:10px 12px; border-radius:8px; border:1px solid #2e2e35; background:#111115; color:#eee; font-size:.85rem;}
+    input[type=file] {width:100%;}
+    button {background:#2563eb; color:#fff; border:none; padding:10px 16px; font-size:.8rem; border-radius:8px; cursor:pointer; font-weight:600; letter-spacing:.5px; display:inline-flex; align-items:center; gap:6px;}
+    button.secondary {background:#333;}
+    button:disabled {opacity:.4; cursor:not-allowed;}
+    .row {display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+    video {width:100%; height:100%; background:#000; border-radius:12px; outline:none;}
+    #playerShell {height:65vh; min-height:360px;}
+    .badge {background:#333; padding:2px 6px; border-radius:4px; font-size:.7rem;}
+    .status {font-size:.65rem; margin-top:6px; opacity:.6;}
+    a.download-link {display:inline-block; margin-top:12px; font-size:.75rem; background:#10b981; padding:8px 12px; border-radius:8px; color:#031; font-weight:600; text-decoration:none;}
+    a.download-link:hover {filter:brightness(1.1);}    
+    footer {text-align:center; font-size:.65rem; padding:12px; opacity:.4;}
+    .error {color:#f87171; font-size:.7rem; margin-top:4px;}
+    .progress {height:6px; width:100%; background:#222; border-radius:3px; overflow:hidden; margin-top:12px;}
+    .progress span {display:block; height:100%; width:0; background:linear-gradient(90deg,#2563eb,#9333ea);}  
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔒 Secret Media Player <span class="badge">Beta</span></h1>
+    <nav><a href="/" style="color:#6cf; text-decoration:none;">Home</a></nav>
+  </header>
+  <main>
+    <div class="card">
+      <h2 style="margin:0 0 4px; font-size:.95rem;">Source</h2>
+      <p style="margin:0; font-size:.65rem; opacity:.6;">Play ad-free YouTube videos or your own files. Nothing is uploaded for local files.</p>
+      <label for="ytUrl">YouTube URL</label>
+      <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..." />
+      <label for="qualitySelect" style="margin-top:14px;">Quality</label>
+      <select id="qualitySelect" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #2e2e35; background:#111115; color:#eee; font-size:.8rem;">
+        <option value="">(auto)</option>
+      </select>
+      <div class="row" style="margin-top:14px;">
+        <button id="playBtn">▶ Play</button>
+        <button id="downloadBtn" class="secondary" disabled>⬇ Download</button>
+        <button id="clearBtn" class="secondary">✕ Clear</button>
+      </div>
+      <div id="ytError" class="error" style="display:none;"></div>
+      <div class="progress" id="streamProgress" style="display:none;"><span></span></div>
+      <label for="fileInput">Local File</label>
+      <input type="file" id="fileInput" accept="video/*,audio/*" />
+      <div class="row">
+        <button id="playFileBtn">▶ Play File</button>
+        <button id="downloadFileBtn" class="secondary" disabled>⬇ Get Copy</button>
+      </div>
+      <div id="fileError" class="error" style="display:none;"></div>
+      <div class="status" id="statusMsg"></div>
+    </div>
+    <div class="card" id="playerShell">
+      <video id="player" controls playsinline></video>
+      <a id="downloadLink" class="download-link" style="display:none;" href="#" download>Download Current</a>
+    </div>
+  </main>
+  <footer>Ad-free playback powered by server-side stream (ytdl-core). Respect YouTube's Terms of Service. Local files never leave your device.</footer>
+  <script>
+    const el = id => document.getElementById(id);
+    const player = el('player');
+    const ytUrl = el('ytUrl');
+    const playBtn = el('playBtn');
+    const qualitySelect = el('qualitySelect');
+    const downloadBtn = el('downloadBtn');
+    const clearBtn = el('clearBtn');
+    const fileInput = el('fileInput');
+    const playFileBtn = el('playFileBtn');
+    const downloadFileBtn = el('downloadFileBtn');
+    const statusMsg = el('statusMsg');
+    const ytError = el('ytError');
+    const fileError = el('fileError');
+    const progress = el('streamProgress');
+    const progressBar = progress.querySelector('span');
+    const downloadLink = el('downloadLink');
+
+    function resetErrors(){ytError.style.display='none'; fileError.style.display='none'; ytError.textContent=''; fileError.textContent='';}
+
+    function isYouTube(url){return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(url);}
+
+    async function loadInfo(){
+      resetErrors();
+      const url = ytUrl.value.trim();
+      if(!url || !isYouTube(url)) return;
+      statusMsg.textContent='Fetching format list...';
+      try {
+        const infoRes = await fetch('/media-player/info?url=' + encodeURIComponent(url));
+        if(!infoRes.ok) throw new Error('Info request failed');
+        const data = await infoRes.json();
+        qualitySelect.innerHTML = '<option value="">(auto)</option>';
+        (data.formats||[]).forEach(f => {
+          const opt = document.createElement('option');
+          const q = f.qualityLabel || f.itag;
+          opt.value = f.itag;
+          opt.textContent = `${q} ${f.hasAudio?'':'(no audio)'}`;
+          qualitySelect.appendChild(opt);
+        });
+        statusMsg.textContent='Formats loaded.';
+      } catch(e){
+        statusMsg.textContent='Failed to load formats.';
+      }
+    }
+
+    // Anti-fail: track retry attempts & degrade quality if needed
+    let playRetries = 0;
+    const MAX_PLAY_RETRIES = 3;
+
+    async function playYouTube(){
+      resetErrors();
+      const url = ytUrl.value.trim();
+      if(!url){ytError.textContent='Enter a URL'; ytError.style.display='block'; return;}
+      if(!isYouTube(url)){ytError.textContent='Provide a valid YouTube URL'; ytError.style.display='block'; return;}
+      statusMsg.textContent='Requesting stream...';
+      downloadBtn.disabled=true; progress.style.display='block'; progressBar.style.width='4%';
+      try {
+        const itag = qualitySelect.value.trim();
+        const streamUrl = '/media-player/stream?url=' + encodeURIComponent(url) + (itag?('&itag='+itag):'');
+        player.src = streamUrl;
+        player.play();
+        downloadBtn.disabled=false;
+        downloadLink.href = '/media-player/download?url=' + encodeURIComponent(url);
+        downloadLink.style.display='inline-block';
+        statusMsg.textContent='Streaming ' + (itag?('itag '+itag):'best available') + '...';
+        let pct=4; const int=setInterval(()=>{pct=Math.min(pct+3,95); progressBar.style.width=pct+'%'; if(pct>=95) clearInterval(int);},300);
+      } catch(err){
+        ytError.textContent='Stream failed.'; ytError.style.display='block'; statusMsg.textContent='';
+      } finally { setTimeout(()=>{progress.style.display='none'; progressBar.style.width='0';},5000); }
+    }
+
+    player.addEventListener('error', () => {
+      // Attempt automatic retry with downgraded quality
+      if(!ytUrl.value.trim() || playRetries >= MAX_PLAY_RETRIES) return;
+      playRetries++;
+      statusMsg.textContent='Recovering from error (attempt '+playRetries+')...';
+      // Choose a lower itag from the list (last option usually lower quality)
+      const opts = [...qualitySelect.options].filter(o=>o.value);
+      if(opts.length){
+        // pick mid or last depending on attempt
+        const idx = Math.min(opts.length-1, playRetries);
+        qualitySelect.value = opts[idx].value;
+      }
+      playYouTube();
+    });
+    playBtn.addEventListener('click', () => { playRetries = 0; playYouTube(); });
+    ytUrl.addEventListener('change', loadInfo);
+    ytUrl.addEventListener('blur', loadInfo);
+    downloadBtn.addEventListener('click', ()=>{
+      const url = ytUrl.value.trim();
+      if(!isYouTube(url)) return;
+      statusMsg.textContent='Download started...';
+      const a = document.createElement('a');
+      a.href = '/media-player/download?url=' + encodeURIComponent(url);
+      a.style.display='none'; document.body.appendChild(a); a.click(); setTimeout(()=>a.remove(),1000);
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      ytUrl.value=''; player.removeAttribute('src'); player.load(); downloadBtn.disabled=true; downloadLink.style.display='none'; statusMsg.textContent=''; resetErrors();
+    });
+
+    playFileBtn.addEventListener('click', ()=>{
+      resetErrors();
+      const file = fileInput.files[0];
+      if(!file){fileError.textContent='Select a file first'; fileError.style.display='block'; return;}
+      const url = URL.createObjectURL(file);
+      player.src = url; player.play();
+      statusMsg.textContent='Playing local file';
+      downloadLink.href = url; downloadLink.download = file.name; downloadLink.style.display='inline-block';
+      downloadFileBtn.disabled=false;
+    });
+
+    downloadFileBtn.addEventListener('click', ()=>{
+      const file = fileInput.files[0]; if(!file) return;
+      const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; a.click();
+    });
+  </script>
+</body>
+</html>
