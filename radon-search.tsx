@@ -1,6 +1,6 @@
 import { GameList } from "../components/GameList";
 import { games } from "../util/games";
-import { filterSearch } from "../util/filterSearch";
+import { filter } from "../util/filterSearch";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "motion/react";
 
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/search")({
 
 function RouteComponent() {
   const { q } = Route.useSearch();
-  const searchResults = q ? filterSearch(q, games) : games;
+  const searchResults = q ? filter(q) : games;
 
   return (
     <motion.main
