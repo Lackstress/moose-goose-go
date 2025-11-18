@@ -263,27 +263,6 @@ function setupDuckMath() {
   return true;
 }
 
-// Clone and setup NativeLite
-function setupNativeLite() {
-  const nativelitePath = path.join(__dirname, '..', 'nativelite');
-  
-  if (fs.existsSync(nativelitePath)) {
-    console.log('✅ NativeLite Games already exists\n');
-    return true;
-  }
-  
-  console.log('📥 Cloning NativeLite Games repository...');
-  const parentDir = path.join(__dirname, '..');
-  process.chdir(parentDir);
-  
-  if (!runCommand('git clone https://github.com/parcoil/nativelite.git nativelite', 'Cloning NativeLite Games')) {
-    console.log('⚠️  NativeLite Games clone failed - continuing without it\n');
-  }
-  
-  process.chdir(__dirname);
-  return true;
-}
-
 // Start the server
 function startServer() {
   console.log('\n🚀 Starting Gaming Hub Server...\n');
@@ -294,7 +273,6 @@ function startServer() {
   console.log('  - Landing Page:    http://localhost:3000/');
   console.log('  - GameHub:         http://localhost:3000/ghub');
   console.log('  - DuckMath:        http://localhost:3000/duckmath');
-  console.log('  - NativeLite Games: http://localhost:3000/native-lite');
   console.log('  - Radon Portal:    http://localhost:3000/radon-g3mes');
   console.log('');
   console.log('Press Ctrl+C to stop the server');
@@ -339,9 +317,6 @@ async function main() {
   
   console.log('Step 6: Setting up DuckMath...\n');
   setupDuckMath();
-  
-  console.log('Step 7: Setting up NativeLite Games...\n');
-  setupNativeLite();
   
   console.log('✅ Setup complete!\n');
   console.log('📋 Setup Summary:');
