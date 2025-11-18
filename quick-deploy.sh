@@ -97,6 +97,14 @@ if [ -f "duckmath/package.json" ]; then
     (cd duckmath && npm install) || echo "⚠️  DuckMath npm install failed, continuing..."
 fi
 
+# Clone NativeLite Games
+echo "📦 Cloning NativeLite games..."
+if [ ! -d "nativelite" ]; then
+    git clone https://github.com/parcoil/nativelite.git nativelite || echo "⚠️  NativeLite clone failed, continuing..."
+else
+    (cd nativelite && git pull --ff-only) || echo "⚠️  NativeLite update failed, continuing..."
+fi
+
 # Clone and build Radon Games
 echo "⚡ Cloning and building Radon Games..."
 

@@ -121,6 +121,16 @@ else
 fi
 
 ##############################################
+# Step 5.55/10: Clone/Update NativeLite
+##############################################
+echo -e "${GREEN}📦 Step 5.55/10: Cloning/Updating NativeLite games...${NC}"
+if [ ! -d "nativelite" ]; then
+    git clone https://github.com/parcoil/nativelite.git nativelite || true
+else
+    (cd nativelite && git pull --ff-only || true)
+fi
+
+##############################################
 # Step 5.6/10: Clone/Update + Patch + Build Radon Games
 ##############################################
 echo -e "${GREEN}⚡ Step 5.6/10: Cloning/Patching/Building Radon Games...${NC}"

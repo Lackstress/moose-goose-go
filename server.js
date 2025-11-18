@@ -69,9 +69,10 @@ app.use(express.json());
 
 // ===== ROUTES =====
 
-// Bare server proxy for Radon Games web proxy (must be at root level)
+// Bare server proxy for Radon Games web proxy
 // This implements a basic bare-mux protocol proxy
-app.all('/~/sj/*', async (req, res) => {
+// Handler function to be reused for both root and /radon-g3mes paths
+const handleBareProxy = async (req, res, pathPrefix) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -83,8 +84,8 @@ app.all('/~/sj/*', async (req, res) => {
 
   try {
     // Extract the target URL from the path
-    // Format: /~/sj/https://example.com/path
-    const urlPath = req.path.replace('/~/sj/', '');
+    // Format: /~/sj/https://example.com/path or /radon-g3mes/~/sj/https://example.com/path
+    const urlPath = req.path.replace(pathPrefix, '');
     
     if (!urlPath || !urlPath.startsWith('http')) {
       return res.status(400).json({ error: 'Invalid proxy URL' });
@@ -161,7 +162,13 @@ app.all('/~/sj/*', async (req, res) => {
       res.status(500).json({ error: 'Proxy error', message: err.message });
     }
   }
-});
+};
+
+// Root level proxy route (legacy)
+app.all('/~/sj/*', (req, res) => handleBareProxy(req, res, '/~/sj/'));
+
+// Radon-prefixed proxy route (for /radon-g3mes base path)
+app.all('/radon-g3mes/~/sj/*', (req, res) => handleBareProxy(req, res, '/radon-g3mes/~/sj/'));
 
 // Landing page - root (shows all 3 hubs to choose from)
 app.get('/', (req, res) => {
@@ -369,7 +376,155 @@ app.get('/duckmath/*', (req, res, next) => {
   next();
 });
 
+// ============================================================================
+// NATIVELITE GAMES HUB
+// ============================================================================
 
+let nativelitePath = path.join(__dirname, '..', 'nativelite');
+try {
+  const fs = require('fs');
+  if (!fs.existsSync(nativelitePath)) {
+    const fallback = path.join(__dirname, 'nativelite');
+    if (fs.existsSync(fallback)) {
+      nativelitePath = fallback;
+    }
+  }
+} catch {}
+
+const serveNativeliteIndex = (req, res) => {
+  const fs = require('fs');
+  const indexPath = path.join(nativelitePath, 'index.html');
+
+  if (!fs.existsSync(indexPath)) {
+    return res.status(404).send('NativeLite Games is not installed.');
+  }
+
+  try {
+    let html = fs.readFileSync(indexPath, 'utf8');
+
+    // Inject a <base> tag so client-side routing & absolute assets work under /native-lite
+    html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n  <base href="/native-lite/">`);
+
+    // Rewrite absolute asset and link paths to live under /native-lite
+    html = html.replace(/href="\/(?!native-lite|http|https|\/)/g, 'href="/native-lite/');
+    html = html.replace(/src="\/(?!native-lite|http|https|\/)/g, 'src="/native-lite/');
+    
+    // Fix weird import paths like import "/./config/custom.js"
+    html = html.replace(/import\s+["']\/\.\//g, 'import "/native-lite/');
+
+    // Inject runtime interceptor to fix dynamically added root-relative links
+    const interceptor = `
+      <script>
+        (function(){
+          var basePath = '/native-lite';
+          function fixLinks(){
+            try {
+              document.querySelectorAll('a[href]').forEach(function(a){
+                var href = a.getAttribute('href');
+                if (!href) return;
+                if (href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('//') && !href.startsWith('http')) {
+                  a.setAttribute('href', basePath + href);
+                }
+              });
+              // Also fix forms
+              document.querySelectorAll('form[action]').forEach(function(f){
+                var action = f.getAttribute('action');
+                if (action && action.startsWith('/') && !action.startsWith(basePath) && !action.startsWith('//') && !action.startsWith('http')) {
+                  f.setAttribute('action', basePath + action);
+                }
+              });
+            } catch(_) {}
+          }
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fixLinks);
+          } else {
+            fixLinks();
+          }
+          // Intercept clicks
+          document.addEventListener('click', function(e){
+            var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+            if (!a) return;
+            var href = a.getAttribute('href');
+            if (!href) return;
+            if (href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('//') && !href.startsWith('http')) {
+              e.preventDefault();
+              window.location.href = basePath + href;
+            }
+          }, true);
+          // Observe DOM mutations
+          try {
+            var mo = new MutationObserver(function(){ fixLinks(); });
+            mo.observe(document.documentElement || document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['href', 'action'] });
+          } catch(_) {}
+          setInterval(fixLinks, 300);
+        })();
+      </script>
+    `;
+    html = html.replace('</body>', interceptor + '</body>');
+
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(html);
+  } catch (e) {
+    console.error('Failed to serve NativeLite index:', e);
+    return res.status(500).send('NativeLite Games failed to load.');
+  }
+};
+
+// Handle NativeLite SPA routes FIRST (before static serving)
+app.get('/native-lite', serveNativeliteIndex);
+app.get('/native-lite/', serveNativeliteIndex);
+app.get('/native-lite/index.html', serveNativeliteIndex);
+// Intercept JavaScript files to rewrite import paths
+app.get('/native-lite/**/*.js', (req, res, next) => {
+  const fs = require('fs');
+  const requestedPath = req.path.replace('/native-lite/', '');
+  const fullPath = path.join(nativelitePath, requestedPath);
+  
+  if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+    try {
+      let js = fs.readFileSync(fullPath, 'utf8');
+      // Fix import paths like import "/./config/custom.js" to use /native-lite/
+      js = js.replace(/import\s+(["'])\/\.\//g, 'import $1/native-lite/');
+      // Fix other absolute imports
+      js = js.replace(/import\s+(["'])\/(?!native-lite|http|https)/g, 'import $1/native-lite/');
+      res.setHeader('Content-Type', 'application/javascript');
+      return res.send(js);
+    } catch (e) {
+      console.error('Failed to serve NativeLite JS:', e);
+    }
+  }
+  next();
+});
+// Serve static assets (excluding index.html which we handle above)
+app.use('/native-lite', express.static(nativelitePath, { index: false }));
+// Catch-all for NativeLite subdirectories
+app.get('/native-lite/*', (req, res, next) => {
+  const fs = require('fs');
+  const requestedPath = req.path.replace('/native-lite/', '');
+  const fullPath = path.join(nativelitePath, requestedPath);
+  
+  // If this is a directory request, serve its index.html with base tag injection
+  if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
+    const indexPath = path.join(fullPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      try {
+        let html = fs.readFileSync(indexPath, 'utf8');
+        html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n  <base href="/native-lite/">`);
+        html = html.replace(/href="\/(?!native-lite|http|https|\/)/g, 'href="/native-lite/');
+        html = html.replace(/src="\/(?!native-lite|http|https|\/)/g, 'src="/native-lite/');
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(html);
+      } catch (e) {
+        console.error('Failed to serve NativeLite subdirectory index:', e);
+      }
+    }
+  }
+  next();
+});
+
+// ============================================================================
+// RADON GAMES HUB
+// ============================================================================
 
 // Helper function to prepare Radon Games HTML with base tag and asset rewrites
 function prepareRadonHtml(html) {
@@ -379,8 +534,9 @@ function prepareRadonHtml(html) {
   // Rewrite asset paths
   html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
   html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
-  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/)/g, 'href="/radon-g3mes/');
-  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/)/g, 'src="/radon-g3mes/');
+  // Exclude proxy paths (/~/) from rewriting
+  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/|~)/g, 'href="/radon-g3mes/');
+  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/|~)/g, 'src="/radon-g3mes/');
   
   // Inject interceptor script
   return injectRadonInterceptor(html);
@@ -393,12 +549,21 @@ function injectRadonInterceptor(html) {
       (function() {
         const basePath = '/radon-g3mes';
         
+        // Helper to check if a path should be excluded from rewriting
+        function shouldExclude(path) {
+          if (!path || !path.startsWith('/')) return true;
+          if (path.startsWith('http') || path.startsWith('//')) return true;
+          if (path.startsWith(basePath)) return true;
+          if (path.startsWith('/~/')) return true; // EXCLUDE PROXY PATHS
+          return false;
+        }
+        
         // First, fix all existing href and src attributes on page load
         function fixAllLinks() {
           // Fix all anchor links
           document.querySelectorAll('a[href]').forEach(link => {
             const href = link.getAttribute('href');
-            if (href && href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('http') && !href.startsWith('//')) {
+            if (!shouldExclude(href)) {
               link.setAttribute('href', basePath + href);
             }
           });
@@ -406,7 +571,7 @@ function injectRadonInterceptor(html) {
           // Fix all image sources
           document.querySelectorAll('img[src]').forEach(img => {
             const src = img.getAttribute('src');
-            if (src && src.startsWith('/') && !src.startsWith(basePath) && !src.startsWith('http') && !src.startsWith('//')) {
+            if (!shouldExclude(src)) {
               img.setAttribute('src', basePath + src);
             }
           });
@@ -414,7 +579,7 @@ function injectRadonInterceptor(html) {
           // Fix all iframe sources (CRITICAL FOR GAMES)
           document.querySelectorAll('iframe[src]').forEach(iframe => {
             const src = iframe.getAttribute('src');
-            if (src && src.startsWith('/') && !src.startsWith(basePath) && !src.startsWith('http') && !src.startsWith('//')) {
+            if (!shouldExclude(src)) {
               iframe.setAttribute('src', basePath + src);
             }
           });
@@ -422,7 +587,7 @@ function injectRadonInterceptor(html) {
           // Fix form actions
           document.querySelectorAll('form[action]').forEach(form => {
             const action = form.getAttribute('action');
-            if (action && action.startsWith('/') && !action.startsWith(basePath) && !action.startsWith('http') && !action.startsWith('//')) {
+            if (!shouldExclude(action)) {
               form.setAttribute('action', basePath + action);
             }
           });
@@ -446,8 +611,8 @@ function injectRadonInterceptor(html) {
           const href = target.getAttribute('href');
           if (!href) return;
           
-          // Skip external links and already-prefixed links and anchor links
-          if (href.startsWith('http') || href.startsWith('//') || href.startsWith(basePath) || href.startsWith('#')) {
+          // Skip external links, already-prefixed links, anchor links, and proxy paths
+          if (href.startsWith('http') || href.startsWith('//') || href.startsWith(basePath) || href.startsWith('#') || href.startsWith('/~/')) {
             return;
           }
           
