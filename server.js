@@ -250,8 +250,18 @@ app.get('/games', (req, res) => {
 
 // ===== DUCK MATH ROUTES =====
 // Note: deploy.sh clones DuckMath to the parent directory of this repo
-// so we intentionally resolve to '../duckmath' here.
-const duckmathPath = path.join(__dirname, '..', 'duckmath');
+// so we intentionally resolve to '../duckmath' here. For local dev, we also
+// support a fallback './duckmath' inside this repository if present.
+let duckmathPath = path.join(__dirname, '..', 'duckmath');
+try {
+  const fs = require('fs');
+  if (!fs.existsSync(duckmathPath)) {
+    const fallback = path.join(__dirname, 'duckmath');
+    if (fs.existsSync(fallback)) {
+      duckmathPath = fallback;
+    }
+  }
+} catch {}
 const serveDuckmathIndex = (req, res) => {
   const fs = require('fs');
   const indexPath = path.join(duckmathPath, 'index.html');
@@ -264,13 +274,57 @@ const serveDuckmathIndex = (req, res) => {
     let html = fs.readFileSync(indexPath, 'utf8');
 
     // Inject a <base> tag so client-side routing & absolute assets work under /duckmath
-    if (html.includes('<head>')) {
-      html = html.replace('<head>', '<head>\n  <base href="/duckmath/">');
-    }
+    // Use a robust regex to match <head> with optional attributes/whitespace
+    html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n  <base href="/duckmath/">`);
 
     // Rewrite absolute asset and link paths to live under /duckmath
     // Avoid touching fully-qualified URLs (http/https) or protocol-relative (//)
     html = html.replace(/href="\/(?!duckmath|http|https|\/)/g, 'href="/duckmath/');
+
+      // Inject small runtime interceptor to fix dynamically added root-relative links
+      const interceptor = `
+        <script>
+          (function(){
+            var basePath = '/duckmath';
+            function fixLinks(){
+              try {
+                document.querySelectorAll('a[href]').forEach(function(a){
+                  var href = a.getAttribute('href');
+                  if (!href) return;
+                  // prefix root-relative links that are not already under /duckmath and not protocol-relative
+                  if (href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('//')) {
+                    a.setAttribute('href', basePath + href);
+                  }
+                });
+              } catch(_) {}
+            }
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', fixLinks);
+            } else {
+              fixLinks();
+            }
+            // Intercept clicks as a safety net for links mutated after load
+            document.addEventListener('click', function(e){
+              var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+              if (!a) return;
+              var href = a.getAttribute('href');
+              if (!href) return;
+              if (href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('//')) {
+                e.preventDefault();
+                window.location.href = basePath + href;
+              }
+            }, true);
+            // Observe DOM mutations for dynamically inserted content
+            try {
+              var mo = new MutationObserver(function(){ fixLinks(); });
+              mo.observe(document.documentElement || document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['href'] });
+            } catch(_) {}
+            // Re-run periodically as a fallback to catch any missed changes
+            setInterval(fixLinks, 300);
+          })();
+        </script>
+      `;
+      html = html.replace('</body>', interceptor + '</body>');
     html = html.replace(/src="\/(?!duckmath|http|https|\/)/g, 'src="/duckmath/');
 
     res.setHeader('Content-Type', 'text/html');
@@ -281,11 +335,39 @@ const serveDuckmathIndex = (req, res) => {
   }
 };
 
-// Serve static assets for DuckMath first
-app.use('/duckmath', express.static(duckmathPath));
-// Then handle SPA routes/fallback
+// Handle DuckMath SPA routes FIRST (before static serving)
+// This ensures we can inject base tag and rewrite paths
 app.get('/duckmath', serveDuckmathIndex);
-app.get('/duckmath/*', serveDuckmathIndex);
+app.get('/duckmath/', serveDuckmathIndex);
+app.get('/duckmath/index.html', serveDuckmathIndex);
+// Serve static assets (excluding index.html which we handle above)
+app.use('/duckmath', express.static(duckmathPath, { index: false }));
+// Catch-all for DuckMath subdirectories that need index.html (like /duckmath/g4m3s/)
+app.get('/duckmath/*', (req, res, next) => {
+  const fs = require('fs');
+  const requestedPath = req.path.replace('/duckmath/', '');
+  const fullPath = path.join(duckmathPath, requestedPath);
+  
+  // If this is a directory request, serve its index.html with base tag injection
+  if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
+    const indexPath = path.join(fullPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      try {
+        let html = fs.readFileSync(indexPath, 'utf8');
+        html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n  <base href="/duckmath/">`);
+        html = html.replace(/href="\/(?!duckmath|http|https|\/)/g, 'href="/duckmath/');
+        html = html.replace(/src="\/(?!duckmath|http|https|\/)/g, 'src="/duckmath/');
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(html);
+      } catch (e) {
+        console.error('Failed to serve DuckMath subdirectory index:', e);
+      }
+    }
+  }
+  
+  // Otherwise continue to static file serving or 404
+  next();
+});
 
 
 
@@ -440,6 +522,32 @@ function injectRadonInterceptor(html) {
         if (window.location.pathname.includes('/search')) {
           console.log('[Radon] Search path detected:', window.location.pathname);
         }
+
+        // Patch service worker registration so it scopes to /radon-g3mes instead of the domain root
+        try {
+          if (navigator.serviceWorker && typeof navigator.serviceWorker.register === 'function') {
+            const originalRegister = navigator.serviceWorker.register.bind(navigator.serviceWorker);
+            navigator.serviceWorker.register = function(scriptURL, options) {
+              try {
+                if (typeof scriptURL === 'string') {
+                  if (scriptURL.startsWith('/') && !scriptURL.startsWith(basePath) && !scriptURL.startsWith('//')) {
+                    scriptURL = basePath + scriptURL;
+                  }
+                }
+                // Ensure scope stays within /radon-g3mes
+                if (!options) {
+                  options = { scope: basePath + '/' };
+                } else if (typeof options.scope === 'string') {
+                  const s = options.scope;
+                  if (s.startsWith('/') && !s.startsWith(basePath) && !s.startsWith('//')) {
+                    options = Object.assign({}, options, { scope: basePath + s });
+                  }
+                }
+              } catch(_) {}
+              return originalRegister(scriptURL, options);
+            };
+          }
+        } catch(_) {}
       })();
     </script>
   `;
