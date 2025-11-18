@@ -249,16 +249,41 @@ app.get('/games', (req, res) => {
 });
 
 // ===== DUCK MATH ROUTES =====
+// Note: deploy.sh clones DuckMath to the parent directory of this repo
+// so we intentionally resolve to '../duckmath' here.
 const duckmathPath = path.join(__dirname, '..', 'duckmath');
 const serveDuckmathIndex = (req, res) => {
-    const indexPath = path.join(duckmathPath, 'index.html');
-    if (require('fs').existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
-        res.status(404).send('DuckMath is not installed.');
+  const fs = require('fs');
+  const indexPath = path.join(duckmathPath, 'index.html');
+
+  if (!fs.existsSync(indexPath)) {
+    return res.status(404).send('DuckMath is not installed.');
+  }
+
+  try {
+    let html = fs.readFileSync(indexPath, 'utf8');
+
+    // Inject a <base> tag so client-side routing & absolute assets work under /duckmath
+    if (html.includes('<head>')) {
+      html = html.replace('<head>', '<head>\n  <base href="/duckmath/">');
     }
+
+    // Rewrite absolute asset and link paths to live under /duckmath
+    // Avoid touching fully-qualified URLs (http/https) or protocol-relative (//)
+    html = html.replace(/href="\/(?!duckmath|http|https|\/)/g, 'href="/duckmath/');
+    html = html.replace(/src="\/(?!duckmath|http|https|\/)/g, 'src="/duckmath/');
+
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(html);
+  } catch (e) {
+    console.error('Failed to serve DuckMath index:', e);
+    return res.status(500).send('DuckMath failed to load.');
+  }
 };
+
+// Serve static assets for DuckMath first
 app.use('/duckmath', express.static(duckmathPath));
+// Then handle SPA routes/fallback
 app.get('/duckmath', serveDuckmathIndex);
 app.get('/duckmath/*', serveDuckmathIndex);
 
