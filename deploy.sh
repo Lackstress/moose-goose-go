@@ -172,6 +172,19 @@ echo -e "${YELLOW}   Building Radon Games...${NC}"
 NODE_OPTIONS="--max-old-space-size=1024" pnpm run build
 cd ..
 
+##############################################
+# Step 5.7/10: Clone/Update Seraph
+##############################################
+echo -e "${GREEN}📦 Step 5.7/10: Cloning/Updating Seraph gaming hub...${NC}"
+if [ ! -d "seraph" ]; then
+    echo -e "${YELLOW}   Cloning Seraph (5.68 GiB - this may take a while)...${NC}"
+    git clone --depth 1 https://github.com/Lackstress/seraph.git seraph
+else
+    echo -e "${YELLOW}   Updating Seraph...${NC}"
+    (cd seraph && git pull --ff-only || true)
+fi
+echo -e "${GREEN}   ✅ Seraph ready${NC}"
+
 # Return to repo directory reliably
 cd "${REPO_DIR}"
 

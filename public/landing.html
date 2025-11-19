@@ -397,6 +397,7 @@
       <p>GameHub: <code>/ghub</code></p>
       <p>DuckMath: <code>/duckmath</code></p>
       <p>Radon Portal: <code>/radon-g3mes</code></p>
+      <p>Seraph: <code>/seraph</code></p>
     </div>
 
     <div class="warning-notice">
@@ -478,10 +479,35 @@
         </div>
         <a href="/radon-g3mes" class="platform-btn" id="btn-radon">Access Radon →</a>
       </div>
+
+      <!-- Seraph Card -->
+      <div class="platform-card">
+        <span class="platform-icon">👼</span>
+        <div class="platform-title">Seraph Games</div>
+        <div class="platform-description">
+          Massive offline-ready gaming collection with 350+ games and full customization
+        </div>
+        <ul class="feature-list">
+          <li>350+ Unity, Flash, & Retro Games</li>
+          <li>Offline Mode (110+ Downloadable)</li>
+          <li>9 Custom Themes</li>
+          <li>Tab Cloaking & Panic Key</li>
+          <li>Emulators (NES, SNES, GB, GBA, DS)</li>
+          <li>100% Static - No Backend Required</li>
+        </ul>
+        <div class="hub-controls">
+          <label class="toggle-switch">
+            <input type="checkbox" id="cloak-seraph" onchange="toggleCloak('seraph', this.checked)">
+            <span class="slider"></span>
+            <span class="toggle-label">Hide URL</span>
+          </label>
+        </div>
+        <a href="/seraph" class="platform-btn" id="btn-seraph">Play Seraph →</a>
+      </div>
     </div>
 
     <div class="footer">
-      <p>🌟 Enjoy unlimited gaming with GameHub, DuckMath & Radon Portal 🌟</p>
+      <p>🌟 Enjoy unlimited gaming with GameHub, DuckMath, Radon Portal & Seraph 🌟</p>
       <p style="margin-top: 8px; font-size: 0.75rem; opacity: 0.5;">Build: codespace-r4wr5p99997jf5gwx-v2024.11.15</p>
     </div>
   </div>
@@ -495,7 +521,8 @@
     const hubUrls = {
       'ghub': '/ghub',
       'duckmath': '/duckmath',
-      'radon': '/radon-g3mes'
+      'radon': '/radon-g3mes',
+      'seraph': '/seraph'
     };
 
     function toggleCloak(hub, enabled) {

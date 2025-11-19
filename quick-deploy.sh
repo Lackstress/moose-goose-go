@@ -169,6 +169,17 @@ if [ ! -d "radon-games/dist" ]; then
 fi
 echo "✅ Radon Games dist folder verified"
 
+# Clone Seraph
+echo "📦 Cloning Seraph gaming hub..."
+if [ ! -d "seraph" ]; then
+    echo "📥 Cloning Seraph (5.68 GiB - this may take a while)..."
+    git clone --depth 1 https://github.com/Lackstress/seraph.git seraph || echo "⚠️  Seraph clone failed, continuing..."
+else
+    echo "🔄 Updating Seraph..."
+    (cd seraph && git pull --ff-only) || echo "⚠️  Seraph update failed, continuing..."
+fi
+echo "✅ Seraph ready"
+
 # Return to repo directory
 cd "$REPO_DIR"
 
@@ -241,6 +252,7 @@ echo "  • https://$DOMAIN/ - Landing page"
 echo "  • https://$DOMAIN/ghub - Game Hub"
 echo "  • https://$DOMAIN/duckmath - DuckMath games"
 echo "  • https://$DOMAIN/radon-g3mes - Radon Games (200+ games)"
+echo "  • https://$DOMAIN/seraph - Seraph Games (350+ games)"
 echo ""
 echo "🔧 Useful Commands:"
 echo "  • pm2 status - Check server status"

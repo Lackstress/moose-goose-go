@@ -972,6 +972,120 @@ app.get('/media-player/info', async (req, res) => {
 });
 
 // Static files for games
+// SERAPH GAMING HUB WITH DARK THEME
+// ============================================================================
+
+let seraphPath = path.join(__dirname, '..', 'seraph');
+try {
+  const fs = require('fs');
+  if (!fs.existsSync(seraphPath)) {
+    const fallback = path.join(__dirname, 'seraph');
+    if (fs.existsSync(fallback)) {
+      seraphPath = fallback;
+    }
+  }
+} catch {}
+
+const serveSeraphIndex = (req, res) => {
+  const fs = require('fs');
+  const indexPath = path.join(seraphPath, 'index.html');
+
+  if (!fs.existsSync(indexPath)) {
+    return res.status(404).send('Seraph is not installed.');
+  }
+
+  try {
+    let html = fs.readFileSync(indexPath, 'utf8');
+
+    // Inject base tag for proper routing
+    html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n  <base href="/seraph/">`);
+
+    // Rewrite asset paths
+    html = html.replace(/href="\/(?!seraph|http|https|\/)/g, 'href="/seraph/');
+    html = html.replace(/src="\/(?!seraph|http|https|\/)/g, 'src="/seraph/');
+    
+    // Rewrite CSS url() paths in style attributes (e.g., url('../images/...'))
+    html = html.replace(/url\(['"]?\.\.\/([^'")]+)['"]?\)/g, 'url("/seraph/$1")');
+
+    // Runtime interceptor for dynamic links
+    const interceptor = `
+      <script>
+        (function(){
+          var basePath = '/seraph';
+          function fixLinks(){
+            try {
+              document.querySelectorAll('a[href]').forEach(function(a){
+                var href = a.getAttribute('href');
+                if (!href) return;
+                if (href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('//')) {
+                  a.setAttribute('href', basePath + href);
+                }
+              });
+            } catch(_) {}
+          }
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fixLinks);
+          } else {
+            fixLinks();
+          }
+          document.addEventListener('click', function(e){
+            var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+            if (!a) return;
+            var href = a.getAttribute('href');
+            if (!href) return;
+            if (href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('//')) {
+              e.preventDefault();
+              window.location.href = basePath + href;
+            }
+          }, true);
+          try {
+            var mo = new MutationObserver(function(){ fixLinks(); });
+            mo.observe(document.documentElement || document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['href'] });
+          } catch(_) {}
+          setInterval(fixLinks, 300);
+        })();
+      </script>
+    `;
+    html = html.replace('</body>', interceptor + '</body>');
+
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(html);
+  } catch (e) {
+    console.error('Failed to serve Seraph index:', e);
+    return res.status(500).send('Seraph failed to load.');
+  }
+};
+
+// Seraph routes
+app.get('/seraph', serveSeraphIndex);
+app.get('/seraph/', serveSeraphIndex);
+app.get('/seraph/index.html', serveSeraphIndex);
+app.use('/seraph', express.static(seraphPath, { index: false }));
+app.get('/seraph/*', (req, res, next) => {
+  const fs = require('fs');
+  const requestedPath = req.path.replace('/seraph/', '');
+  const fullPath = path.join(seraphPath, requestedPath);
+  
+  if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
+    const indexPath = path.join(fullPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      try {
+        let html = fs.readFileSync(indexPath, 'utf8');
+        html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n  <base href="/seraph/">`);
+        html = html.replace(/href="\/(?!seraph|http|https|\/)/g, 'href="/seraph/');
+        html = html.replace(/src="\/(?!seraph|http|https|\/)/g, 'src="/seraph/');
+        // Rewrite CSS url() paths in style attributes (e.g., url('../images/...'))
+        html = html.replace(/url\(['"]?\.\.\/([^'")]+)['"]?\)/g, 'url("/seraph/$1")');
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(html);
+      } catch (e) {
+        console.error('Failed to serve Seraph subdirectory index:', e);
+      }
+    }
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API Routes
@@ -985,6 +1099,7 @@ server.listen(PORT, () => {
   console.log(`🎰 GameHub: http://localhost:${PORT}/ghub`);
   console.log(`🦆 DuckMath: http://localhost:${PORT}/duckmath`);
   console.log(`⚡ Radon Portal: http://localhost:${PORT}/radon-g3mes`);
+  console.log(`👼 Seraph: http://localhost:${PORT}/seraph`);
 });
       // Basic routes
 app.get('/games/:gameId', (req, res) => {
