@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const http = require('http');
 const socketIO = require('socket.io');
 const cors = require('cors');
@@ -1060,31 +1061,146 @@ const serveSeraphIndex = (req, res) => {
 app.get('/seraph', serveSeraphIndex);
 app.get('/seraph/', serveSeraphIndex);
 app.get('/seraph/index.html', serveSeraphIndex);
-app.use('/seraph', express.static(seraphPath, { index: false }));
+// Handle all HTML files in seraph BEFORE static middleware
 app.get('/seraph/*', (req, res, next) => {
   const fs = require('fs');
   const requestedPath = req.path.replace('/seraph/', '');
   const fullPath = path.join(seraphPath, requestedPath);
   
-  if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
-    const indexPath = path.join(fullPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      try {
-        let html = fs.readFileSync(indexPath, 'utf8');
-        html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n  <base href="/seraph/">`);
-        html = html.replace(/href="\/(?!seraph|http|https|\/)/g, 'href="/seraph/');
-        html = html.replace(/src="\/(?!seraph|http|https|\/)/g, 'src="/seraph/');
-        // Rewrite CSS url() paths in style attributes (e.g., url('../images/...'))
-        html = html.replace(/url\(['"]?\.\.\/([^'")]+)['"]?\)/g, 'url("/seraph/$1")');
-        res.setHeader('Content-Type', 'text/html');
-        return res.send(html);
-      } catch (e) {
-        console.error('Failed to serve Seraph subdirectory index:', e);
+  // Handle HTML files (both index.html and other .html files)
+  let htmlPath;
+  if (req.path.endsWith('.html')) {
+    // Direct request to any .html file
+    htmlPath = fullPath;
+  } else if (req.path.endsWith('/index.html')) {
+    // Explicit index.html request
+    htmlPath = fullPath;
+  } else if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
+    // Directory request - look for index.html inside
+    htmlPath = path.join(fullPath, 'index.html');
+  }
+  
+  if (htmlPath && fs.existsSync(htmlPath)) {
+    try {
+      let html = fs.readFileSync(htmlPath, 'utf8');
+      
+      // Determine base path based on the actual directory structure
+      // Extract the directory path from the request URL
+      let basePath = '/seraph/';
+      const pathParts = req.path.split('/').filter(p => p);
+      
+      // If the path contains .html file, remove it to get the directory
+      if (pathParts[pathParts.length - 1].endsWith('.html')) {
+        pathParts.pop();
       }
+      
+      // If path ends without trailing slash and isn't just /seraph, add the folder
+      if (pathParts.length > 1) {
+        basePath = '/' + pathParts.join('/') + '/';
+      }
+      
+      // Inject base tag for proper routing
+      html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n  <base href="${basePath}">`);
+      
+      // Rewrite asset paths - absolute paths (handle both double and single quotes)
+      html = html.replace(/href=(["'])\/(?!seraph|http|https|\/)/g, 'href=$1/seraph/');
+      html = html.replace(/src=(["'])\/(?!seraph|http|https|\/)/g, 'src=$1/seraph/');
+      
+      // Rewrite relative paths (../) - handle both quote types
+      // For games index, ../ paths should stay within /seraph/games/
+      // For other pages, ../ means go up one directory level
+      html = html.replace(/href=(["'])\.\.\/([^"']+)\1/g, (match, quote, capture) => {
+        if (basePath === '/seraph/games/') {
+          return `href=${quote}${capture}${quote}`;  // Relative to /seraph/games/
+        } else {
+          const upOneLevelPath = basePath.split('/').slice(0, -2).join('/') + '/';
+          return `href=${quote}${upOneLevelPath}${capture}${quote}`;
+        }
+      });
+      html = html.replace(/src=(["'])\.\.\/([^"']+)\1/g, (match, quote, capture) => {
+        if (basePath === '/seraph/games/') {
+          return `src=${quote}${capture}${quote}`;
+        } else {
+          const upOneLevelPath = basePath.split('/').slice(0, -2).join('/') + '/';
+          return `src=${quote}${upOneLevelPath}${capture}${quote}`;
+        }
+      });
+      
+      // Rewrite CSS url() paths in inline styles (e.g., url('../images/...') or url(/images/...))
+      html = html.replace(/url\(['"]?\.\.\/([^'")]+)['"]?\)/g, 'url("/seraph/$1")');
+      html = html.replace(/url\(['"]?\/(?!seraph|http|https)([^'")]+)['"]?\)/g, 'url("/seraph/$1")');
+      
+      // Runtime interceptor for dynamic links - same as main index route
+      const interceptor = `
+        <script>
+          (function(){
+            var basePath = '/seraph';
+            function fixLinks(){
+              try {
+                document.querySelectorAll('a[href]').forEach(function(a){
+                  var href = a.getAttribute('href');
+                  if (!href) return;
+                  if (href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('//')) {
+                    a.setAttribute('href', basePath + href);
+                  }
+                });
+              } catch(_) {}
+            }
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', fixLinks);
+            } else {
+              fixLinks();
+            }
+            document.addEventListener('click', function(e){
+              var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+              if (!a) return;
+              var href = a.getAttribute('href');
+              if (!href) return;
+              if (href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('//')) {
+                e.preventDefault();
+                window.location.href = basePath + href;
+              }
+            }, true);
+            try {
+              var mo = new MutationObserver(function(){ fixLinks(); });
+              mo.observe(document.documentElement || document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['href'] });
+            } catch(_) {}
+            setInterval(fixLinks, 300);
+          })();
+        </script>
+      `;
+      html = html.replace('</body>', interceptor + '</body>');
+      
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(html);
+    } catch (e) {
+      console.error('Failed to serve Seraph subdirectory index:', e);
     }
   }
   next();
 });
+
+// Intercept CSS files to rewrite absolute URL paths
+app.get('/seraph/**/*.css', async (req, res, next) => {
+  try {
+    const cssPath = path.join(seraphPath, req.path.replace('/seraph/', ''));
+    if (fs.existsSync(cssPath)) {
+      let css = await fs.promises.readFile(cssPath, 'utf-8');
+      
+      // Rewrite absolute url() paths in CSS to include /seraph/ prefix
+      css = css.replace(/url\(['"]?\/(?!seraph|http|https)([^'")]+)['"]?\)/g, 'url("/seraph/$1")');
+      
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      return res.send(css);
+    }
+  } catch (e) {
+    console.error('Failed to serve Seraph CSS file:', e);
+  }
+  next();
+});
+
+// Serve static Seraph files for non-index.html requests
+app.use('/seraph', express.static(seraphPath, { index: false }));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
