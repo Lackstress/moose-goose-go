@@ -213,50 +213,103 @@ timeout 300 npm install || {
 sudo npm install -g pm2
 
 # Stop existing process if running
+echo "🛑 Stopping existing PM2 process (if any)..."
 pm2 delete games-hub 2>/dev/null || true
 
 # Start with PM2 and auto-restart on crash
+echo "🚀 Starting Node.js server with PM2..."
 pm2 start server.js --name games-hub --time --watch false --max-memory-restart 500M
+
+# Verify PM2 started successfully
+if ! pm2 list | grep -q "games-hub.*online"; then
+    echo "❌ Failed to start server with PM2"
+    echo "Check logs with: pm2 logs games-hub"
+    exit 1
+fi
 
 # Save PM2 process list
 pm2 save --force
 
 # Setup PM2 to start on system boot
+echo "🔧 Configuring PM2 to start on boot..."
 sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u $USER --hp $HOME
 pm2 save --force
 
 echo "✅ PM2 configured to auto-start on boot and restart on crashes"
 
+# Wait for server to be ready
+echo "⏳ Waiting for server to start..."
+sleep 3
+
 # Configure Nginx
-sudo tee /etc/nginx/sites-available/$DOMAIN << EOF
+echo "⚙️  Configuring Nginx..."
+sudo tee /etc/nginx/sites-available/$DOMAIN > /dev/null << EOF
 server {
     listen 80;
     server_name $DOMAIN www.$DOMAIN;
+    
+    client_max_body_size 100M;
+    
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
+        proxy_read_timeout 300;
+        proxy_connect_timeout 300;
     }
+    
     location /socket.io/ {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     }
 }
 EOF
 
 sudo ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl restart nginx
+
+echo "🧪 Testing Nginx configuration..."
+if ! sudo nginx -t; then
+    echo "❌ Nginx configuration test failed!"
+    exit 1
+fi
+
+echo "🔄 Restarting Nginx..."
+sudo systemctl restart nginx
+sudo systemctl enable nginx
+echo "✅ Nginx configured and enabled"
+
+# Verify server is responding
+echo "🔍 Verifying server is running..."
+if ! curl -s http://localhost:3000 > /dev/null; then
+    echo "⚠️  Warning: Server may not be responding on port 3000"
+    echo "   Check with: pm2 logs games-hub"
+fi
 
 # Get SSL
+echo "🔐 Setting up SSL certificate..."
 sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos --email $EMAIL --redirect
 
+if [ $? -ne 0 ]; then
+    echo "⚠️  SSL certificate setup failed. You can try again later with:"
+    echo "   sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN"
+else
+    echo "✅ SSL certificate installed successfully"
+fi
+
 # Firewall
+echo "🔒 Configuring firewall..."
 sudo ufw allow 'Nginx Full' && sudo ufw allow OpenSSH && yes | sudo ufw enable
 
 echo ""

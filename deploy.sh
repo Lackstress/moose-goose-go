@@ -255,7 +255,9 @@ sudo tee /etc/nginx/sites-available/$DOMAIN > /dev/null << EOL
 server {
     listen 80;
     server_name $DOMAIN www.$DOMAIN;
-
+    
+    client_max_body_size 100M;
+    
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -266,8 +268,10 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
+        proxy_read_timeout 300;
+        proxy_connect_timeout 300;
     }
-
+    
     location /socket.io/ {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -285,6 +289,7 @@ sudo ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 
 # Test Nginx config
+echo -e "${YELLOW}🧪 Testing Nginx configuration...${NC}"
 sudo nginx -t
 
 if [ $? -ne 0 ]; then
@@ -292,7 +297,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+echo -e "${YELLOW}🔄 Restarting and enabling Nginx...${NC}"
 sudo systemctl restart nginx
+sudo systemctl enable nginx
+echo -e "${GREEN}   ✅ Nginx configured and enabled${NC}"
 
 ##############################################
 # Step 9/10: Configure firewall
@@ -305,17 +313,51 @@ echo "y" | sudo ufw enable
 ##############################################
 # Step 9.5/10: Start application with PM2
 ##############################################
-echo -e "${GREEN}🚀 Starting application...${NC}"
+echo -e "${GREEN}🚀 Step 9.5/10: Starting application with PM2...${NC}"
 pm2 delete games-hub 2>/dev/null || true
+
+echo -e "${YELLOW}   Starting Node.js server...${NC}"
 pm2 start server.js --name "games-hub" --time --watch false --max-memory-restart 500M
-pm2 save
+
+if ! pm2 list | grep -q "games-hub.*online"; then
+    echo -e "${RED}❌ Failed to start server with PM2${NC}"
+    echo -e "${YELLOW}Check logs with: pm2 logs games-hub${NC}"
+    exit 1
+fi
+
+echo -e "${YELLOW}   Saving PM2 process list...${NC}"
+pm2 save --force
+
+echo -e "${YELLOW}   Configuring PM2 to start on boot...${NC}"
 sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u $USER --hp $HOME
+pm2 save --force
+
+echo -e "${GREEN}   ✅ Application started and configured for auto-start${NC}"
 
 ##############################################
 # Step 10/10: SSL certificate
 ##############################################
-echo -e "${GREEN}🔐 Setting up SSL certificate...${NC}"
+echo -e "${GREEN}🔐 Step 10/10: Setting up SSL certificate...${NC}"
+
+# Wait a moment for server to be fully ready
+echo -e "${YELLOW}   Waiting for server to be ready...${NC}"
+sleep 3
+
+# Verify server is responding on port 3000
+if ! curl -s http://localhost:3000 > /dev/null; then
+    echo -e "${YELLOW}⚠️  Warning: Server may not be responding on port 3000${NC}"
+    echo -e "${YELLOW}   Check with: pm2 logs games-hub${NC}"
+fi
+
+echo -e "${YELLOW}   Obtaining SSL certificate from Let's Encrypt...${NC}"
 sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos --email $EMAIL --redirect
+
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}⚠️  SSL certificate setup failed. You can try again later with:${NC}"
+    echo -e "${YELLOW}   sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN${NC}"
+else
+    echo -e "${GREEN}   ✅ SSL certificate installed successfully${NC}"
+fi
 
 echo ""
 echo -e "${GREEN}================================================================="
