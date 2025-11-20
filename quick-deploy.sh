@@ -26,14 +26,15 @@ REPO_DIR="$(pwd)"
 
 # Install essentials
 echo "📦 Installing system dependencies..."
-sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx curl git
+sudo apt update
+sudo DEBIAN_FRONTEND=noninteractive apt install -y nginx certbot python3-certbot-nginx curl git -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" || echo "⚠️  Some packages failed to install, continuing..."
 
 # Install yt-dlp for media player
 echo "📦 Installing yt-dlp for media player..."
 if ! command -v yt-dlp &> /dev/null; then
     sudo apt install -y yt-dlp || sudo pip3 install yt-dlp || {
         echo "📥 Installing via direct download..."
-        sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+        sudo curl -fsSL --connect-timeout 30 --max-time 60 https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
         sudo chmod a+rx /usr/local/bin/yt-dlp
     }
     echo "✅ yt-dlp installed"
@@ -44,7 +45,7 @@ fi
 # Install Node.js 20.x (required for React 19)
 if ! command -v node &> /dev/null || [ "$(node -v | cut -d'.' -f1 | tr -d 'v')" -lt 18 ]; then
     echo "📦 Installing Node.js 20.x..."
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    curl -fsSL --connect-timeout 30 --max-time 120 https://deb.nodesource.com/setup_20.x | sudo -E bash -
     sudo apt install -y nodejs
 else
     echo "✅ Node.js already installed: $(node -v)"
@@ -73,8 +74,9 @@ if [ -f "database/games.db" ]; then
 fi
 
 # Reset any local changes (except database which we backed up)
+echo "🔄 Resetting and pulling latest changes..."
 git reset --hard HEAD || true
-git pull --ff-only || git pull --rebase || true
+timeout 120 git pull --ff-only || timeout 120 git pull --rebase || echo "⚠️  Git pull failed or timed out, using existing version..."
 
 # Restore games.db after pull
 if [ -f "database/games.db.backup" ]; then
@@ -83,12 +85,14 @@ if [ -f "database/games.db.backup" ]; then
 fi
 
 # Clone DuckMath in parent directory
-echo "📦 Cloning DuckMath games..."
+echo "📦 Setting up DuckMath games..."
 cd ..
 if [ ! -d "duckmath" ]; then
-    git clone https://github.com/duckmath/duckmath.github.io.git duckmath || echo "⚠️  DuckMath clone failed, continuing..."
+    echo "   Cloning DuckMath repository..."
+    timeout 300 git clone --depth 1 https://github.com/duckmath/duckmath.github.io.git duckmath || echo "⚠️  DuckMath clone failed or timed out, continuing..."
 else
-    (cd duckmath && git pull --ff-only) || echo "⚠️  DuckMath update failed, continuing..."
+    echo "   Updating DuckMath..."
+    (cd duckmath && timeout 120 git pull --ff-only) || echo "⚠️  DuckMath update failed, continuing..."
 fi
 
 # Install DuckMath dependencies only if it is a Node project
@@ -98,7 +102,7 @@ if [ -f "duckmath/package.json" ]; then
 fi
 
 # Clone and build Radon Games
-echo "⚡ Cloning and building Radon Games..."
+echo "⚡ Setting up Radon Games..."
 
 # Install pnpm if not already installed
 if ! command -v pnpm &> /dev/null; then
@@ -107,13 +111,16 @@ if ! command -v pnpm &> /dev/null; then
 fi
 
 if [ ! -d "radon-games" ]; then
-    echo "📥 Cloning Radon Games repository..."
-    git clone https://github.com/Radon-Games/Radon-Games.git radon-games
+    echo "📥 Cloning Radon Games repository (this may take a minute)..."
+    timeout 300 git clone --depth 1 https://github.com/Radon-Games/Radon-Games.git radon-games || {
+        echo "❌ Radon Games clone failed or timed out"
+        exit 1
+    }
 else
     echo "🔄 Updating Radon Games..."
     cd radon-games
     git reset --hard HEAD
-    git pull
+    timeout 120 git pull || echo "⚠️  Update failed or timed out, using existing version..."
     cd ..
 fi
 
@@ -147,17 +154,24 @@ echo "🔍 Installing missing search.tsx route..."
 cp "$REPO_DIR/radon-search.tsx" src/routes/search.tsx
 echo "  ✓ src/routes/search.tsx installed"
 
-echo "📦 Installing Radon Games dependencies (this may take a few minutes)..."
+echo "📦 Installing Radon Games dependencies (3-5 minutes)..."
 # Limit memory usage and network concurrency for low-memory VMs
-NODE_OPTIONS="--max-old-space-size=1024" pnpm install --no-frozen-lockfile --network-concurrency=1
+timeout 600 bash -c "NODE_OPTIONS='--max-old-space-size=1024' pnpm install --no-frozen-lockfile --network-concurrency=1" || {
+    echo "❌ Radon dependency installation failed or timed out"
+    exit 1
+}
+echo "✅ Dependencies installed"
 
 echo "🔨 Generating route tree..."
 # Force regenerate route tree with TypeScript compiler
-NODE_OPTIONS="--max-old-space-size=1024" pnpm exec tsc --noEmit false || echo "⚠️  TSC completed with warnings, continuing..."
+timeout 120 bash -c "NODE_OPTIONS='--max-old-space-size=1024' pnpm exec tsc --noEmit false" || echo "⚠️  TSC completed with warnings, continuing..."
 
-echo "🔨 Building Radon Games..."
+echo "🔨 Building Radon Games (2-3 minutes)..."
 # Limit memory usage during build
-NODE_OPTIONS="--max-old-space-size=1024" pnpm run build
+timeout 600 bash -c "NODE_OPTIONS='--max-old-space-size=1024' pnpm run build" || {
+    echo "❌ Radon build failed or timed out"
+    exit 1
+}
 
 echo "✅ Radon Games built successfully"
 cd ..
@@ -170,15 +184,17 @@ fi
 echo "✅ Radon Games dist folder verified"
 
 # Clone Seraph
-echo "📦 Cloning Seraph gaming hub..."
+echo "📦 Setting up Seraph gaming hub..."
 if [ ! -d "seraph" ]; then
-    echo "📥 Cloning Seraph (5.68 GiB - this may take a while)..."
-    git clone --depth 1 https://github.com/Lackstress/seraph.git seraph || echo "⚠️  Seraph clone failed, continuing..."
+    echo "📥 Cloning Seraph (5.68 GiB - may take 5-10 minutes)..."
+    timeout 900 git clone --depth 1 --progress https://github.com/Lackstress/seraph.git seraph || echo "⚠️  Seraph clone failed or timed out, continuing without Seraph..."
 else
     echo "🔄 Updating Seraph..."
-    (cd seraph && git pull --ff-only) || echo "⚠️  Seraph update failed, continuing..."
+    (cd seraph && timeout 300 git pull --ff-only) || echo "⚠️  Seraph update failed, using existing version..."
 fi
-echo "✅ Seraph ready"
+if [ -d "seraph" ]; then
+    echo "✅ Seraph ready"
+fi
 
 # Return to repo directory
 cd "$REPO_DIR"
@@ -190,7 +206,10 @@ fi
 
 # Install dependencies for main Game Hub (includes secret media-player deps)
 echo "📦 Installing Game Hub dependencies..."
-npm install
+timeout 300 npm install || {
+    echo "❌ npm install failed or timed out"
+    exit 1
+}
 sudo npm install -g pm2
 
 # Stop existing process if running
@@ -241,26 +260,70 @@ sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos --e
 sudo ufw allow 'Nginx Full' && sudo ufw allow OpenSSH && yes | sudo ufw enable
 
 echo ""
-echo "================================"
+echo "================================================================"
 echo "✅ Deployment Complete!"
-echo "================================"
+echo "================================================================"
 echo ""
-echo "🌐 Your site is live at: https://$DOMAIN"
+echo "🌐 Your site should be live at: https://$DOMAIN"
 echo ""
 echo "📍 Available Routes:"
-echo "  • https://$DOMAIN/ - Landing page"
-echo "  • https://$DOMAIN/ghub - Game Hub"
-echo "  • https://$DOMAIN/duckmath - DuckMath games"
+echo "  • https://$DOMAIN/ - Landing page (hub selector)"
+echo "  • https://$DOMAIN/ghub - Custom GameHub"
+echo "  • https://$DOMAIN/duckmath - DuckMath educational games"
 echo "  • https://$DOMAIN/radon-g3mes - Radon Games (200+ games)"
-echo "  • https://$DOMAIN/seraph - Seraph Games (350+ games)"
+if [ -d "../seraph" ]; then
+    echo "  • https://$DOMAIN/seraph - Seraph (350+ games)"
+fi
 echo ""
-echo "🔧 Useful Commands:"
-echo "  • pm2 status - Check server status"
-echo "  • pm2 logs games-hub - View logs"
-echo "  • pm2 restart games-hub - Restart server"
+echo "⚙️  SERVER MANAGEMENT COMMANDS:"
 echo ""
-echo "🎮 Radon Games Features:"
-echo "  • 200+ HTML5 and Unity games"
-echo "  • Web proxy at /radon-g3mes/proxy"
-echo "  • CDN proxy for game files"
+echo "Start/Stop/Restart:"
+echo "  pm2 start games-hub          # Start the server"
+echo "  pm2 stop games-hub           # Stop the server"
+echo "  pm2 restart games-hub        # Restart the server"
+echo "  pm2 reload games-hub         # Reload with zero-downtime"
+echo "  pm2 delete games-hub         # Remove from PM2"
+echo ""
+echo "Monitoring:"
+echo "  pm2 status                   # View all PM2 processes"
+echo "  pm2 logs games-hub           # View live logs (Ctrl+C to exit)"
+echo "  pm2 logs games-hub --lines 50  # View last 50 log lines"
+echo "  pm2 logs games-hub --err     # View only error logs"
+echo "  pm2 monit                    # Interactive monitoring dashboard"
+echo ""
+echo "Nginx Commands:"
+echo "  sudo systemctl status nginx  # Check Nginx status"
+echo "  sudo systemctl restart nginx # Restart Nginx"
+echo "  sudo nginx -t                # Test Nginx configuration"
+echo "  sudo systemctl reload nginx  # Reload config without downtime"
+echo ""
+echo "SSL Certificate:"
+echo "  sudo certbot renew --dry-run # Test certificate renewal"
+echo "  sudo certbot certificates    # List all certificates"
+echo "  sudo certbot renew           # Manually renew certificates"
+echo ""
+echo "🔧 TROUBLESHOOTING:"
+echo ""
+echo "If site isn't accessible:"
+echo "  1. Check server is running:  pm2 status"
+echo "  2. Check logs for errors:    pm2 logs games-hub --err"
+echo "  3. Check Nginx status:       sudo systemctl status nginx"
+echo "  4. Check firewall:           sudo ufw status"
+echo "  5. Verify DNS propagation:   nslookup $DOMAIN"
+echo ""
+echo "DNS Configuration (if not done):"
+echo "  Go to Namecheap → Advanced DNS and add:"
+echo "  • A Record: @   → $(curl -s --connect-timeout 5 ifconfig.me 2>/dev/null || echo 'YOUR_SERVER_IP')"
+echo "  • A Record: www → $(curl -s --connect-timeout 5 ifconfig.me 2>/dev/null || echo 'YOUR_SERVER_IP')"
+echo ""
+echo "  ⚠️  DNS propagation can take 5-30 minutes after adding records"
+echo "  ⚠️  Check propagation: https://dnschecker.org/#A/$DOMAIN"
+echo ""
+echo "Quick Deployment Updates:"
+echo "  cd $REPO_DIR                 # Navigate to repo"
+echo "  git pull                     # Pull latest changes"
+echo "  npm install                  # Update dependencies"
+echo "  pm2 restart games-hub        # Restart server"
+echo ""
+echo "🎮 Happy Gaming! If you need help, check PM2 logs first."
 echo ""
