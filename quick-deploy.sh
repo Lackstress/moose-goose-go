@@ -142,7 +142,7 @@ sed -i 's/const router = createRouter({ routeTree, defaultPreload: "viewport" })
 echo "  ✓ src/main.tsx patched (basepath: '/radon-g3mes')"
 
 # Patch src/routes/game/$gameid.tsx - change CDN path for game iframes
-sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' 'src/routes/game/$gameid.tsx'
+sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' 'src/routes/game/\$gameid.tsx'
 echo "  ✓ src/routes/game/\$gameid.tsx patched (CDN paths)"
 
 # Patch src/components/GameCard.tsx - change CDN path for images
