@@ -18,47 +18,6 @@ const io = socketIO(server, {
 });
 
 const PORT = process.env.PORT || 3000;
-const { execFile } = require('child_process');
-const { promisify } = require('util');
-const execFileAsync = promisify(execFile);
-
-// ---- YouTube info caching & yt-dlp wrapper (avoids 410 errors) ----
-const ytInfoCache = new Map();
-const YT_INFO_TTL_MS = 5 * 60 * 1000;
-
-async function fetchYoutubeInfoStable(videoUrl) {
-  const cached = ytInfoCache.get(videoUrl);
-  const now = Date.now();
-  if (cached && (now - cached.cachedAt) < YT_INFO_TTL_MS) {
-    return cached.info;
-  }
-  try {
-    const { stdout } = await execFileAsync('yt-dlp', [
-      '--dump-json',
-      '--no-playlist',
-      '--skip-download',
-      videoUrl
-    ], { maxBuffer: 5 * 1024 * 1024 });
-    const raw = JSON.parse(stdout);
-    const info = {
-      videoDetails: { title: raw.title || 'Video', videoId: raw.id },
-      formats: (raw.formats || []).map(f => ({
-        itag: f.format_id,
-        qualityLabel: f.format_note || f.height ? `${f.height}p` : 'unknown',
-        hasVideo: !!f.vcodec && f.vcodec !== 'none',
-        hasAudio: !!f.acodec && f.acodec !== 'none',
-        container: f.ext,
-        url: f.url,
-        bitrate: f.tbr ? f.tbr * 1000 : 0,
-        mimeType: f.vcodec && f.acodec ? `video/${f.ext}` : f.vcodec ? `video/${f.ext}` : `audio/${f.ext}`
-      }))
-    };
-    ytInfoCache.set(videoUrl, { info, cachedAt: Date.now() });
-    return info;
-  } catch (err) {
-    throw new Error(`yt-dlp info fetch failed: ${err.message}`);
-  }
-}
 
 // Initialize Multiplayer Manager
 const multiplayerManager = new MultiplayerManager(io);
@@ -848,127 +807,127 @@ app.get('/radon-g3mes/*', (req, res) => {
   res.send(html);
 });
 
-// ===== Secret Media Player =====
+// ===== Simple YouTube Media Player =====
 app.get('/media-player', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'media-player.html'));
 });
-// Stream YouTube video (ad-free)
-app.get('/media-player/stream', async (req, res) => {
+
+// ===== Spotify to YouTube Converter =====
+app.get('/media-player/spotify-to-youtube', async (req, res) => {
   try {
-    const raw = req.query.url;
-    const itag = req.query.itag;
-    if (!raw) return res.status(400).json({ error: 'Missing url parameter' });
-    const videoUrl = decodeURIComponent(raw);
-    const isYoutube = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(videoUrl);
-    if (!isYoutube) return res.status(400).json({ error: 'Only YouTube URLs supported' });
+    const { spotifyUrl } = req.query;
     
-    const info = await fetchYoutubeInfoStable(videoUrl);
-
-    function pickBest(formats) {
-      let candidates = formats.filter(f => f.hasVideo && f.hasAudio && (f.container === 'mp4' || /mp4/.test(f.mimeType||'')));
-      if (!candidates.length) candidates = formats.filter(f => f.hasVideo && f.hasAudio);
-      if (!candidates.length) candidates = formats.filter(f => f.hasVideo);
-      candidates.sort((a,b)=>( (b.height||0)-(a.height||0) ) || ((b.bitrate||0)-(a.bitrate||0)) );
-      return candidates[0];
+    if (!spotifyUrl) {
+      return res.status(400).json({ error: 'Missing Spotify URL' });
     }
 
-    let format;
-    if (itag) {
-      format = info.formats.find(f => String(f.itag) === String(itag));
-    }
-    if (!format) {
-      format = pickBest(info.formats);
-    }
-    if (!format) {
-      // Final fallback to itag 18 (baseline mp4 360p)
-      format = info.formats.find(f => f.itag == 18);
-    }
-    if (!format) return res.status(500).json({ error: 'No suitable format found' });
+    // Extract Spotify ID and type
+    const patterns = {
+      track: /(?:https?:\/\/)?(?:open\.)?spotify\.com\/track\/([a-zA-Z0-9]{22})/,
+      playlist: /(?:https?:\/\/)?(?:open\.)?spotify\.com\/playlist\/([a-zA-Z0-9]{22})/,
+      album: /(?:https?:\/\/)?(?:open\.)?spotify\.com\/album\/([a-zA-Z0-9]{22})/,
+      artist: /(?:https?:\/\/)?(?:open\.)?spotify\.com\/artist\/([a-zA-Z0-9]{22})/
+    };
 
-    res.setHeader('Content-Type', 'video/mp4');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('X-Selected-Itag', format.itag || 'unknown');
-    res.setHeader('X-Selected-Quality', format.qualityLabel || 'unknown');
+    let spotifyData = null;
+    for (const [type, pattern] of Object.entries(patterns)) {
+      const match = spotifyUrl.match(pattern);
+      if (match) {
+        spotifyData = { type, id: match[1] };
+        console.log('Detected Spotify content:', { type, id, url: spotifyUrl });
+        break;
+      }
+    }
 
-    // Stream via yt-dlp direct URL (no 410 issues)
-    const https = require('https');
-    const http = require('http');
-    const formatUrl = format.url;
-    if (!formatUrl) return res.status(500).json({ error: 'Format URL not available' });
-    const protocol = formatUrl.startsWith('https') ? https : http;
-    protocol.get(formatUrl, proxyRes => {
-      res.setHeader('Content-Type', proxyRes.headers['content-type'] || 'video/mp4');
-      if (proxyRes.headers['content-length']) res.setHeader('Content-Length', proxyRes.headers['content-length']);
-      proxyRes.pipe(res);
-    }).on('error', err => {
-      console.error('Stream proxy error:', err.message);
-      if (!res.headersSent) res.status(500).json({ error: 'Stream failed', details: err.message });
-    });
-  } catch (err) {
-    console.error('Media stream error:', err.message);
-    if (!res.headersSent) res.status(500).json({ error: 'Failed to stream video', message: err.message });
-  }
-});
-// Download YouTube video
-app.get('/media-player/download', async (req, res) => {
-  try {
-    const raw = req.query.url;
-    if (!raw) return res.status(400).json({ error: 'Missing url parameter' });
-    const url = decodeURIComponent(raw);
-    const isYoutube = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(url);
-    if (!isYoutube) return res.status(400).json({ error: 'Only YouTube URLs supported' });
-    const info = await fetchYoutubeInfoStable(url);
-    const titleSafe = info.videoDetails.title.replace(/[^a-z0-9\-_ ]/gi,'').slice(0,80) || 'video';
-    res.setHeader('Content-Disposition', `attachment; filename="${titleSafe}.mp4"`);
-    res.setHeader('Content-Type', 'video/mp4');
-    const combined = info.formats.filter(f => f.hasVideo && f.hasAudio).sort((a,b)=>b.bitrate-a.bitrate)[0];
-    const format = combined || info.formats.find(f => f.itag == '18');
-    if (!format || !format.url) return res.status(500).json({ error: 'No downloadable format' });
-    const https = require('https');
-    const http = require('http');
-    const protocol = format.url.startsWith('https') ? https : http;
-    protocol.get(format.url, proxyRes => {
-      if (proxyRes.headers['content-length']) res.setHeader('Content-Length', proxyRes.headers['content-length']);
-      proxyRes.pipe(res);
-    }).on('error', e => {
-      console.error('Download error:', e.message);
-      if (!res.headersSent) res.status(500).end();
-    });
-  } catch (err) {
-    console.error('Media download error:', err.message);
-    if (!res.headersSent) res.status(500).json({ error: 'Failed to download video', message: err.message });
-  }
-});
+    if (!spotifyData) {
+      console.log('Failed to detect Spotify content type for URL:', spotifyUrl);
+      return res.status(400).json({ error: 'Invalid Spotify URL' });
+    }
 
-// Expose format info for debugging / quality selection
-app.get('/media-player/info', async (req, res) => {
-  try {
-    const raw = req.query.url;
-    if (!raw) return res.status(400).json({ error: 'Missing url parameter' });
-    const videoUrl = decodeURIComponent(raw);
-    const isYoutube = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(videoUrl);
-    if (!isYoutube) return res.status(400).json({ error: 'Only YouTube URLs supported' });
-    const info = await fetchYoutubeInfoStable(videoUrl);
-    const formats = info.formats
-      .filter(f => f.hasVideo)
-      .map(f => ({
-        itag: f.itag,
-        qualityLabel: f.qualityLabel,
-        container: f.container,
-        hasAudio: !!f.hasAudio,
-        hasVideo: !!f.hasVideo,
-        bitrate: f.bitrate,
-        mimeType: f.mimeType,
-        approxDurationMs: f.approxDurationMs
-      }))
-      .sort((a,b)=>{
-        const hA = parseInt(a.qualityLabel) || 0; const hB = parseInt(b.qualityLabel) || 0;
-        return hB - hA;
+    // Playlists and albums get full playback via Spotify embed - no conversion needed!
+    if (spotifyData.type === 'playlist') {
+      console.log('Processing playlist for full playback');
+      return res.json({
+        type: 'spotify_embed_full',
+        originalUrl: spotifyUrl,
+        spotifyData: spotifyData,
+        message: '✅ Full playlist playback via Spotify embed'
       });
-    res.json({ title: info.videoDetails.title, formats });
-  } catch (err) {
-    console.error('Info fetch error:', err.message);
-    res.status(500).json({ error: 'Failed to fetch info', message: err.message });
+    }
+
+    if (spotifyData.type === 'album') {
+      console.log('Processing album for full playback');
+      return res.json({
+        type: 'spotify_embed_full',
+        originalUrl: spotifyUrl,
+        spotifyData: spotifyData,
+        message: '✅ Full album playback via Spotify embed'
+      });
+    }
+
+    if (spotifyData.type === 'artist') {
+      console.log('Processing artist for full playback');
+      return res.json({
+        type: 'spotify_embed_full',
+        originalUrl: spotifyUrl,
+        spotifyData: spotifyData,
+        message: '✅ Full artist playback via Spotify embed'
+      });
+    }
+
+    // Only tracks need conversion - they have 30-second preview limitation
+    if (spotifyData.type === 'track') {
+      console.log('Processing track for YouTube conversion');
+      try {
+        // For tracks, try to find YouTube equivalent for full playback
+        return res.json({
+          type: 'youtube_search',
+          query: '', // Will be filled by frontend after extracting track name
+          originalSpotifyUrl: spotifyUrl,
+          spotifyData: spotifyData,
+          message: '🔄 Searching YouTube for full version of this track...'
+        });
+      } catch (error) {
+        console.error('Track conversion error:', error);
+        return res.json({
+          type: 'spotify_embed_preview',
+          originalUrl: spotifyUrl,
+          spotifyData: spotifyData,
+          message: '⚠️ Track will play in Spotify embed (30-second preview)'
+        });
+      }
+    }
+
+  } catch (error) {
+    console.error('Spotify conversion error:', error);
+    res.status(500).json({ error: 'Failed to process Spotify link' });
+  }
+});
+
+// ===== YouTube Search API =====
+app.get('/media-player/youtube-search', async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Missing search query' });
+    }
+
+    // Use YouTube's search API (simplified version)
+    // In production, you'd use YouTube Data API v3
+    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+    
+    // For now, return a direct YouTube search URL that the frontend can use
+    res.json({
+      type: 'youtube_search_results',
+      searchUrl: searchUrl,
+      query: query,
+      message: 'Click to search YouTube for this content'
+    });
+
+  } catch (error) {
+    console.error('YouTube search error:', error);
+    res.status(500).json({ error: 'Failed to search YouTube' });
   }
 });
 
