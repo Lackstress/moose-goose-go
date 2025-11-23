@@ -328,15 +328,15 @@
         <!-- Spotify Tab -->
         <div id="spotify-tab" class="tab-content">
             <div class="spotify-info">
-                <h4>🎵 Smart Spotify Player</h4>
-                <p>Intelligent playback based on content type:</p>
+                <h4>🎵 Smart Spotify to YouTube Converter</h4>
+                <p><strong>🎯 No Login Required!</strong> Automatically converts Spotify content to YouTube:</p>
                 <ul>
-                    <li><strong>🎵 Spotify Playlists</strong> - <span style="color: #10b981;">✅ FULL PLAYBACK</span> - Complete playlists</li>
-                    <li><strong>💿 Spotify Albums</strong> - <span style="color: #10b981;">✅ FULL PLAYBACK</span> - All album tracks</li>
-                    <li><strong>🎤 Spotify Artists</strong> - <span style="color: #10b981;">✅ FULL PLAYBACK</span> - Artist catalog</li>
-                    <li><strong>🎶 Individual Tracks</strong> - <span style="color: #f59e0b;">⚠️ AUTO-CONVERTS</span> to YouTube for full songs</li>
+                    <li><strong>🎵 Spotify Playlists</strong> - <span style="color: #10b981;">✅ AUTO-CONVERTS</span> - All tracks to YouTube playlist!</li>
+                    <li><strong>💿 Spotify Albums</strong> - <span style="color: #10b981;">✅ AUTO-CONVERTS</span> - All tracks to YouTube playlist!</li>
+                    <li><strong>🎤 Spotify Artists</strong> - <span style="color: #f59e0b;">⚠️ SEARCHES YOUTUBE</span> - Finds artist on YouTube</li>
+                    <li><strong>🎶 Individual Tracks</strong> - <span style="color: #10b981;">✅ CONVERTS TO YOUTUBE</span> - Full song via YouTube</li>
                 </ul>
-                <p><em>💡 <strong>Smart Detection:</strong> Automatically finds the best playback method for each content type!</em></p>
+                <p><em>💡 <strong>Perfect for people without Spotify access!</strong> Paste any Spotify link and play it on YouTube.</em></p>
             </div>
             
             <div class="music-source-tabs">
@@ -372,7 +372,7 @@
                 </div>
                 <div class="error" id="spotifyError"></div>
                 <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 12px; color: rgba(255, 255, 255, 0.8);">
-                    ✨ <strong>Smart Features:</strong> Playlists/albums get full playback. Individual tracks auto-convert to YouTube for full songs!
+                    ✨ <strong>No Spotify? No Problem!</strong> Paste a Spotify playlist URL and watch it convert to YouTube - no login required!
                 </div>
             </div>
             
@@ -408,7 +408,15 @@
         function switchMusicSource(source) {
             // Update music source buttons
             document.querySelectorAll('.music-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            
+            // Find and activate the correct tab button
+            const buttons = document.querySelectorAll('.music-tab');
+            buttons.forEach(btn => {
+                if (btn.textContent.includes(source === 'youtube-music' ? 'YouTube Music' : 
+                    source === 'spotify' ? 'Spotify' : 'SoundCloud')) {
+                    btn.classList.add('active');
+                }
+            });
             
             // Update music sections
             document.querySelectorAll('.music-section').forEach(s => s.classList.remove('active'));
@@ -487,7 +495,7 @@
             return extractYouTubeVideoId(url);
         }
 
-        function playYouTubeMusic() {
+        async function playYouTubeMusic() {
             const link = document.getElementById('youtubeMusicLink').value.trim();
             const errorMsg = document.getElementById('youtubeMusicError');
             const musicWrapper = document.getElementById('musicWrapper');
@@ -497,12 +505,55 @@
             errorMsg.textContent = '';
             
             if (!link) {
-                errorMsg.textContent = '❌ Please enter a YouTube Music link';
+                errorMsg.textContent = '❌ Please enter a YouTube Music link or search query';
                 errorMsg.classList.add('show');
                 return;
             }
             
-            const videoId = extractYouTubeMusicId(link);
+            // First, try to extract video ID (if it's a YouTube URL)
+            let videoId = extractYouTubeMusicId(link);
+            
+            // If not a direct YouTube URL, treat it as a search query
+            if (!videoId) {
+                musicWrapper.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                        <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
+                        <div>Searching YouTube for: "${link}"</div>
+                        <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">Finding best match...</div>
+                    </div>
+                `;
+                
+                try {
+                    // Search YouTube via server endpoint
+                    const response = await fetch(`/media-player/youtube-search?query=${encodeURIComponent(link)}`);
+                    const data = await response.json();
+                    
+                    if (data.type === 'youtube_video' && data.videoId) {
+                        videoId = data.videoId;
+                        // Continue to embed the video below
+                    } else if (data.searchUrl) {
+                        // Fallback: show search results link
+                        musicWrapper.innerHTML = `
+                            <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                                <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
+                                <div>${data.message || 'Could not find video automatically'}</div>
+                                <a href="${data.searchUrl}" target="_blank" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background: #8b5cf6; color: white; text-decoration: none; border-radius: 8px;">
+                                    Open YouTube Search Results
+                                </a>
+                            </div>
+                        `;
+                        return;
+                    } else {
+                        throw new Error('No video ID found');
+                    }
+                } catch (searchError) {
+                    console.error('YouTube search error:', searchError);
+                    errorMsg.textContent = '❌ Failed to search YouTube. Please enter a direct YouTube URL.';
+                    errorMsg.classList.add('show');
+                    musicWrapper.innerHTML = '';
+                    return;
+                }
+            }
             
             if (!videoId) {
                 errorMsg.textContent = '❌ Invalid YouTube Music link. Please check and try again.';
@@ -580,64 +631,313 @@
                 const response = await fetch(`/media-player/spotify-to-youtube?spotifyUrl=${encodeURIComponent(link)}`);
                 const data = await response.json();
                 
-                if (data.type === 'spotify_embed_full') {
-                    // Playlists, albums, and artists get full playback via Spotify embed
-                    createSpotifyEmbed(link, spotifyData, 'full');
-                    errorMsg.textContent = '✅ ' + data.message;
+                if (data.type === 'youtube_playlist_conversion') {
+                    // Playlists/albums are being converted to YouTube - search for each track
+                    await convertPlaylistToYouTube(data.tracks, spotifyData);
+                    return;
+                    
+                } else if (data.type === 'conversion_failed') {
+                    // Conversion failed - show helpful message
+                    musicWrapper.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.8);">
+                            <div style="font-size: 32px; margin-bottom: 15px;">⚠️</div>
+                            <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Could Not Convert ${spotifyData.type}</div>
+                            <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                                ${data.message}
+                            </div>
+                            <div style="background: rgba(139, 92, 246, 0.2); border-radius: 8px; padding: 15px; max-width: 400px; margin: 0 auto; text-align: left;">
+                                <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px;">💡 Try this instead:</div>
+                                <ol style="margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.8;">
+                                    <li>Copy the ${spotifyData.type} name from Spotify</li>
+                                    <li>Switch to the YouTube Music tab above</li>
+                                    <li>Search for the ${spotifyData.type} name</li>
+                                    <li>Play the YouTube version</li>
+                                </ol>
+                            </div>
+                        </div>
+                    `;
+                    errorMsg.textContent = '⚠️ ' + data.message;
+                    errorMsg.style.background = 'rgba(245, 158, 11, 0.1)';
+                    errorMsg.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+                    errorMsg.style.color = '#f59e0b';
                     errorMsg.classList.add('show');
-                    setTimeout(() => errorMsg.classList.remove('show'), 3000);
+                    
+                } else if (data.type === 'spotify_embed_full') {
+                    // Fallback to Spotify embed (shouldn't happen with new implementation)
+                    createSpotifyEmbed(link, spotifyData, 'full');
+                    errorMsg.textContent = `✅ ${spotifyData.type === 'playlist' ? 'Playlist' : 'Album'} loaded in Spotify embed.`;
+                    errorMsg.style.background = 'rgba(29, 185, 84, 0.1)';
+                    errorMsg.style.borderColor = 'rgba(29, 185, 84, 0.3)';
+                    errorMsg.style.color = '#1db954';
+                    errorMsg.classList.add('show');
+                    setTimeout(() => errorMsg.classList.remove('show'), 8000);
                     
                 } else if (data.type === 'youtube_search') {
-                    // Only tracks get converted to YouTube for full playback
+                    // Tracks/playlists get converted to YouTube
+                    const isPlaylistSearch = data.playlistSearch || spotifyData.type === 'playlist' || spotifyData.type === 'album';
+                    
                     musicWrapper.innerHTML = `
                         <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
                             <div style="font-size: 24px; margin-bottom: 10px;">🔄</div>
                             <div>${data.message}</div>
-                            <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">Finding YouTube equivalent for full song</div>
+                            <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">
+                                ${isPlaylistSearch ? 'Finding YouTube version of this playlist...' : 'Searching YouTube for full song...'}
+                            </div>
                         </div>
                     `;
                     
-                    const trackName = await extractSpotifyTrackName(link);
-                    if (trackName) {
-                        // Switch to YouTube Music tab and search for the track
+                    // Use the search query from the server response
+                    const searchQuery = data.query || await extractSpotifyTrackName(link);
+                    
+                    if (searchQuery) {
+                        // Switch to YouTube Music tab and search for the content
                         switchMusicSource('youtube-music');
-                        document.getElementById('youtubeMusicLink').value = trackName;
-                        playYouTubeMusic();
+                        document.getElementById('youtubeMusicLink').value = searchQuery;
+                        await playYouTubeMusic();
+                        
+                        // Show success message
+                        if (isPlaylistSearch) {
+                            errorMsg.textContent = `✅ Found YouTube result for: "${searchQuery}". You can play this or search for more results.`;
+                            errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                            errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                            errorMsg.style.color = '#10b981';
+                            errorMsg.classList.add('show');
+                            setTimeout(() => errorMsg.classList.remove('show'), 8000);
+                        }
                         return;
                     }
                     
-                    // Fallback if track name extraction fails
-                    createSpotifyEmbed(link, spotifyData, 'preview');
-                    
-                } else if (data.type === 'spotify_embed_preview') {
-                    // Track preview fallback
-                    createSpotifyEmbed(link, spotifyData, 'preview');
-                    errorMsg.textContent = '⚠️ ' + data.message;
+                    // Fallback if search query is not available
+                    errorMsg.textContent = '⚠️ Could not extract search query. Please search YouTube manually.';
                     errorMsg.classList.add('show');
                     
                 } else {
-                    // Default fallback
+                    // Unexpected response type
                     createSpotifyEmbed(link, spotifyData, 'preview');
+                    errorMsg.textContent = '⚠️ Using Spotify embed. Log in to Spotify for full playback.';
+                    errorMsg.classList.add('show');
                 }
                 
             } catch (error) {
                 console.error('Spotify conversion error:', error);
-                // Fallback to regular Spotify embed
-                createSpotifyEmbed(link, spotifyData, 'preview');
+                errorMsg.textContent = '❌ Error processing Spotify link. Please try again.';
+                errorMsg.classList.add('show');
             }
         }
 
-        async function extractSpotifyTrackName(spotifyUrl) {
+        async function convertPlaylistToYouTube(tracks, spotifyData) {
+            const musicWrapper = document.getElementById('musicWrapper');
+            const errorMsg = document.getElementById('spotifyError');
+            
+            // Show conversion progress
+            musicWrapper.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.9);">
+                    <div style="font-size: 32px; margin-bottom: 15px;">🎵</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Converting Spotify ${spotifyData.type} to YouTube</div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                        Searching YouTube for ${tracks.length} tracks...
+                    </div>
+                    <div style="background: rgba(139, 92, 246, 0.2); border-radius: 8px; padding: 15px; max-width: 400px; margin: 0 auto;">
+                        <div id="conversion-progress" style="font-size: 13px; color: rgba(255,255,255,0.8);">
+                            Preparing...
+                        </div>
+                        <div style="margin-top: 10px; background: rgba(0,0,0,0.3); height: 6px; border-radius: 3px; overflow: hidden;">
+                            <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const progressText = document.getElementById('conversion-progress');
+            const progressBar = document.getElementById('progress-bar');
+            const videoIds = [];
+            
             try {
-                // This is a simplified approach - in production you'd use Spotify API
-                // For now, we'll extract from the URL or use a placeholder
-                const trackId = spotifyUrl.match(/track\/([a-zA-Z0-9]{22})/);
-                if (trackId) {
-                    // Return a generic search that user can refine
-                    return `Spotify track ${trackId[1]}`;
+                // Search YouTube for each track
+                let successCount = 0;
+                let failCount = 0;
+                
+                for (let i = 0; i < tracks.length; i++) {
+                    const track = tracks[i];
+                    const progress = i + 1;
+                    const total = tracks.length;
+                    const percentage = Math.round((progress / total) * 100);
+                    
+                    // Update progress text with clear "X out of Y" format
+                    progressText.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 5px;">Found ${successCount} out of ${total} songs</div>
+                        <div style="font-size: 11px; opacity: 0.8;">Searching: ${track.artist} - ${track.name}</div>
+                        <div style="font-size: 11px; opacity: 0.7; margin-top: 3px;">(${progress}/${total} searched • ${percentage}% complete)</div>
+                    `;
+                    progressBar.style.width = `${percentage}%`;
+                    
+                    try {
+                        const videoId = await searchYouTubeClientSide(track.searchQuery);
+                        
+                        if (videoId) {
+                            videoIds.push(videoId);
+                            successCount++;
+                            console.log(`  ✓ [${successCount}/${total}] Found: ${videoId} for "${track.searchQuery}"`);
+                        } else {
+                            failCount++;
+                            console.log(`  ✗ [${i+1}/${total}] Not found: "${track.searchQuery}"`);
+                        }
+                        
+                        // Delay between searches to avoid rate limiting
+                        // Use longer delay every 10 searches to be extra safe
+                        const delay = (i + 1) % 10 === 0 ? 2000 : 800;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    } catch (trackError) {
+                        failCount++;
+                        console.error(`  ✗ [${i+1}/${total}] Error for: ${track.searchQuery}`, trackError.message);
+                    }
                 }
+                
+                console.log(`\n✅ Search complete: Found ${successCount} out of ${tracks.length} total tracks (${failCount} failed)`);
+                
+                if (videoIds.length > 0) {
+                    // Create YouTube playlist with all video IDs
+                    const successRate = Math.round((successCount / tracks.length) * 100);
+                    progressText.innerHTML = `
+                        <div style="font-weight: 600; color: #10b981;">✅ Found ${successCount} out of ${tracks.length} songs!</div>
+                        <div style="font-size: 11px; opacity: 0.8; margin-top: 5px;">Success rate: ${successRate}% • Starting playback...</div>
+                    `;
+                    
+                    // Create YouTube embed with playlist
+                    const playlistParam = videoIds.join(',');
+                    const embedUrl = `https://www.youtube.com/embed/${videoIds[0]}?playlist=${playlistParam}&autoplay=1`;
+                    
+                    setTimeout(() => {
+                        musicWrapper.innerHTML = `
+                            <div class="video-container">
+                                <iframe 
+                                    src="${embedUrl}" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowfullscreen
+                                    loading="lazy">
+                                </iframe>
+                            </div>
+                            <div style="margin-top: 15px; padding: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.9); text-align: center;">
+                                ✅ <strong>YouTube Playlist Created!</strong><br>
+                                <span style="font-size: 12px; opacity: 0.9;">
+                                    Queued ${videoIds.length} out of ${tracks.length} tracks (${successRate}% success rate)
+                                </span><br>
+                                <span style="font-size: 11px; opacity: 0.7; margin-top: 5px; display: inline-block;">
+                                    ${failCount > 0 ? `${failCount} songs couldn't be found on YouTube` : 'All songs found!'}
+                                </span>
+                            </div>
+                        `;
+                        
+                        errorMsg.textContent = `✅ Successfully queued ${videoIds.length} out of ${tracks.length} tracks (${successRate}% success)`;
+                        errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                        errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                        errorMsg.style.color = '#10b981';
+                        errorMsg.classList.add('show');
+                        setTimeout(() => errorMsg.classList.remove('show'), 5000);
+                    }, 1000);
+                } else {
+                    throw new Error('No tracks found on YouTube');
+                }
+            } catch (conversionError) {
+                console.error('Playlist conversion error:', conversionError);
+                musicWrapper.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                        <div style="font-size: 24px; margin-bottom: 10px;">❌</div>
+                        <div>Failed to convert playlist to YouTube</div>
+                        <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">Try using YouTube Music search directly</div>
+                    </div>
+                `;
+                errorMsg.textContent = '❌ Playlist conversion failed. Please try YouTube Music search.';
+                errorMsg.classList.add('show');
+            }
+        }
+        
+        // Search YouTube using reliable yt-search package (server-side)
+        async function searchYouTubeClientSide(query) {
+            try {
+                // Try multiple search variations for better results
+                const searchVariations = [
+                    query,                                          // Exact: "Artist Song"
+                    query + ' official audio',                      // With official audio
+                    query + ' official video',                      // With official video  
+                    query + ' lyrics',                              // Lyric video
+                    query.replace(/\(feat\..*?\)/gi, '').trim(),   // Remove "(feat. ...)"
+                    query.split(' ').slice(0, -1).join(' ')         // Try without last word
+                ];
+                
+                // Try each variation
+                for (let i = 0; i < searchVariations.length; i++) {
+                    const searchQuery = searchVariations[i];
+                    
+                    try {
+                        const response = await fetch(`/media-player/youtube-search?query=${encodeURIComponent(searchQuery)}`, {
+                            signal: AbortSignal.timeout(15000) // Increased timeout
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.type === 'youtube_video' && data.videoId) {
+                                if (searchQuery !== query) {
+                                    console.log(`    ✓ Found using variation: "${searchQuery}"`);
+                                }
+                                return data.videoId;
+                            } else if (data.error) {
+                                console.log(`    ⚠ Server error: ${data.error}`);
+                            }
+                        } else {
+                            console.log(`    ⚠ HTTP ${response.status} for variation ${i + 1}`);
+                        }
+                        
+                        // Small delay between variations
+                        if (i < searchVariations.length - 1) {
+                            await new Promise(resolve => setTimeout(resolve, 200));
+                        }
+                    } catch (e) {
+                        const errMsg = e?.message || e?.toString() || 'Unknown error';
+                        console.log(`    ⚠ Variation ${i + 1} failed: ${errMsg}`);
+                        continue;
+                    }
+                }
+                
                 return null;
             } catch (error) {
+                const errMsg = error?.message || error?.toString() || 'Unknown error';
+                console.error(`    ✗ Search error: ${errMsg}`);
+                return null;
+            }
+        }
+        
+        async function extractSpotifyTrackName(spotifyUrl) {
+            try {
+                // Try to get title from Spotify oEmbed API
+                const oEmbedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyUrl)}`;
+                const response = await fetch(oEmbedUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.title) {
+                        return data.title;
+                    }
+                }
+                
+                // Fallback: extract from URL
+                const patterns = {
+                    track: /track\/([a-zA-Z0-9]{22})/,
+                    playlist: /playlist\/([a-zA-Z0-9]{22})/,
+                    album: /album\/([a-zA-Z0-9]{22})/,
+                    artist: /artist\/([a-zA-Z0-9]{22})/
+                };
+                
+                for (const [type, pattern] of Object.entries(patterns)) {
+                    const match = spotifyUrl.match(pattern);
+                    if (match) {
+                        return `spotify ${type} ${match[1]}`;
+                    }
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Error extracting Spotify track name:', error);
                 return null;
             }
         }
@@ -690,24 +990,34 @@
                         onerror="console.error('Spotify iframe failed to load')">
                     </iframe>
                 </div>
-                <div style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">
-                    Debug: Content type = ${spotifyData.type}, Mode = ${mode}
-                </div>
+                ${mode === 'full' && (spotifyData.type === 'playlist' || spotifyData.type === 'album') ? `
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(29, 185, 84, 0.15); border: 1px solid rgba(29, 185, 84, 0.3); border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.9); text-align: center;">
+                        <div style="margin-bottom: 5px;">🎵 <strong>Log in to Spotify in the player above for full playback</strong></div>
+                        <div style="font-size: 11px; opacity: 0.8;">Click the "Log in" button in the Spotify embed to play all tracks</div>
+                    </div>
+                ` : ''}
             `;
             
             // Show appropriate message based on mode and content type
             if (mode === 'full') {
-                // Full playback for playlists, albums, artists
-                errorMsg.textContent = '✅ Full playback available! Enjoy the complete content.';
-                errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
-                errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-                errorMsg.style.color = '#10b981';
+                // Full playback for playlists, albums (requires login)
+                if (spotifyData.type === 'playlist' || spotifyData.type === 'album') {
+                    errorMsg.textContent = `✅ ${spotifyData.type === 'playlist' ? 'Playlist' : 'Album'} loaded! Log in to Spotify in the player above for full playback.`;
+                    errorMsg.style.background = 'rgba(29, 185, 84, 0.1)';
+                    errorMsg.style.borderColor = 'rgba(29, 185, 84, 0.3)';
+                    errorMsg.style.color = '#1db954';
+                } else {
+                    errorMsg.textContent = '✅ Content loaded in Spotify embed!';
+                    errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                    errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                    errorMsg.style.color = '#10b981';
+                }
             } else if (mode === 'preview') {
                 // Preview mode for tracks
                 if (spotifyData.type === 'track') {
-                    errorMsg.textContent = '⚠️ Track preview (30 seconds). Try SoundCloud or YouTube Music for full tracks.';
+                    errorMsg.textContent = '⚠️ Track preview (30 seconds). Try YouTube Music tab for full song.';
                 } else {
-                    errorMsg.textContent = '⚠️ Limited playback. Try SoundCloud or YouTube Music for full tracks.';
+                    errorMsg.textContent = '⚠️ Limited playback. Try YouTube Music for full tracks.';
                 }
                 errorMsg.style.background = 'rgba(245, 158, 11, 0.1)';
                 errorMsg.style.borderColor = 'rgba(245, 158, 11, 0.3)';
@@ -716,11 +1026,11 @@
             
             errorMsg.classList.add('show');
             
-            // Auto-hide success messages after 5 seconds
+            // Auto-hide success messages after 8 seconds
             if (mode === 'full') {
                 setTimeout(() => {
                     errorMsg.classList.remove('show');
-                }, 5000);
+                }, 8000);
             }
         }
 

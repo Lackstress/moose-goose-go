@@ -2,9 +2,11 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
+const https = require('https');
 const socketIO = require('socket.io');
 const cors = require('cors');
 const compression = require('compression');
+const ytsearch = require('yt-search');
 const MultiplayerManager = require('./multiplayer-manager');
 require('dotenv').config();
 
@@ -21,6 +23,56 @@ const PORT = process.env.PORT || 3000;
 
 // Initialize Multiplayer Manager
 const multiplayerManager = new MultiplayerManager(io);
+
+// Helper function for making HTTPS requests with redirect support
+function httpsGet(url, options = {}, redirectCount = 0) {
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url);
+    const requestOptions = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      method: 'GET',
+      headers: options.headers || {}
+    };
+    
+    https.get(requestOptions, (res) => {
+      // Handle redirects (302, 301, etc.)
+      if ((res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 303 || res.statusCode === 307) && res.headers.location) {
+        if (redirectCount >= 5) {
+          return reject(new Error('Too many redirects'));
+        }
+        
+        const redirectUrl = new URL(res.headers.location, url);
+        console.log(`Following redirect (${res.statusCode}) to: ${redirectUrl.pathname.substring(0, 50)}...`);
+        
+        // Follow redirect
+        return httpsGet(redirectUrl.toString(), options, redirectCount + 1)
+          .then(resolve)
+          .catch(reject);
+      }
+      
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        resolve({
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          statusCode: res.statusCode,
+          text: () => Promise.resolve(data),
+          json: () => {
+            try {
+              return Promise.resolve(JSON.parse(data));
+            } catch (e) {
+              return Promise.reject(e);
+            }
+          }
+        });
+      });
+    }).on('error', (err) => {
+      console.error('HTTPS request error:', err.message);
+      reject(err);
+    });
+  });
+}
 
 // Middleware
 app.use(compression());
@@ -834,7 +886,7 @@ app.get('/media-player/spotify-to-youtube', async (req, res) => {
       const match = spotifyUrl.match(pattern);
       if (match) {
         spotifyData = { type, id: match[1] };
-        console.log('Detected Spotify content:', { type, id, url: spotifyUrl });
+        console.log('Detected Spotify content:', { type: spotifyData.type, id: spotifyData.id, url: spotifyUrl });
         break;
       }
     }
@@ -844,67 +896,239 @@ app.get('/media-player/spotify-to-youtube', async (req, res) => {
       return res.status(400).json({ error: 'Invalid Spotify URL' });
     }
 
-    // Playlists and albums get full playback via Spotify embed - no conversion needed!
-    if (spotifyData.type === 'playlist') {
-      console.log('Processing playlist for full playback');
-      return res.json({
-        type: 'spotify_embed_full',
-        originalUrl: spotifyUrl,
-        spotifyData: spotifyData,
-        message: '✅ Full playlist playback via Spotify embed'
-      });
-    }
-
-    if (spotifyData.type === 'album') {
-      console.log('Processing album for full playback');
-      return res.json({
-        type: 'spotify_embed_full',
-        originalUrl: spotifyUrl,
-        spotifyData: spotifyData,
-        message: '✅ Full album playback via Spotify embed'
-      });
-    }
-
-    if (spotifyData.type === 'artist') {
-      console.log('Processing artist for full playback');
-      return res.json({
-        type: 'spotify_embed_full',
-        originalUrl: spotifyUrl,
-        spotifyData: spotifyData,
-        message: '✅ Full artist playback via Spotify embed'
-      });
-    }
-
-    // Only tracks need conversion - they have 30-second preview limitation
-    if (spotifyData.type === 'track') {
-      console.log('Processing track for YouTube conversion');
+    // Strategy: 
+    // - Playlists and albums: Extract all tracks and convert to YouTube playlist
+    // - Individual tracks: Convert to YouTube (since Spotify only gives 30-second preview)
+    
+    if (spotifyData.type === 'playlist' || spotifyData.type === 'album') {
+      console.log(`\n🎵 PLAYLIST/ALBUM DETECTED - Using Spotify Web API to extract tracks`);
+      
       try {
-        // For tracks, try to find YouTube equivalent for full playback
-        return res.json({
-          type: 'youtube_search',
-          query: '', // Will be filled by frontend after extracting track name
-          originalSpotifyUrl: spotifyUrl,
-          spotifyData: spotifyData,
-          message: '🔄 Searching YouTube for full version of this track...'
+        // Step 1: Get Spotify access token using Client Credentials flow
+        const clientId = process.env.SPOTIFY_CLIENT_ID;
+        const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+        
+        if (!clientId || !clientSecret) {
+          console.log('❌ Spotify API credentials not found in .env file');
+          throw new Error('Spotify API credentials not configured');
+        }
+        
+        console.log('Getting Spotify access token...');
+        
+        // Get access token
+        const tokenData = `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}`;
+        const tokenResponse = await new Promise((resolve, reject) => {
+          const req = https.request({
+            hostname: 'accounts.spotify.com',
+            path: '/api/token',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Content-Length': tokenData.length
+            }
+          }, (res) => {
+            let data = '';
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => {
+              resolve({
+                ok: res.statusCode >= 200 && res.statusCode < 300,
+                statusCode: res.statusCode,
+                json: () => Promise.resolve(JSON.parse(data))
+              });
+            });
+          });
+          req.on('error', reject);
+          req.write(tokenData);
+          req.end();
         });
-      } catch (error) {
-        console.error('Track conversion error:', error);
-        return res.json({
-          type: 'spotify_embed_preview',
-          originalUrl: spotifyUrl,
-          spotifyData: spotifyData,
-          message: '⚠️ Track will play in Spotify embed (30-second preview)'
+        
+        if (!tokenResponse.ok) {
+          console.log(`❌ Token request failed with status ${tokenResponse.statusCode}`);
+          throw new Error('Failed to get Spotify access token');
+        }
+        
+        const tokenJson = await tokenResponse.json();
+        const accessToken = tokenJson.access_token;
+        console.log('✅ Got access token!');
+        
+        // Step 2: Fetch playlist/album data
+        const apiPath = `/v1/${spotifyData.type}s/${spotifyData.id}`;
+        console.log(`Fetching ${spotifyData.type} data from Spotify API...`);
+        
+        const playlistResponse = await httpsGet(`https://api.spotify.com${apiPath}`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         });
+        
+        if (!playlistResponse.ok) {
+          console.log(`❌ API request failed with status ${playlistResponse.statusCode}`);
+          throw new Error('Failed to fetch playlist data');
+        }
+        
+        const playlistData = await playlistResponse.json();
+        
+        // Step 3: Extract ALL tracks with pagination support
+        const tracks = [];
+        let tracksData = playlistData?.tracks;
+        
+        // Process first page
+        if (tracksData?.items) {
+          for (const item of tracksData.items) {
+            const track = item?.track || item;
+            if (track?.name && track?.artists?.[0]?.name) {
+              tracks.push({
+                name: track.name,
+                artist: track.artists[0].name,
+                searchQuery: `${track.artists[0].name} ${track.name}`
+              });
+              console.log(`  ✓ ${track.artists[0].name} - ${track.name}`);
+            }
+          }
+        }
+        
+        // Fetch remaining pages if playlist has more tracks
+        while (tracksData?.next) {
+          console.log(`Fetching next page... (${tracks.length} tracks so far)`);
+          
+          const nextResponse = await httpsGet(tracksData.next, {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+          
+          if (nextResponse.ok) {
+            tracksData = await nextResponse.json();
+            
+            for (const item of tracksData.items || []) {
+              const track = item?.track || item;
+              if (track?.name && track?.artists?.[0]?.name) {
+                tracks.push({
+                  name: track.name,
+                  artist: track.artists[0].name,
+                  searchQuery: `${track.artists[0].name} ${track.name}`
+                });
+                console.log(`  ✓ ${track.artists[0].name} - ${track.name}`);
+              }
+            }
+          } else {
+            console.log(`Failed to fetch next page, stopping pagination`);
+            break;
+          }
+        }
+        
+        console.log(`\n✅ SUCCESS! Extracted ${tracks.length} tracks in total from Spotify ${spotifyData.type}`);
+        
+        if (tracks.length > 0) {
+          console.log(`🎵 Sending ALL ${tracks.length} tracks to frontend for YouTube conversion\n`);
+          
+          return res.json({
+            type: 'youtube_playlist_conversion',
+            tracks: tracks, // Send ALL tracks (no limit!)
+            originalUrl: spotifyUrl,
+            spotifyData: spotifyData,
+            message: `✅ Found ${tracks.length} tracks! Converting to YouTube queue...`
+          });
+        }
+        
+      } catch (apiError) {
+        console.log('Spotify API error:', apiError.message);
       }
+      
+      // Fallback: Get playlist name and search YouTube
+      console.log(`Using fallback: searching YouTube for ${spotifyData.type} name...`);
+      try {
+        const oEmbedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyUrl)}`;
+        const oEmbedResponse = await httpsGet(oEmbedUrl);
+        
+        if (oEmbedResponse.ok) {
+          const oEmbedData = await oEmbedResponse.json();
+          const title = oEmbedData.title || '';
+          
+          if (title) {
+            console.log(`✅ Got ${spotifyData.type} name: "${title}"\n`);
+            return res.json({
+              type: 'youtube_search',
+              query: title,
+              originalSpotifyUrl: spotifyUrl,
+              spotifyData: spotifyData,
+              playlistSearch: true,
+              message: `🔄 Searching YouTube for: "${title}"`
+            });
+          }
+        }
+      } catch (oEmbedError) {
+        console.log('oEmbed fallback failed:', oEmbedError.message);
+      }
+      
+      console.log(`❌ All methods failed\n`);
+      return res.json({
+        type: 'conversion_failed',
+        originalUrl: spotifyUrl,
+        spotifyData: spotifyData,
+        message: `Could not extract track list. Please check your Spotify API credentials.`
+      });
+    }
+    
+    // For tracks and artists, try to convert to YouTube
+    console.log(`Converting ${spotifyData.type} to YouTube for full playback`);
+    
+    try {
+      // Fetch metadata from Spotify using oEmbed API to get track name
+      let searchQuery = '';
+      
+      try {
+        // Use Spotify oEmbed API (no auth required) to get title
+        const oEmbedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyUrl)}`;
+        const oEmbedResponse = await httpsGet(oEmbedUrl);
+        
+        if (oEmbedResponse.ok) {
+          const oEmbedData = await oEmbedResponse.json();
+          const title = oEmbedData.title || '';
+          
+          if (title) {
+            // Use the title as search query for YouTube
+            searchQuery = title;
+            console.log(`Extracted title from Spotify: ${title}`);
+          }
+        }
+      } catch (oEmbedError) {
+        console.log('oEmbed fetch failed, will use generic search:', oEmbedError.message);
+      }
+      
+      // If we couldn't get the title, create a generic search query
+      if (!searchQuery) {
+        searchQuery = `spotify ${spotifyData.type} ${spotifyData.id}`;
+      }
+      
+      return res.json({
+        type: 'youtube_search',
+        query: searchQuery,
+        originalSpotifyUrl: spotifyUrl,
+        spotifyData: spotifyData,
+        message: `🔄 Converting ${spotifyData.type} to YouTube for full playback...`
+      });
+      
+    } catch (error) {
+      console.error('Conversion error:', error);
+      // Fallback: still try YouTube search
+      return res.json({
+        type: 'youtube_search',
+        query: `spotify ${spotifyData.type} ${spotifyData.id}`,
+        originalSpotifyUrl: spotifyUrl,
+        spotifyData: spotifyData,
+        message: `🔄 Converting ${spotifyData.type} to YouTube for full playback...`
+      });
     }
 
   } catch (error) {
-    console.error('Spotify conversion error:', error);
-    res.status(500).json({ error: 'Failed to process Spotify link' });
+    console.error('Spotify conversion error:', error.message);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ error: 'Failed to process Spotify link', details: error.message });
   }
 });
 
-// ===== YouTube Search API =====
+// ===== YouTube Search API (using yt-search with retry logic) =====
 app.get('/media-player/youtube-search', async (req, res) => {
   try {
     const { query } = req.query;
@@ -913,21 +1137,84 @@ app.get('/media-player/youtube-search', async (req, res) => {
       return res.status(400).json({ error: 'Missing search query' });
     }
 
-    // Use YouTube's search API (simplified version)
-    // In production, you'd use YouTube Data API v3
-    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+    console.log(`🔍 Searching YouTube for: "${query}"`);
     
-    // For now, return a direct YouTube search URL that the frontend can use
-    res.json({
+    // Retry logic with exponential backoff
+    const maxRetries = 3;
+    let lastError = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Add delay between retries to avoid rate limiting
+        if (attempt > 1) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // 1s, 2s, 4s max
+          console.log(`  Retry ${attempt}/${maxRetries} after ${delay}ms delay...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        
+        // Use yt-search package with timeout
+        const searchPromise = ytsearch(query);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Search timeout')), 10000)
+        );
+        
+        const searchResults = await Promise.race([searchPromise, timeoutPromise]);
+        
+        // Get first video result
+        const videos = searchResults?.videos;
+        
+        if (videos && videos.length > 0) {
+          const video = videos[0];
+          console.log(`✓ Found: ${video.videoId} - "${video.title}"`);
+          
+          return res.json({
+            type: 'youtube_video',
+            videoId: video.videoId,
+            title: video.title,
+            query: query,
+            duration: video.timestamp,
+            message: '✅ Found video on YouTube'
+          });
+        }
+        
+        // No videos found but search succeeded
+        console.log(`✗ No videos found for "${query}"`);
+        return res.json({
+          type: 'youtube_search_results',
+          searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+          query: query,
+          message: 'No videos found'
+        });
+        
+      } catch (searchError) {
+        lastError = searchError;
+        const errorMsg = searchError?.message || searchError?.toString() || 'Unknown error';
+        console.error(`✗ Search attempt ${attempt}/${maxRetries} failed for "${query}": ${errorMsg}`);
+        
+        // If this was the last attempt, fall through to error handling
+        if (attempt === maxRetries) {
+          break;
+        }
+        // Otherwise, continue to next retry
+      }
+    }
+    
+    // All retries failed
+    console.error(`✗ All ${maxRetries} attempts failed for "${query}"`);
+    return res.json({
       type: 'youtube_search_results',
-      searchUrl: searchUrl,
+      searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
       query: query,
-      message: 'Click to search YouTube for this content'
+      message: 'Search failed after retries',
+      error: lastError?.message || 'Unknown error'
     });
 
   } catch (error) {
     console.error('YouTube search error:', error);
-    res.status(500).json({ error: 'Failed to search YouTube' });
+    res.status(500).json({ 
+      error: 'Failed to search YouTube',
+      message: error?.message || 'Unknown error'
+    });
   }
 });
 
