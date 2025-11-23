@@ -296,55 +296,177 @@ const serveDuckmathIndex = (req, res) => {
     // Use a robust regex to match <head> with optional attributes/whitespace
     html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n  <base href="/duckmath/">`);
 
-    // Rewrite absolute asset and link paths to live under /duckmath
+    // Rewrite absolute asset and link paths to live under /duckmath (handle both double and single quotes)
     // Avoid touching fully-qualified URLs (http/https) or protocol-relative (//)
-    html = html.replace(/href="\/(?!duckmath|http|https|\/)/g, 'href="/duckmath/');
+    html = html.replace(/href=(["'])\/(?!duckmath|http|https|\/)/g, 'href=$1/duckmath/');
+    
+    // Rewrite relative paths (../) - handle both quote types
+    html = html.replace(/href=(["'])\.\.\/([^"']+)\1/g, (match, quote, capture) => {
+      const upOneLevelPath = '/duckmath/';
+      return `href=${quote}${upOneLevelPath}${capture}${quote}`;
+    });
+    
+    // Rewrite CSS url() paths in inline styles (e.g., url('../images/...') or url(/images/...))
+    html = html.replace(/url\(['"]?\.\.\/([^'")]+)['"]?\)/g, 'url("/duckmath/$1")');
+    html = html.replace(/url\(['"]?\/(?!duckmath|http|https|\/)([^'")]+)['"]?\)/g, 'url("/duckmath/$1")');
 
-      // Inject small runtime interceptor to fix dynamically added root-relative links
+    // Inject comprehensive runtime interceptor IMMEDIATELY after base tag (before any scripts run)
+    // This ensures path fixing happens before JavaScript executes
       const interceptor = `
         <script>
           (function(){
             var basePath = '/duckmath';
-            function fixLinks(){
+            
+            function shouldExclude(path) {
+              if (!path || !path.startsWith('/')) return true;
+              if (path.startsWith('http') || path.startsWith('//')) return true;
+              if (path.startsWith(basePath)) return true;
+              return false;
+            }
+            
+            function fixAllAssets(){
               try {
+                // Fix all anchor links
                 document.querySelectorAll('a[href]').forEach(function(a){
                   var href = a.getAttribute('href');
-                  if (!href) return;
-                  // prefix root-relative links that are not already under /duckmath and not protocol-relative
-                  if (href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('//')) {
+                  if (href && !shouldExclude(href)) {
                     a.setAttribute('href', basePath + href);
+                  }
+                });
+                
+                // Fix all image sources
+                document.querySelectorAll('img[src]').forEach(function(img){
+                  var src = img.getAttribute('src');
+                  if (src && !shouldExclude(src)) {
+                    img.setAttribute('src', basePath + src);
+                  }
+                });
+                
+                // Fix all script sources
+                document.querySelectorAll('script[src]').forEach(function(script){
+                  var src = script.getAttribute('src');
+                  if (src && !shouldExclude(src)) {
+                    script.setAttribute('src', basePath + src);
+                  }
+                });
+                
+                // Fix all link stylesheet hrefs
+                document.querySelectorAll('link[href]').forEach(function(link){
+                  var href = link.getAttribute('href');
+                  if (href && !shouldExclude(href)) {
+                    link.setAttribute('href', basePath + href);
+                  }
+                });
+                
+                // Fix all iframe sources (CRITICAL FOR GAMES)
+                document.querySelectorAll('iframe[src]').forEach(function(iframe){
+                  var src = iframe.getAttribute('src');
+                  if (src && !shouldExclude(src)) {
+                    iframe.setAttribute('src', basePath + src);
+                  }
+                });
+                
+                // Fix all source elements (audio/video)
+                document.querySelectorAll('source[src]').forEach(function(source){
+                  var src = source.getAttribute('src');
+                  if (src && !shouldExclude(src)) {
+                    source.setAttribute('src', basePath + src);
+                  }
+                });
+                
+                // Fix form actions
+                document.querySelectorAll('form[action]').forEach(function(form){
+                  var action = form.getAttribute('action');
+                  if (action && !shouldExclude(action)) {
+                    form.setAttribute('action', basePath + action);
                   }
                 });
               } catch(_) {}
             }
+            
             if (document.readyState === 'loading') {
-              document.addEventListener('DOMContentLoaded', fixLinks);
+              document.addEventListener('DOMContentLoaded', fixAllAssets);
             } else {
-              fixLinks();
+              fixAllAssets();
             }
+            
             // Intercept clicks as a safety net for links mutated after load
             document.addEventListener('click', function(e){
               var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
               if (!a) return;
               var href = a.getAttribute('href');
               if (!href) return;
-              if (href.startsWith('/') && !href.startsWith(basePath) && !href.startsWith('//')) {
+              if (href.startsWith('/') && !shouldExclude(href)) {
                 e.preventDefault();
                 window.location.href = basePath + href;
               }
             }, true);
+            
             // Observe DOM mutations for dynamically inserted content
             try {
-              var mo = new MutationObserver(function(){ fixLinks(); });
-              mo.observe(document.documentElement || document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['href'] });
+              var mo = new MutationObserver(function(){ fixAllAssets(); });
+              mo.observe(document.documentElement || document.body, { 
+                childList: true, 
+                subtree: true, 
+                attributes: true, 
+                attributeFilter: ['href', 'src', 'action'] 
+              });
             } catch(_) {}
+            
             // Re-run periodically as a fallback to catch any missed changes
-            setInterval(fixLinks, 300);
+            setInterval(fixAllAssets, 500);
+            
+            // Intercept fetch requests to fix API calls and asset loading
+            var originalFetch = window.fetch;
+            window.fetch = function(url, options) {
+              if (typeof url === 'string' && url.startsWith('/') && !shouldExclude(url)) {
+                url = basePath + url;
+              }
+              return originalFetch.call(this, url, options);
+            };
+            
+            // Fix XMLHttpRequest for legacy AJAX
+            var originalOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url, ...args) {
+              if (typeof url === 'string' && url.startsWith('/') && !shouldExclude(url)) {
+                url = basePath + url;
+              }
+              return originalOpen.call(this, method, url, ...args);
+            };
+            
+            // Intercept fetch requests to fix API calls and asset loading
+            var originalFetch = window.fetch;
+            window.fetch = function(url, options) {
+              if (typeof url === 'string' && url.startsWith('/') && !shouldExclude(url)) {
+                url = basePath + url;
+              }
+              return originalFetch.call(this, url, options);
+            };
+            
+            // Fix XMLHttpRequest for legacy AJAX
+            var originalOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url, ...args) {
+              if (typeof url === 'string' && url.startsWith('/') && !shouldExclude(url)) {
+                url = basePath + url;
+              }
+              return originalOpen.call(this, method, url, ...args);
+            };
           })();
         </script>
       `;
-      html = html.replace('</body>', interceptor + '</body>');
-    html = html.replace(/src="\/(?!duckmath|http|https|\/)/g, 'src="/duckmath/');
+      // Inject interceptor right after base tag in head, or before closing head tag
+      if (html.includes('</head>')) {
+        html = html.replace('</head>', interceptor + '</head>');
+      } else {
+        html = html.replace('</body>', interceptor + '</body>');
+      }
+    html = html.replace(/src=(["'])\/(?!duckmath|http|https|\/)/g, 'src=$1/duckmath/');
+    
+    // Rewrite relative paths for src attributes
+    html = html.replace(/src=(["'])\.\.\/([^"']+)\1/g, (match, quote, capture) => {
+      const upOneLevelPath = '/duckmath/';
+      return `src=${quote}${upOneLevelPath}${capture}${quote}`;
+    });
 
     res.setHeader('Content-Type', 'text/html');
     return res.send(html);
@@ -359,6 +481,78 @@ const serveDuckmathIndex = (req, res) => {
 app.get('/duckmath', serveDuckmathIndex);
 app.get('/duckmath/', serveDuckmathIndex);
 app.get('/duckmath/index.html', serveDuckmathIndex);
+// Intercept CSS files to rewrite absolute URL paths for DuckMath (must be BEFORE static middleware)
+app.get(/^\/duckmath\/.*\.css$/i, async (req, res, next) => {
+  try {
+    const fs = require('fs');
+    const relativePath = req.path.replace(/^\/duckmath\//, '');
+    const cssPath = path.join(duckmathPath, relativePath);
+    if (fs.existsSync(cssPath) && fs.statSync(cssPath).isFile()) {
+      let css = await fs.promises.readFile(cssPath, 'utf-8');
+      
+      // Get the directory of the CSS file relative to duckmath root
+      const cssDir = path.dirname(relativePath).replace(/\\/g, '/');
+      
+      // Rewrite absolute url() paths in CSS to include /duckmath/ prefix
+      css = css.replace(/url\(['"]?\/(?!duckmath|http|https|\/)([^'")]+)['"]?\)/g, 'url("/duckmath/$1")');
+      
+      // Rewrite relative url() paths in CSS - properly resolve relative to CSS file location
+      css = css.replace(/url\(['"]?\.\.\/([^'")]+)['"]?\)/g, (match, urlPath) => {
+        // Calculate the actual path: go up one level from CSS dir, then append the url path
+        const parts = cssDir.split('/').filter(p => p);
+        if (parts.length > 0) parts.pop(); // Go up one directory
+        const resolvedPath = parts.length > 0 ? parts.join('/') + '/' + urlPath : urlPath;
+        return `url("/duckmath/${resolvedPath}")`;
+      });
+      
+      // Rewrite relative paths without ../ (relative to CSS file's directory)
+      css = css.replace(/url\(['"]?([^'"/"\.\.][^'")]*?)['"]?\)/g, (match, urlPath) => {
+        // Only process if it's not already absolute, http, or starts with ../
+        if (urlPath.startsWith('/') || urlPath.startsWith('http') || urlPath.startsWith('data:') || urlPath.startsWith('../')) {
+          return match; // Leave as-is
+        }
+        // Make it relative to the CSS file's directory
+        const cssDirForRel = cssDir || '';
+        const fullPath = cssDirForRel ? cssDirForRel + '/' + urlPath : urlPath;
+        return `url("/duckmath/${fullPath}")`;
+      });
+      
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      return res.send(css);
+    }
+  } catch (e) {
+    console.error('Failed to serve DuckMath CSS file:', e);
+  }
+  next();
+});
+
+// Intercept JavaScript files to rewrite absolute paths in JS code (must be BEFORE static middleware)
+app.get(/^\/duckmath\/.*\.js$/i, async (req, res, next) => {
+  try {
+    const fs = require('fs');
+    const jsPath = path.join(duckmathPath, req.path.replace(/^\/duckmath\//, ''));
+    if (fs.existsSync(jsPath) && fs.statSync(jsPath).isFile()) {
+      let js = await fs.promises.readFile(jsPath, 'utf-8');
+      
+      // Rewrite absolute paths in string literals (e.g., fetch('/api/...') or '/images/...')
+      // Be careful not to break code - only match common patterns
+      js = js.replace(/(['"])\/(?!duckmath|http|https|\/)([^'"]+)\1/g, (match, quote, path) => {
+        // Skip if it looks like a regex pattern, comment, or special case
+        if (path.includes('*') || path.includes('+') || path.includes('?') || path.includes('\\')) {
+          return match;
+        }
+        return quote + '/duckmath/' + path + quote;
+      });
+      
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      return res.send(js);
+    }
+  } catch (e) {
+    console.error('Failed to serve DuckMath JS file:', e);
+  }
+  next();
+});
+
 // Serve static assets (excluding index.html which we handle above)
 app.use('/duckmath', express.static(duckmathPath, { index: false }));
 // Catch-all for DuckMath subdirectories that need index.html (like /duckmath/g4m3s/)
@@ -374,8 +568,25 @@ app.get('/duckmath/*', (req, res, next) => {
       try {
         let html = fs.readFileSync(indexPath, 'utf8');
         html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n  <base href="/duckmath/">`);
-        html = html.replace(/href="\/(?!duckmath|http|https|\/)/g, 'href="/duckmath/');
-        html = html.replace(/src="\/(?!duckmath|http|https|\/)/g, 'src="/duckmath/');
+        
+        // Rewrite absolute paths (handle both double and single quotes)
+        html = html.replace(/href=(["'])\/(?!duckmath|http|https|\/)/g, 'href=$1/duckmath/');
+        html = html.replace(/src=(["'])\/(?!duckmath|http|https|\/)/g, 'src=$1/duckmath/');
+        
+        // Rewrite relative paths (../) - handle both quote types
+        html = html.replace(/href=(["'])\.\.\/([^"']+)\1/g, (match, quote, capture) => {
+          const upOneLevelPath = '/duckmath/';
+          return `href=${quote}${upOneLevelPath}${capture}${quote}`;
+        });
+        html = html.replace(/src=(["'])\.\.\/([^"']+)\1/g, (match, quote, capture) => {
+          const upOneLevelPath = '/duckmath/';
+          return `src=${quote}${upOneLevelPath}${capture}${quote}`;
+        });
+        
+        // Rewrite CSS url() paths in inline styles
+        html = html.replace(/url\(['"]?\.\.\/([^'")]+)['"]?\)/g, 'url("/duckmath/$1")');
+        html = html.replace(/url\(['"]?\/(?!duckmath|http|https|\/)([^'")]+)['"]?\)/g, 'url("/duckmath/$1")');
+        
         res.setHeader('Content-Type', 'text/html');
         return res.send(html);
       } catch (e) {
@@ -394,15 +605,26 @@ app.get('/duckmath/*', (req, res, next) => {
 
 // Helper function to prepare Radon Games HTML with base tag and asset rewrites
 function prepareRadonHtml(html) {
-  // Add base tag for React Router to help with routing
-  html = html.replace('<head>', '<head>\n  <base href="/radon-g3mes/">');
+  // Add base tag for React Router to help with routing - use robust regex to match <head> with optional attributes/whitespace
+  html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n  <base href="/radon-g3mes/">`);
   
-  // Rewrite asset paths
-  html = html.replaceAll('href="/assets/', 'href="/radon-g3mes/assets/');
-  html = html.replaceAll('src="/assets/', 'src="/radon-g3mes/assets/');
-  // Exclude proxy paths (/~/) from rewriting
-  html = html.replace(/href="\/(?!radon-g3mes|http|https|\/|~)/g, 'href="/radon-g3mes/');
-  html = html.replace(/src="\/(?!radon-g3mes|http|https|\/|~)/g, 'src="/radon-g3mes/');
+  // Rewrite asset paths - absolute paths (handle both double and single quotes)
+  html = html.replace(/href=(["'])\/(?!radon-g3mes|http|https|\/|~)/g, 'href=$1/radon-g3mes/');
+  html = html.replace(/src=(["'])\/(?!radon-g3mes|http|https|\/|~)/g, 'src=$1/radon-g3mes/');
+  
+  // Rewrite relative paths (../) - handle both quote types
+  html = html.replace(/href=(["'])\.\.\/([^"']+)\1/g, (match, quote, capture) => {
+    const upOneLevelPath = '/radon-g3mes/';
+    return `href=${quote}${upOneLevelPath}${capture}${quote}`;
+  });
+  html = html.replace(/src=(["'])\.\.\/([^"']+)\1/g, (match, quote, capture) => {
+    const upOneLevelPath = '/radon-g3mes/';
+    return `src=${quote}${upOneLevelPath}${capture}${quote}`;
+  });
+  
+  // Rewrite CSS url() paths in inline styles (e.g., url('../images/...') or url(/images/...))
+  html = html.replace(/url\(['"]?\.\.\/([^'")]+)['"]?\)/g, 'url("/radon-g3mes/$1")');
+  html = html.replace(/url\(['"]?\/(?!radon-g3mes|http|https|\/|~)([^'")]+)['"]?\)/g, 'url("/radon-g3mes/$1")');
   
   // Inject interceptor script
   return injectRadonInterceptor(html);
@@ -628,6 +850,66 @@ app.use('/radon-g3mes/baremux', express.static(path.join(__dirname, '..', 'radon
 app.use('/radon-g3mes/libcurl', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'libcurl')));
 app.use('/radon-g3mes/epoxy', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'epoxy')));
 app.use('/radon-g3mes/scram', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'scram')));
+
+// Intercept CSS files to rewrite absolute URL paths for Radon (must be BEFORE static middleware)
+app.get(/^\/radon-g3mes\/.*\.css$/i, async (req, res, next) => {
+  try {
+    const fs = require('fs');
+    const relativePath = req.path.replace(/^\/radon-g3mes\//, '');
+    const cssPath = path.join(__dirname, '..', 'radon-games', 'dist', relativePath);
+    if (fs.existsSync(cssPath) && fs.statSync(cssPath).isFile()) {
+      let css = await fs.promises.readFile(cssPath, 'utf-8');
+      
+      // Get the directory of the CSS file relative to dist root (e.g., "assets/css")
+      const cssDir = path.dirname(relativePath).replace(/\\/g, '/');
+      
+      // Rewrite absolute url() paths in CSS to include /radon-g3mes/ prefix
+      css = css.replace(/url\(['"]?\/(?!radon-g3mes|http|https|\/|~)([^'")]+)['"]?\)/g, 'url("/radon-g3mes/$1")');
+      
+      // Rewrite relative url() paths with ../ - properly resolve relative to CSS file location
+      css = css.replace(/url\(['"]?\.\.\/([^'")]+)['"]?\)/g, (match, urlPath) => {
+        // Calculate the actual path: go up one level from CSS dir, then append the url path
+        const parts = cssDir.split('/').filter(p => p);
+        if (parts.length > 0) parts.pop(); // Go up one directory
+        const resolvedPath = parts.length > 0 ? parts.join('/') + '/' + urlPath : urlPath;
+        return `url("/radon-g3mes/${resolvedPath}")`;
+      });
+      
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      return res.send(css);
+    }
+  } catch (e) {
+    console.error('Failed to serve Radon CSS file:', e);
+  }
+  next();
+});
+
+// Intercept JavaScript files to rewrite absolute paths in JS code for Radon (must be BEFORE static middleware)
+app.get(/^\/radon-g3mes\/.*\.js$/i, async (req, res, next) => {
+  try {
+    const fs = require('fs');
+    const jsPath = path.join(__dirname, '..', 'radon-games', 'dist', req.path.replace(/^\/radon-g3mes\//, ''));
+    if (fs.existsSync(jsPath) && fs.statSync(jsPath).isFile()) {
+      let js = await fs.promises.readFile(jsPath, 'utf-8');
+      
+      // Rewrite absolute paths in string literals (e.g., fetch('/api/...') or '/images/...')
+      // Be careful not to break code - only match common patterns
+      js = js.replace(/(['"])\/(?!radon-g3mes|http|https|\/|~)([^'"]+)\1/g, (match, quote, path) => {
+        // Skip if it looks like a regex pattern, comment, or special case
+        if (path.includes('*') || path.includes('+') || path.includes('?') || path.includes('\\')) {
+          return match;
+        }
+        return quote + '/radon-g3mes/' + path + quote;
+      });
+      
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      return res.send(js);
+    }
+  } catch (e) {
+    console.error('Failed to serve Radon JS file:', e);
+  }
+  next();
+});
 
 // Radon Games assets - serve ONLY /assets/ folder, not everything
 app.use('/radon-g3mes/assets', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'assets')));
