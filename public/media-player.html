@@ -16,9 +16,10 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             padding: 20px;
+            gap: 20px;
         }
         
         .container {
@@ -30,6 +31,261 @@
             max-width: 1000px;
             width: 100%;
             border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        
+        /* History Section Styles */
+        .history-container {
+            background: rgba(30, 30, 45, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            max-width: 1000px;
+            width: 100%;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .history-header h2 {
+            color: #ffffff;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .clear-history-btn {
+            padding: 8px 16px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        
+        .clear-history-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+        
+        .history-empty {
+            text-align: center;
+            padding: 30px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+        
+        .history-item {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .history-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .history-item-type {
+            background: linear-gradient(135deg, #1db954, #1ed760);
+            color: #000;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .history-item-date {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+        }
+        
+        .history-link-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+        
+        .history-link-label {
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 70px;
+        }
+        
+        .history-link-label.spotify {
+            color: #1db954;
+        }
+        
+        .history-link-label.youtube {
+            color: #ff0000;
+        }
+        
+        .history-link-url {
+            flex: 1;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: monospace;
+        }
+        
+        .copy-btn {
+            padding: 6px 12px;
+            background: rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(139, 92, 246, 0.5);
+        }
+        
+        .copy-btn.copied {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 0.5);
+            color: #10b981;
+        }
+        
+        .use-link-btn {
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .use-link-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .history-track-count {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Quick Open Section */
+        .quick-open-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+        }
+        
+        .quick-open-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .quick-open-header h4 {
+            color: #a78bfa;
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .quick-open-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .quick-open-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .quick-open-item:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .quick-open-icon {
+            font-size: 18px;
+        }
+        
+        .quick-open-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .quick-open-title {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .quick-open-meta {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            display: flex;
+            gap: 8px;
+        }
+        
+        .quick-open-play {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .quick-open-play:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .quick-open-empty {
+            text-align: center;
+            padding: 15px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 13px;
         }
         
         h1 {
@@ -374,6 +630,16 @@
                 <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 12px; color: rgba(255, 255, 255, 0.8);">
                     ✨ <strong>No Spotify? No Problem!</strong> Paste a Spotify playlist URL and watch it convert to YouTube - no login required!
                 </div>
+                
+                <!-- Quick Open Section -->
+                <div class="quick-open-section" id="quickOpenSection">
+                    <div class="quick-open-header">
+                        <h4>⚡ Quick Open (Recent Conversions)</h4>
+                    </div>
+                    <div class="quick-open-list" id="quickOpenList">
+                        <div class="quick-open-empty">No recent conversions. Convert a playlist to see it here!</div>
+                    </div>
+                </div>
             </div>
             
             <!-- SoundCloud Section -->
@@ -391,6 +657,17 @@
             </div>
             
             <div id="musicWrapper"></div>
+        </div>
+    </div>
+
+    <!-- Conversion History Section -->
+    <div class="history-container" id="historyContainer">
+        <div class="history-header">
+            <h2>📜 Conversion History</h2>
+            <button class="clear-history-btn" onclick="clearHistory()">🗑️ Clear All</button>
+        </div>
+        <div id="historyList">
+            <div class="history-empty">No conversions yet. Convert a Spotify playlist to see it here!</div>
         </div>
     </div>
 
@@ -633,7 +910,7 @@
                 
                 if (data.type === 'youtube_playlist_conversion') {
                     // Playlists/albums are being converted to YouTube - search for each track
-                    await convertPlaylistToYouTube(data.tracks, spotifyData);
+                    await convertPlaylistToYouTube(data.tracks, spotifyData, link);
                     return;
                     
                 } else if (data.type === 'youtube_playlist_search') {
@@ -666,6 +943,10 @@
                                     </iframe>
                                 </div>
                             `;
+                            
+                            // Save to history
+                            saveToHistory(link, playlistEmbedUrl, spotifyData.type, 0);
+                            
                             errorMsg.textContent = `✅ Found YouTube playlist: "${searchData.title || data.query}". Full playback available!`;
                             errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
                             errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
@@ -685,6 +966,10 @@
                                     </iframe>
                                 </div>
                             `;
+                            
+                            // Save to history
+                            saveToHistory(link, videoEmbedUrl, spotifyData.type, 0);
+                            
                             errorMsg.textContent = `✅ Found YouTube result for "${data.query}". Full playback available!`;
                             errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
                             errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
@@ -812,7 +1097,7 @@
             }
         }
 
-        async function convertPlaylistToYouTube(tracks, spotifyData) {
+        async function convertPlaylistToYouTube(tracks, spotifyData, spotifyUrl) {
             const musicWrapper = document.getElementById('musicWrapper');
             const errorMsg = document.getElementById('spotifyError');
             
@@ -914,6 +1199,9 @@
                                 </span>
                             </div>
                         `;
+                        
+                        // Save to history
+                        saveToHistory(spotifyUrl, embedUrl, spotifyData.type, videoIds.length);
                         
                         errorMsg.textContent = `✅ Successfully queued ${videoIds.length} out of ${tracks.length} tracks (${successRate}% success)`;
                         errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
@@ -1218,7 +1506,237 @@
                 switchMusicSource('soundcloud');
                 playSoundCloud();
             }
+            
+            // Load history on page load
+            loadHistory();
         });
+        
+        // ===== HISTORY FUNCTIONS =====
+        
+        // Save conversion to history
+        function saveToHistory(spotifyUrl, youtubeUrl, type, trackCount) {
+            const history = JSON.parse(localStorage.getItem('spotifyConversionHistory') || '[]');
+            
+            // Create history entry
+            const entry = {
+                id: Date.now(),
+                spotifyUrl: spotifyUrl,
+                youtubeUrl: youtubeUrl,
+                type: type, // 'playlist', 'album', 'track'
+                trackCount: trackCount || 0,
+                date: new Date().toISOString()
+            };
+            
+            // Add to beginning of array (newest first)
+            history.unshift(entry);
+            
+            // Keep only last 20 entries
+            if (history.length > 20) {
+                history.pop();
+            }
+            
+            localStorage.setItem('spotifyConversionHistory', JSON.stringify(history));
+            renderHistory();
+            renderQuickOpen();
+        }
+        
+        // Load and render history
+        function loadHistory() {
+            renderHistory();
+            renderQuickOpen();
+        }
+        
+        // Render Quick Open section (shows last 5 conversions)
+        function renderQuickOpen() {
+            const quickOpenList = document.getElementById('quickOpenList');
+            const history = JSON.parse(localStorage.getItem('spotifyConversionHistory') || '[]');
+            
+            // Show only last 5 conversions
+            const recentConversions = history.slice(0, 5);
+            
+            if (recentConversions.length === 0) {
+                quickOpenList.innerHTML = '<div class="quick-open-empty">No recent conversions. Convert a playlist to see it here!</div>';
+                return;
+            }
+            
+            quickOpenList.innerHTML = recentConversions.map(entry => {
+                const icon = entry.type === 'playlist' ? '🎵' : entry.type === 'album' ? '💿' : '🎶';
+                const spotifyId = entry.spotifyUrl.match(/\/(playlist|album|track)\/([a-zA-Z0-9]+)/);
+                const shortId = spotifyId ? spotifyId[2].substring(0, 8) + '...' : 'Unknown';
+                const trackInfo = entry.trackCount > 0 ? `${entry.trackCount} tracks` : '';
+                const date = new Date(entry.date);
+                const timeAgo = getTimeAgo(date);
+                
+                return `
+                    <div class="quick-open-item">
+                        <span class="quick-open-icon">${icon}</span>
+                        <div class="quick-open-info">
+                            <div class="quick-open-title">${entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}: ${shortId}</div>
+                            <div class="quick-open-meta">
+                                <span>${trackInfo}</span>
+                                <span>•</span>
+                                <span>${timeAgo}</span>
+                            </div>
+                        </div>
+                        <button class="quick-open-play" onclick="quickPlayYouTube('${entry.youtubeUrl.replace(/'/g, "\\'")}')">▶ Play</button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Get time ago string
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return date.toLocaleDateString();
+        }
+        
+        // Quick play YouTube from Quick Open
+        function quickPlayYouTube(url) {
+            const musicWrapper = document.getElementById('musicWrapper');
+            
+            // If it's an embed URL, play it directly in the music wrapper
+            if (url.includes('youtube.com/embed/')) {
+                musicWrapper.innerHTML = `
+                    <div class="video-container">
+                        <iframe 
+                            src="${url}${url.includes('?') ? '&' : '?'}autoplay=1" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen
+                            loading="lazy">
+                        </iframe>
+                    </div>
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.9); text-align: center;">
+                        ✅ <strong>Playing from Quick Open!</strong>
+                    </div>
+                `;
+                
+                // Scroll to the player
+                musicWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // Fallback to using the regular player
+                useYouTubeLink(url);
+            }
+        }
+        
+        // Render history items
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('spotifyConversionHistory') || '[]');
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="history-empty">No conversions yet. Convert a Spotify playlist to see it here!</div>';
+                return;
+            }
+            
+            historyList.innerHTML = history.map(entry => {
+                const date = new Date(entry.date);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                return `
+                    <div class="history-item">
+                        <div class="history-item-header">
+                            <span class="history-item-type">${entry.type}</span>
+                            <span class="history-item-date">${formattedDate}</span>
+                        </div>
+                        <div class="history-link-row">
+                            <span class="history-link-label spotify">Spotify:</span>
+                            <span class="history-link-url" title="${entry.spotifyUrl}">${entry.spotifyUrl}</span>
+                            <button class="copy-btn" onclick="copyToClipboard('${entry.spotifyUrl}', this)">📋 Copy</button>
+                        </div>
+                        <div class="history-link-row">
+                            <span class="history-link-label youtube">YouTube:</span>
+                            <span class="history-link-url" title="${entry.youtubeUrl}">${entry.youtubeUrl}</span>
+                            <button class="copy-btn" onclick="copyToClipboard('${entry.youtubeUrl}', this)">📋 Copy</button>
+                            <button class="use-link-btn" onclick="useYouTubeLink('${entry.youtubeUrl}')">▶ Play</button>
+                        </div>
+                        ${entry.trackCount > 0 ? `<div class="history-track-count">🎵 ${entry.trackCount} tracks converted</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Copy text to clipboard
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✅ Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                button.textContent = '✅ Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = '📋 Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+        
+        // Use YouTube link in the player
+        function useYouTubeLink(url) {
+            // Check if it's a playlist or video
+            const isPlaylist = url.includes('playlist=') || url.includes('list=') || url.includes('videoseries');
+            
+            // Switch to YouTube tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.tab').classList.add('active'); // First tab is YouTube
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('youtube-tab').classList.add('active');
+            
+            // Set the URL and play
+            document.getElementById('youtubeLink').value = url;
+            
+            // If it's already an embed URL, extract the info and create embed directly
+            if (url.includes('youtube.com/embed/')) {
+                const videoWrapper = document.getElementById('youtubeWrapper');
+                videoWrapper.innerHTML = `
+                    <div class="video-container">
+                        <iframe 
+                            src="${url}${url.includes('?') ? '&' : '?'}autoplay=1" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen
+                            loading="lazy">
+                        </iframe>
+                    </div>
+                `;
+            } else {
+                playYouTube();
+            }
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Clear all history
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all conversion history?')) {
+                localStorage.removeItem('spotifyConversionHistory');
+                renderHistory();
+                renderQuickOpen();
+            }
+        }
     </script>
 </body>
 </html>
