@@ -1317,8 +1317,8 @@ app.get('/media-player/spotify-to-youtube', async (req, res) => {
         console.log('Spotify API error:', apiError.message);
       }
       
-      // Fallback: Get playlist name and search YouTube
-      console.log(`Using fallback: searching YouTube for ${spotifyData.type} name...`);
+      // Fallback: Get playlist name and search YouTube for a PLAYLIST (not just the name)
+      console.log(`Using fallback: searching YouTube for ${spotifyData.type} as a playlist...`);
       try {
         const oEmbedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyUrl)}`;
         const oEmbedResponse = await httpsGet(oEmbedUrl);
@@ -1329,13 +1329,14 @@ app.get('/media-player/spotify-to-youtube', async (req, res) => {
           
           if (title) {
             console.log(`✅ Got ${spotifyData.type} name: "${title}"\n`);
+            // Return a special type that tells frontend to search for YouTube playlist
             return res.json({
-              type: 'youtube_search',
+              type: 'youtube_playlist_search',
               query: title,
               originalSpotifyUrl: spotifyUrl,
               spotifyData: spotifyData,
               playlistSearch: true,
-              message: `🔄 Searching YouTube for: "${title}"`
+              message: `🔄 Searching YouTube for playlist: "${title}"`
             });
           }
         }
@@ -1413,13 +1414,14 @@ app.get('/media-player/spotify-to-youtube', async (req, res) => {
 // ===== YouTube Search API (using yt-search with retry logic) =====
 app.get('/media-player/youtube-search', async (req, res) => {
   try {
-    const { query } = req.query;
+    const { query, type } = req.query;
     
     if (!query) {
       return res.status(400).json({ error: 'Missing search query' });
     }
 
-    console.log(`🔍 Searching YouTube for: "${query}"`);
+    const isPlaylistSearch = type === 'playlist';
+    console.log(`🔍 Searching YouTube for ${isPlaylistSearch ? 'playlist' : 'video'}: "${query}"`);
     
     // Retry logic with exponential backoff
     const maxRetries = 3;
@@ -1442,6 +1444,28 @@ app.get('/media-player/youtube-search', async (req, res) => {
         
         const searchResults = await Promise.race([searchPromise, timeoutPromise]);
         
+        // If searching for playlists, check playlists first
+        if (isPlaylistSearch) {
+          const playlists = searchResults?.playlists;
+          
+          if (playlists && playlists.length > 0) {
+            const playlist = playlists[0];
+            console.log(`✓ Found playlist: ${playlist.listId} - "${playlist.title}"`);
+            
+            return res.json({
+              type: 'youtube_playlist',
+              playlistId: playlist.listId,
+              title: playlist.title,
+              query: query,
+              videoCount: playlist.videoCount,
+              message: '✅ Found playlist on YouTube'
+            });
+          }
+          
+          // No playlists found, try to find a video that might be a full mix/compilation
+          console.log(`  No playlists found, searching for video compilations...`);
+        }
+        
         // Get first video result
         const videos = searchResults?.videos;
         
@@ -1460,12 +1484,12 @@ app.get('/media-player/youtube-search', async (req, res) => {
         }
         
         // No videos found but search succeeded
-        console.log(`✗ No videos found for "${query}"`);
+        console.log(`✗ No results found for "${query}"`);
         return res.json({
           type: 'youtube_search_results',
           searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
           query: query,
-          message: 'No videos found'
+          message: 'No results found'
         });
         
       } catch (searchError) {

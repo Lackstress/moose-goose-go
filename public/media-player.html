@@ -636,6 +636,93 @@
                     await convertPlaylistToYouTube(data.tracks, spotifyData);
                     return;
                     
+                } else if (data.type === 'youtube_playlist_search') {
+                    // Playlists/albums fallback - search for YouTube playlist version
+                    musicWrapper.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                            <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
+                            <div>${data.message}</div>
+                            <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">Searching for YouTube playlist...</div>
+                        </div>
+                    `;
+                    
+                    // Search YouTube for the playlist
+                    const playlistQuery = data.query + ' playlist full album';
+                    
+                    try {
+                        const searchResponse = await fetch(`/media-player/youtube-search?query=${encodeURIComponent(playlistQuery)}&type=playlist`);
+                        const searchData = await searchResponse.json();
+                        
+                        if (searchData.type === 'youtube_playlist' && searchData.playlistId) {
+                            // Found a YouTube playlist - embed it
+                            const playlistEmbedUrl = `https://www.youtube.com/embed/videoseries?list=${searchData.playlistId}`;
+                            musicWrapper.innerHTML = `
+                                <div class="video-container">
+                                    <iframe 
+                                        src="${playlistEmbedUrl}" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen
+                                        loading="lazy">
+                                    </iframe>
+                                </div>
+                            `;
+                            errorMsg.textContent = `✅ Found YouTube playlist: "${searchData.title || data.query}". Full playback available!`;
+                            errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                            errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                            errorMsg.style.color = '#10b981';
+                            errorMsg.classList.add('show');
+                            setTimeout(() => errorMsg.classList.remove('show'), 8000);
+                        } else if (searchData.type === 'youtube_video' && searchData.videoId) {
+                            // Found a video (might be a full playlist mix)
+                            const videoEmbedUrl = `https://www.youtube.com/embed/${searchData.videoId}`;
+                            musicWrapper.innerHTML = `
+                                <div class="video-container">
+                                    <iframe 
+                                        src="${videoEmbedUrl}" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen
+                                        loading="lazy">
+                                    </iframe>
+                                </div>
+                            `;
+                            errorMsg.textContent = `✅ Found YouTube result for "${data.query}". Full playback available!`;
+                            errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                            errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                            errorMsg.style.color = '#10b981';
+                            errorMsg.classList.add('show');
+                            setTimeout(() => errorMsg.classList.remove('show'), 8000);
+                        } else {
+                            // Fallback: show search link
+                            musicWrapper.innerHTML = `
+                                <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.8);">
+                                    <div style="font-size: 32px; margin-bottom: 15px;">🔍</div>
+                                    <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Search YouTube for "${data.query}"</div>
+                                    <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                                        Click below to find the playlist on YouTube
+                                    </div>
+                                    <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(playlistQuery)}" target="_blank" 
+                                       style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #ff0000, #cc0000); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                                        🎵 Search YouTube
+                                    </a>
+                                </div>
+                            `;
+                        }
+                    } catch (searchError) {
+                        console.error('YouTube playlist search error:', searchError);
+                        // Fallback: show manual search option
+                        musicWrapper.innerHTML = `
+                            <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.8);">
+                                <div style="font-size: 32px; margin-bottom: 15px;">🔍</div>
+                                <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Search YouTube for "${data.query}"</div>
+                                <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(playlistQuery)}" target="_blank" 
+                                   style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #ff0000, #cc0000); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                                    🎵 Open YouTube Search
+                                </a>
+                            </div>
+                        `;
+                    }
+                    return;
+                    
                 } else if (data.type === 'conversion_failed') {
                     // Conversion failed - show helpful message
                     musicWrapper.innerHTML = `
