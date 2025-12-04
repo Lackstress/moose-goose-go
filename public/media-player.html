@@ -288,6 +288,188 @@
             font-size: 13px;
         }
         
+        /* Custom Playlist Player Controls */
+        .custom-player-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+        }
+        
+        .player-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .player-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .player-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .player-btn.prev-btn, .player-btn.next-btn {
+            padding: 10px 16px;
+        }
+        
+        .player-btn.jump-btn {
+            background: rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+        }
+        
+        .track-indicator {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .track-list-container {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 10px;
+        }
+        
+        .track-list-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .track-list-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .track-list-container::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.5);
+            border-radius: 4px;
+        }
+        
+        .track-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .track-item:hover {
+            background: rgba(139, 92, 246, 0.2);
+        }
+        
+        .track-item.active {
+            background: rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+        }
+        
+        .track-item.not-found {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .track-number {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            flex-shrink: 0;
+        }
+        
+        .track-item.active .track-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        
+        .track-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .track-name {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .track-artist {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .track-play-btn {
+            padding: 6px 12px;
+            background: rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+        
+        .track-item:hover .track-play-btn {
+            opacity: 1;
+        }
+        
+        .track-item.not-found .track-play-btn {
+            display: none;
+        }
+        
+        .tracklist-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .tracklist-toggle:hover {
+            background: rgba(139, 92, 246, 0.2);
+        }
+        
         h1 {
             text-align: center;
             color: #ffffff;
@@ -631,13 +813,13 @@
                     ✨ <strong>No Spotify? No Problem!</strong> Paste a Spotify playlist URL and watch it convert to YouTube - no login required!
                 </div>
                 
-                <!-- Quick Open Section -->
+                <!-- Recently Played Section -->
                 <div class="quick-open-section" id="quickOpenSection">
                     <div class="quick-open-header">
-                        <h4>⚡ Quick Open (Recent Conversions)</h4>
+                        <h4>⚡ Recently Played</h4>
                     </div>
                     <div class="quick-open-list" id="quickOpenList">
-                        <div class="quick-open-empty">No recent conversions. Convert a playlist to see it here!</div>
+                        <div class="quick-open-empty">No recently played tracks. Play a converted playlist to see tracks here!</div>
                     </div>
                 </div>
             </div>
@@ -1122,7 +1304,9 @@
             
             const progressText = document.getElementById('conversion-progress');
             const progressBar = document.getElementById('progress-bar');
-            const videoIds = [];
+            
+            // Store full track data with video IDs
+            const playlistData = [];
             
             try {
                 // Search YouTube for each track
@@ -1146,8 +1330,15 @@
                     try {
                         const videoId = await searchYouTubeClientSide(track.searchQuery);
                         
+                        // Store track data with or without videoId
+                        playlistData.push({
+                            name: track.name,
+                            artist: track.artist,
+                            videoId: videoId || null,
+                            found: !!videoId
+                        });
+                        
                         if (videoId) {
-                            videoIds.push(videoId);
                             successCount++;
                             console.log(`  ✓ [${successCount}/${total}] Found: ${videoId} for "${track.searchQuery}"`);
                         } else {
@@ -1156,54 +1347,57 @@
                         }
                         
                         // Delay between searches to avoid rate limiting
-                        // Use longer delay every 10 searches to be extra safe
                         const delay = (i + 1) % 10 === 0 ? 2000 : 800;
                         await new Promise(resolve => setTimeout(resolve, delay));
                     } catch (trackError) {
                         failCount++;
+                        playlistData.push({
+                            name: track.name,
+                            artist: track.artist,
+                            videoId: null,
+                            found: false
+                        });
                         console.error(`  ✗ [${i+1}/${total}] Error for: ${track.searchQuery}`, trackError.message);
                     }
                 }
                 
                 console.log(`\n✅ Search complete: Found ${successCount} out of ${tracks.length} total tracks (${failCount} failed)`);
                 
-                if (videoIds.length > 0) {
-                    // Create YouTube playlist with all video IDs
+                // Get only found tracks for playback
+                const foundTracks = playlistData.filter(t => t.found);
+                
+                if (foundTracks.length > 0) {
                     const successRate = Math.round((successCount / tracks.length) * 100);
                     progressText.innerHTML = `
                         <div style="font-weight: 600; color: #10b981;">✅ Found ${successCount} out of ${tracks.length} songs!</div>
-                        <div style="font-size: 11px; opacity: 0.8; margin-top: 5px;">Success rate: ${successRate}% • Starting playback...</div>
+                        <div style="font-size: 11px; opacity: 0.8; margin-top: 5px;">Success rate: ${successRate}% • Loading player...</div>
                     `;
                     
-                    // Create YouTube embed with playlist
+                    // Store playlist data globally for navigation
+                    window.currentPlaylist = {
+                        tracks: playlistData,
+                        foundTracks: foundTracks,
+                        currentIndex: 0,
+                        spotifyUrl: spotifyUrl,
+                        type: spotifyData.type
+                    };
+                    
+                    // Create backup YouTube playlist URL (for history)
+                    const videoIds = foundTracks.map(t => t.videoId);
                     const playlistParam = videoIds.join(',');
-                    const embedUrl = `https://www.youtube.com/embed/${videoIds[0]}?playlist=${playlistParam}&autoplay=1`;
+                    const backupEmbedUrl = `https://www.youtube.com/embed/${videoIds[0]}?playlist=${playlistParam}`;
                     
                     setTimeout(() => {
-                        musicWrapper.innerHTML = `
-                            <div class="video-container">
-                                <iframe 
-                                    src="${embedUrl}" 
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                    allowfullscreen
-                                    loading="lazy">
-                                </iframe>
-                            </div>
-                            <div style="margin-top: 15px; padding: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.9); text-align: center;">
-                                ✅ <strong>YouTube Playlist Created!</strong><br>
-                                <span style="font-size: 12px; opacity: 0.9;">
-                                    Queued ${videoIds.length} out of ${tracks.length} tracks (${successRate}% success rate)
-                                </span><br>
-                                <span style="font-size: 11px; opacity: 0.7; margin-top: 5px; display: inline-block;">
-                                    ${failCount > 0 ? `${failCount} songs couldn't be found on YouTube` : 'All songs found!'}
-                                </span>
-                            </div>
-                        `;
+                        // Render custom player
+                        renderCustomPlayer(successCount, tracks.length, successRate, failCount);
                         
-                        // Save to history
-                        saveToHistory(spotifyUrl, embedUrl, spotifyData.type, videoIds.length);
+                        // Save to history with track data for custom player reload
+                        saveToHistory(spotifyUrl, backupEmbedUrl, spotifyData.type, foundTracks.length, {
+                            tracks: playlistData,
+                            foundTracks: foundTracks
+                        });
                         
-                        errorMsg.textContent = `✅ Successfully queued ${videoIds.length} out of ${tracks.length} tracks (${successRate}% success)`;
+                        errorMsg.textContent = `✅ Successfully loaded ${foundTracks.length} tracks with custom controls!`;
                         errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
                         errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
                         errorMsg.style.color = '#10b981';
@@ -1225,6 +1419,181 @@
                 errorMsg.textContent = '❌ Playlist conversion failed. Please try YouTube Music search.';
                 errorMsg.classList.add('show');
             }
+        }
+        
+        // Render custom player with navigation controls
+        function renderCustomPlayer(successCount, totalTracks, successRate, failCount) {
+            const musicWrapper = document.getElementById('musicWrapper');
+            const playlist = window.currentPlaylist;
+            const currentTrack = playlist.foundTracks[playlist.currentIndex];
+            
+            musicWrapper.innerHTML = `
+                <div id="custom-player-wrapper">
+                    <!-- Video Player -->
+                    <div class="video-container">
+                        <iframe 
+                            id="youtube-player-frame"
+                            src="https://www.youtube.com/embed/${currentTrack.videoId}?autoplay=1&enablejsapi=1" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen
+                            loading="lazy">
+                        </iframe>
+                    </div>
+                    
+                    <!-- Player Controls -->
+                    <div class="custom-player-controls">
+                        <button class="player-btn prev-btn" onclick="playPreviousTrack()" ${playlist.currentIndex === 0 ? 'disabled' : ''}>
+                            ⏮️ Prev
+                        </button>
+                        <div class="track-indicator">
+                            <span id="current-track-num">${playlist.currentIndex + 1}</span> / ${playlist.foundTracks.length}
+                        </div>
+                        <button class="player-btn next-btn" onclick="playNextTrack()" ${playlist.currentIndex >= playlist.foundTracks.length - 1 ? 'disabled' : ''}>
+                            Next ⏭️
+                        </button>
+                    </div>
+                    
+                    <!-- Now Playing -->
+                    <div style="text-align: center; margin-top: 10px; padding: 12px; background: rgba(139, 92, 246, 0.15); border-radius: 8px;">
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">NOW PLAYING</div>
+                        <div id="now-playing-title" style="font-size: 14px; font-weight: 600; color: #fff;">${currentTrack.name}</div>
+                        <div id="now-playing-artist" style="font-size: 12px; color: rgba(255,255,255,0.7);">${currentTrack.artist}</div>
+                    </div>
+                    
+                    <!-- Tracklist Toggle -->
+                    <div class="tracklist-toggle" onclick="toggleTracklist()">
+                        <span>📋</span>
+                        <span id="tracklist-toggle-text">Show Tracklist (${playlist.foundTracks.length} songs)</span>
+                        <span id="tracklist-arrow">▼</span>
+                    </div>
+                    
+                    <!-- Tracklist (hidden by default) -->
+                    <div class="track-list-container" id="tracklist-container" style="display: none;">
+                        ${playlist.tracks.map((track, index) => {
+                            const foundIndex = playlist.foundTracks.findIndex(t => t.videoId === track.videoId && track.found);
+                            const isActive = track.found && foundIndex === playlist.currentIndex;
+                            const itemClass = track.found ? (isActive ? 'active' : '') : 'not-found';
+                            
+                            return `
+                                <div class="track-item ${itemClass}" ${track.found ? `onclick="jumpToTrack(${foundIndex})"` : ''} data-index="${index}">
+                                    <div class="track-number">${index + 1}</div>
+                                    <div class="track-info">
+                                        <div class="track-name">${track.name}</div>
+                                        <div class="track-artist">${track.artist}${!track.found ? ' • ❌ Not found' : ''}</div>
+                                    </div>
+                                    ${track.found ? `<button class="track-play-btn" onclick="event.stopPropagation(); jumpToTrack(${foundIndex})">▶ Play</button>` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.9); text-align: center;">
+                        ✅ <strong>Custom Player Active!</strong> - Extensions can't block navigation<br>
+                        <span style="font-size: 12px; opacity: 0.9;">
+                            ${successCount} out of ${totalTracks} tracks (${successRate}% success)
+                        </span><br>
+                        <span style="font-size: 11px; opacity: 0.7;">
+                            ${failCount > 0 ? `${failCount} songs couldn't be found on YouTube` : 'All songs found!'}
+                        </span>
+                    </div>
+                </div>
+            `;
+            
+            // Save initial track to recently played
+            saveRecentlyPlayed(currentTrack);
+        }
+        
+        // Toggle tracklist visibility
+        function toggleTracklist() {
+            const container = document.getElementById('tracklist-container');
+            const arrow = document.getElementById('tracklist-arrow');
+            const text = document.getElementById('tracklist-toggle-text');
+            
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                arrow.textContent = '▲';
+                text.textContent = 'Hide Tracklist';
+            } else {
+                container.style.display = 'none';
+                arrow.textContent = '▼';
+                text.textContent = `Show Tracklist (${window.currentPlaylist.foundTracks.length} songs)`;
+            }
+        }
+        
+        // Play previous track
+        function playPreviousTrack() {
+            const playlist = window.currentPlaylist;
+            if (playlist.currentIndex > 0) {
+                playlist.currentIndex--;
+                updatePlayer();
+            }
+        }
+        
+        // Play next track
+        function playNextTrack() {
+            const playlist = window.currentPlaylist;
+            if (playlist.currentIndex < playlist.foundTracks.length - 1) {
+                playlist.currentIndex++;
+                updatePlayer();
+            }
+        }
+        
+        // Jump to specific track
+        function jumpToTrack(index) {
+            const playlist = window.currentPlaylist;
+            if (index >= 0 && index < playlist.foundTracks.length) {
+                playlist.currentIndex = index;
+                updatePlayer();
+            }
+        }
+        
+        // Update player with current track
+        function updatePlayer() {
+            const playlist = window.currentPlaylist;
+            const currentTrack = playlist.foundTracks[playlist.currentIndex];
+            
+            // Update iframe
+            const iframe = document.getElementById('youtube-player-frame');
+            iframe.src = `https://www.youtube.com/embed/${currentTrack.videoId}?autoplay=1&enablejsapi=1`;
+            
+            // Update track indicator
+            document.getElementById('current-track-num').textContent = playlist.currentIndex + 1;
+            
+            // Update now playing
+            document.getElementById('now-playing-title').textContent = currentTrack.name;
+            document.getElementById('now-playing-artist').textContent = currentTrack.artist;
+            
+            // Save to recently played
+            saveRecentlyPlayed(currentTrack);
+            
+            // Update button states
+            const prevBtn = document.querySelector('.prev-btn');
+            const nextBtn = document.querySelector('.next-btn');
+            prevBtn.disabled = playlist.currentIndex === 0;
+            nextBtn.disabled = playlist.currentIndex >= playlist.foundTracks.length - 1;
+            
+            // Update tracklist active state
+            document.querySelectorAll('.track-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Find and highlight the active track in the full tracklist
+            const trackItems = document.querySelectorAll('.track-item');
+            trackItems.forEach((item, idx) => {
+                const track = playlist.tracks[idx];
+                if (track.found) {
+                    const foundIndex = playlist.foundTracks.findIndex(t => t.videoId === track.videoId);
+                    if (foundIndex === playlist.currentIndex) {
+                        item.classList.add('active');
+                        // Scroll into view if tracklist is visible
+                        const container = document.getElementById('tracklist-container');
+                        if (container.style.display !== 'none') {
+                            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                }
+            });
         }
         
         // Search YouTube using reliable yt-search package (server-side)
@@ -1514,7 +1883,7 @@
         // ===== HISTORY FUNCTIONS =====
         
         // Save conversion to history
-        function saveToHistory(spotifyUrl, youtubeUrl, type, trackCount) {
+        function saveToHistory(spotifyUrl, youtubeUrl, type, trackCount, trackData = null) {
             const history = JSON.parse(localStorage.getItem('spotifyConversionHistory') || '[]');
             
             // Create history entry
@@ -1524,6 +1893,7 @@
                 youtubeUrl: youtubeUrl,
                 type: type, // 'playlist', 'album', 'track'
                 trackCount: trackCount || 0,
+                trackData: trackData, // Full track data for custom player
                 date: new Date().toISOString()
             };
             
@@ -1546,42 +1916,88 @@
             renderQuickOpen();
         }
         
-        // Render Quick Open section (shows last 5 conversions)
+        // Render Recently Played section (tracks played from custom player)
         function renderQuickOpen() {
             const quickOpenList = document.getElementById('quickOpenList');
-            const history = JSON.parse(localStorage.getItem('spotifyConversionHistory') || '[]');
+            const recentlyPlayed = JSON.parse(localStorage.getItem('recentlyPlayedTracks') || '[]');
             
-            // Show only last 5 conversions
-            const recentConversions = history.slice(0, 5);
-            
-            if (recentConversions.length === 0) {
-                quickOpenList.innerHTML = '<div class="quick-open-empty">No recent conversions. Convert a playlist to see it here!</div>';
+            if (recentlyPlayed.length === 0) {
+                quickOpenList.innerHTML = '<div class="quick-open-empty">No recently played tracks. Play a converted playlist to see tracks here!</div>';
                 return;
             }
             
-            quickOpenList.innerHTML = recentConversions.map(entry => {
-                const icon = entry.type === 'playlist' ? '🎵' : entry.type === 'album' ? '💿' : '🎶';
-                const spotifyId = entry.spotifyUrl.match(/\/(playlist|album|track)\/([a-zA-Z0-9]+)/);
-                const shortId = spotifyId ? spotifyId[2].substring(0, 8) + '...' : 'Unknown';
-                const trackInfo = entry.trackCount > 0 ? `${entry.trackCount} tracks` : '';
-                const date = new Date(entry.date);
-                const timeAgo = getTimeAgo(date);
+            // Show last 10 played tracks
+            quickOpenList.innerHTML = recentlyPlayed.slice(0, 10).map((track, index) => {
+                const timeAgo = getTimeAgo(new Date(track.playedAt));
                 
                 return `
-                    <div class="quick-open-item">
-                        <span class="quick-open-icon">${icon}</span>
+                    <div class="quick-open-item" onclick="quickPlayTrack('${track.videoId}', '${track.name.replace(/'/g, "\\'")}', '${track.artist.replace(/'/g, "\\'")}')">
+                        <span class="quick-open-icon">🎵</span>
                         <div class="quick-open-info">
-                            <div class="quick-open-title">${entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}: ${shortId}</div>
+                            <div class="quick-open-title">${track.name}</div>
                             <div class="quick-open-meta">
-                                <span>${trackInfo}</span>
+                                <span>${track.artist}</span>
                                 <span>•</span>
                                 <span>${timeAgo}</span>
                             </div>
                         </div>
-                        <button class="quick-open-play" onclick="quickPlayYouTube('${entry.youtubeUrl.replace(/'/g, "\\'")}')">▶ Play</button>
+                        <button class="quick-open-play" onclick="event.stopPropagation(); quickPlayTrack('${track.videoId}', '${track.name.replace(/'/g, "\\'")}', '${track.artist.replace(/'/g, "\\'")}')">▶</button>
                     </div>
                 `;
             }).join('');
+        }
+        
+        // Save a played track to recently played history
+        function saveRecentlyPlayed(track) {
+            if (!track || !track.videoId || !track.name) return;
+            
+            const recentlyPlayed = JSON.parse(localStorage.getItem('recentlyPlayedTracks') || '[]');
+            
+            // Remove duplicate if exists (same videoId)
+            const filtered = recentlyPlayed.filter(t => t.videoId !== track.videoId);
+            
+            // Add to beginning
+            filtered.unshift({
+                videoId: track.videoId,
+                name: track.name,
+                artist: track.artist || 'Unknown Artist',
+                playedAt: new Date().toISOString()
+            });
+            
+            // Keep only last 20 tracks
+            if (filtered.length > 20) {
+                filtered.pop();
+            }
+            
+            localStorage.setItem('recentlyPlayedTracks', JSON.stringify(filtered));
+            renderQuickOpen();
+        }
+        
+        // Quick play a single track from Recently Played
+        function quickPlayTrack(videoId, name, artist) {
+            const musicWrapper = document.getElementById('musicWrapper');
+            
+            musicWrapper.innerHTML = `
+                <div class="video-container">
+                    <iframe 
+                        src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen
+                        loading="lazy">
+                    </iframe>
+                </div>
+                <div style="text-align: center; margin-top: 10px; padding: 12px; background: rgba(139, 92, 246, 0.15); border-radius: 8px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">NOW PLAYING</div>
+                    <div style="font-size: 14px; font-weight: 600; color: #fff;">${name}</div>
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.7);">${artist}</div>
+                </div>
+            `;
+            
+            // Save this play
+            saveRecentlyPlayed({ videoId, name, artist });
+            
+            // Scroll to player
+            musicWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         
         // Get time ago string
@@ -1599,31 +2015,67 @@
             return date.toLocaleDateString();
         }
         
-        // Quick play YouTube from Quick Open
-        function quickPlayYouTube(url) {
+        // Load playlist from history with custom player
+        function loadFromHistory(entryId) {
+            const history = JSON.parse(localStorage.getItem('spotifyConversionHistory') || '[]');
+            const entry = history.find(e => e.id === entryId);
+            
+            if (!entry) {
+                console.error('History entry not found:', entryId);
+                return;
+            }
+            
             const musicWrapper = document.getElementById('musicWrapper');
             
-            // If it's an embed URL, play it directly in the music wrapper
-            if (url.includes('youtube.com/embed/')) {
-                musicWrapper.innerHTML = `
-                    <div class="video-container">
-                        <iframe 
-                            src="${url}${url.includes('?') ? '&' : '?'}autoplay=1" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen
-                            loading="lazy">
-                        </iframe>
-                    </div>
-                    <div style="margin-top: 15px; padding: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.9); text-align: center;">
-                        ✅ <strong>Playing from Quick Open!</strong>
-                    </div>
-                `;
+            // If we have track data, load the custom player
+            if (entry.trackData && entry.trackData.foundTracks && entry.trackData.foundTracks.length > 0) {
+                // Set up the playlist data globally
+                window.currentPlaylist = {
+                    tracks: entry.trackData.tracks,
+                    foundTracks: entry.trackData.foundTracks,
+                    currentIndex: 0,
+                    spotifyUrl: entry.spotifyUrl,
+                    type: entry.type
+                };
                 
-                // Scroll to the player
+                // Render custom player
+                const successCount = entry.trackData.foundTracks.length;
+                const totalTracks = entry.trackData.tracks.length;
+                const successRate = Math.round((successCount / totalTracks) * 100);
+                const failCount = totalTracks - successCount;
+                
+                renderCustomPlayer(successCount, totalTracks, successRate, failCount);
+                
+                // Scroll to player
                 musicWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Show success message
+                const errorMsg = document.getElementById('spotifyError');
+                errorMsg.textContent = `✅ Loaded ${successCount} tracks from history with custom controls!`;
+                errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                errorMsg.style.color = '#10b981';
+                errorMsg.classList.add('show');
+                setTimeout(() => errorMsg.classList.remove('show'), 3000);
             } else {
-                // Fallback to using the regular player
-                useYouTubeLink(url);
+                // Fallback: load the YouTube embed URL
+                const url = entry.youtubeUrl;
+                if (url.includes('youtube.com/embed/')) {
+                    musicWrapper.innerHTML = `
+                        <div class="video-container">
+                            <iframe 
+                                src="${url}${url.includes('?') ? '&' : '?'}autoplay=1" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen
+                                loading="lazy">
+                            </iframe>
+                        </div>
+                        <div style="margin-top: 15px; padding: 12px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.9); text-align: center;">
+                            ⚠️ <strong>Playing from YouTube embed</strong> (older history - no custom controls)
+                        </div>
+                    `;
+                    musicWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
         }
         
@@ -1640,6 +2092,7 @@
             historyList.innerHTML = history.map(entry => {
                 const date = new Date(entry.date);
                 const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const hasCustomPlayer = entry.trackData && entry.trackData.foundTracks && entry.trackData.foundTracks.length > 0;
                 
                 return `
                     <div class="history-item">
@@ -1656,9 +2109,9 @@
                             <span class="history-link-label youtube">YouTube:</span>
                             <span class="history-link-url" title="${entry.youtubeUrl}">${entry.youtubeUrl}</span>
                             <button class="copy-btn" onclick="copyToClipboard('${entry.youtubeUrl}', this)">📋 Copy</button>
-                            <button class="use-link-btn" onclick="useYouTubeLink('${entry.youtubeUrl}')">▶ Play</button>
+                            <button class="use-link-btn" onclick="loadFromHistory(${entry.id})">▶ Play</button>
                         </div>
-                        ${entry.trackCount > 0 ? `<div class="history-track-count">🎵 ${entry.trackCount} tracks converted</div>` : ''}
+                        ${entry.trackCount > 0 ? `<div class="history-track-count">🎵 ${entry.trackCount} tracks ${hasCustomPlayer ? '• ⚡ Custom Player' : ''}</div>` : ''}
                     </div>
                 `;
             }).join('');
