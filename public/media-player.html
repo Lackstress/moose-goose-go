@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Media Player - YouTube & Spotify</title>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
         * {
             margin: 0;
@@ -342,6 +343,45 @@
             color: rgba(255, 255, 255, 0.9);
             min-width: 80px;
             text-align: center;
+        }
+        
+        .player-extras {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .toggle-btn {
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+        
+        .toggle-btn.active {
+            background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.5);
+            color: #a78bfa;
+        }
+        
+        .toggle-btn.shuffle-btn.active {
+            background: rgba(34, 197, 94, 0.3);
+            border-color: rgba(34, 197, 94, 0.5);
+            color: #22c55e;
         }
         
         .track-list-container {
@@ -1427,17 +1467,20 @@
             const playlist = window.currentPlaylist;
             const currentTrack = playlist.foundTracks[playlist.currentIndex];
             
+            // Initialize player settings if not set
+            if (window.playerSettings === undefined) {
+                window.playerSettings = {
+                    autoplay: true,
+                    shuffle: false,
+                    originalOrder: null
+                };
+            }
+            
             musicWrapper.innerHTML = `
                 <div id="custom-player-wrapper">
-                    <!-- Video Player -->
+                    <!-- Video Player (YouTube API container) -->
                     <div class="video-container">
-                        <iframe 
-                            id="youtube-player-frame"
-                            src="https://www.youtube.com/embed/${currentTrack.videoId}?autoplay=1&enablejsapi=1" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen
-                            loading="lazy">
-                        </iframe>
+                        <div id="youtube-player-container"></div>
                     </div>
                     
                     <!-- Player Controls -->
@@ -1448,8 +1491,18 @@
                         <div class="track-indicator">
                             <span id="current-track-num">${playlist.currentIndex + 1}</span> / ${playlist.foundTracks.length}
                         </div>
-                        <button class="player-btn next-btn" onclick="playNextTrack()" ${playlist.currentIndex >= playlist.foundTracks.length - 1 ? 'disabled' : ''}>
+                        <button class="player-btn next-btn" onclick="playNextTrack()" ${playlist.currentIndex >= playlist.foundTracks.length - 1 && !window.playerSettings.shuffle ? 'disabled' : ''}>
                             Next ⏭️
+                        </button>
+                    </div>
+                    
+                    <!-- Extra Controls (Autoplay & Shuffle) -->
+                    <div class="player-extras">
+                        <button class="toggle-btn autoplay-btn ${window.playerSettings.autoplay ? 'active' : ''}" onclick="toggleAutoplay()">
+                            🔄 Autoplay ${window.playerSettings.autoplay ? 'ON' : 'OFF'}
+                        </button>
+                        <button class="toggle-btn shuffle-btn ${window.playerSettings.shuffle ? 'active' : ''}" onclick="toggleShuffle()">
+                            🔀 Shuffle ${window.playerSettings.shuffle ? 'ON' : 'OFF'}
                         </button>
                     </div>
                     
@@ -1469,19 +1522,18 @@
                     
                     <!-- Tracklist (hidden by default) -->
                     <div class="track-list-container" id="tracklist-container" style="display: none;">
-                        ${playlist.tracks.map((track, index) => {
-                            const foundIndex = playlist.foundTracks.findIndex(t => t.videoId === track.videoId && track.found);
-                            const isActive = track.found && foundIndex === playlist.currentIndex;
-                            const itemClass = track.found ? (isActive ? 'active' : '') : 'not-found';
+                        ${playlist.foundTracks.map((track, index) => {
+                            const isActive = index === playlist.currentIndex;
+                            const itemClass = isActive ? 'active' : '';
                             
                             return `
-                                <div class="track-item ${itemClass}" ${track.found ? `onclick="jumpToTrack(${foundIndex})"` : ''} data-index="${index}">
+                                <div class="track-item ${itemClass}" onclick="jumpToTrack(${index})" data-index="${index}">
                                     <div class="track-number">${index + 1}</div>
                                     <div class="track-info">
                                         <div class="track-name">${track.name}</div>
-                                        <div class="track-artist">${track.artist}${!track.found ? ' • ❌ Not found' : ''}</div>
+                                        <div class="track-artist">${track.artist}</div>
                                     </div>
-                                    ${track.found ? `<button class="track-play-btn" onclick="event.stopPropagation(); jumpToTrack(${foundIndex})">▶ Play</button>` : ''}
+                                    <button class="track-play-btn" onclick="event.stopPropagation(); jumpToTrack(${index})">▶ Play</button>
                                 </div>
                             `;
                         }).join('')}
@@ -1489,7 +1541,7 @@
                     
                     <!-- Stats -->
                     <div style="margin-top: 15px; padding: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.9); text-align: center;">
-                        ✅ <strong>Custom Player Active!</strong> - Extensions can't block navigation<br>
+                        ✅ <strong>Custom Player Active!</strong> - Auto-advances when song ends<br>
                         <span style="font-size: 12px; opacity: 0.9;">
                             ${successCount} out of ${totalTracks} tracks (${successRate}% success)
                         </span><br>
@@ -1500,8 +1552,100 @@
                 </div>
             `;
             
+            // Initialize YouTube player with API
+            initYouTubePlayer(currentTrack.videoId);
+            
             // Save initial track to recently played
             saveRecentlyPlayed(currentTrack);
+        }
+        
+        // Initialize YouTube Player with API for autoplay detection
+        function initYouTubePlayer(videoId) {
+            // Destroy existing player if any
+            if (window.ytPlayer) {
+                window.ytPlayer.destroy();
+            }
+            
+            // Create new player
+            window.ytPlayer = new YT.Player('youtube-player-container', {
+                height: '100%',
+                width: '100%',
+                videoId: videoId,
+                playerVars: {
+                    autoplay: 1,
+                    modestbranding: 1,
+                    rel: 0,
+                    enablejsapi: 1
+                },
+                events: {
+                    onStateChange: onPlayerStateChange
+                }
+            });
+        }
+        
+        // Handle YouTube player state changes
+        function onPlayerStateChange(event) {
+            // State 0 = video ended
+            if (event.data === YT.PlayerState.ENDED) {
+                console.log('Video ended, autoplay:', window.playerSettings?.autoplay);
+                if (window.playerSettings?.autoplay) {
+                    autoPlayNext();
+                }
+            }
+        }
+        
+        // Auto-play next track (handles shuffle and looping)
+        function autoPlayNext() {
+            const playlist = window.currentPlaylist;
+            if (!playlist) return;
+            
+            if (window.playerSettings.shuffle) {
+                // Pick a random track (different from current)
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * playlist.foundTracks.length);
+                } while (randomIndex === playlist.currentIndex && playlist.foundTracks.length > 1);
+                
+                playlist.currentIndex = randomIndex;
+                updatePlayer();
+            } else {
+                // Normal sequential play
+                if (playlist.currentIndex < playlist.foundTracks.length - 1) {
+                    playlist.currentIndex++;
+                    updatePlayer();
+                } else {
+                    // End of playlist - loop back to start
+                    playlist.currentIndex = 0;
+                    updatePlayer();
+                }
+            }
+        }
+        
+        // Toggle autoplay
+        function toggleAutoplay() {
+            window.playerSettings.autoplay = !window.playerSettings.autoplay;
+            const btn = document.querySelector('.autoplay-btn');
+            if (btn) {
+                btn.classList.toggle('active', window.playerSettings.autoplay);
+                btn.innerHTML = `🔄 Autoplay ${window.playerSettings.autoplay ? 'ON' : 'OFF'}`;
+            }
+        }
+        
+        // Toggle shuffle
+        function toggleShuffle() {
+            window.playerSettings.shuffle = !window.playerSettings.shuffle;
+            const btn = document.querySelector('.shuffle-btn');
+            if (btn) {
+                btn.classList.toggle('active', window.playerSettings.shuffle);
+                btn.innerHTML = `🔀 Shuffle ${window.playerSettings.shuffle ? 'ON' : 'OFF'}`;
+            }
+            
+            // Update next button state
+            const nextBtn = document.querySelector('.next-btn');
+            if (nextBtn && window.currentPlaylist) {
+                const playlist = window.currentPlaylist;
+                nextBtn.disabled = !window.playerSettings.shuffle && playlist.currentIndex >= playlist.foundTracks.length - 1;
+            }
         }
         
         // Toggle tracklist visibility
@@ -1533,7 +1677,17 @@
         // Play next track
         function playNextTrack() {
             const playlist = window.currentPlaylist;
-            if (playlist.currentIndex < playlist.foundTracks.length - 1) {
+            
+            if (window.playerSettings?.shuffle) {
+                // Pick a random track (different from current)
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * playlist.foundTracks.length);
+                } while (randomIndex === playlist.currentIndex && playlist.foundTracks.length > 1);
+                
+                playlist.currentIndex = randomIndex;
+                updatePlayer();
+            } else if (playlist.currentIndex < playlist.foundTracks.length - 1) {
                 playlist.currentIndex++;
                 updatePlayer();
             }
@@ -1553,9 +1707,13 @@
             const playlist = window.currentPlaylist;
             const currentTrack = playlist.foundTracks[playlist.currentIndex];
             
-            // Update iframe
-            const iframe = document.getElementById('youtube-player-frame');
-            iframe.src = `https://www.youtube.com/embed/${currentTrack.videoId}?autoplay=1&enablejsapi=1`;
+            // Update YouTube player using API
+            if (window.ytPlayer && window.ytPlayer.loadVideoById) {
+                window.ytPlayer.loadVideoById(currentTrack.videoId);
+            } else {
+                // Fallback: reinitialize player
+                initYouTubePlayer(currentTrack.videoId);
+            }
             
             // Update track indicator
             document.getElementById('current-track-num').textContent = playlist.currentIndex + 1;
@@ -1571,26 +1729,18 @@
             const prevBtn = document.querySelector('.prev-btn');
             const nextBtn = document.querySelector('.next-btn');
             prevBtn.disabled = playlist.currentIndex === 0;
-            nextBtn.disabled = playlist.currentIndex >= playlist.foundTracks.length - 1;
+            // Next is always enabled if shuffle is on (loops), otherwise check if at end
+            nextBtn.disabled = !window.playerSettings?.shuffle && playlist.currentIndex >= playlist.foundTracks.length - 1;
             
             // Update tracklist active state
-            document.querySelectorAll('.track-item').forEach(item => {
+            document.querySelectorAll('.track-item').forEach((item, idx) => {
                 item.classList.remove('active');
-            });
-            
-            // Find and highlight the active track in the full tracklist
-            const trackItems = document.querySelectorAll('.track-item');
-            trackItems.forEach((item, idx) => {
-                const track = playlist.tracks[idx];
-                if (track.found) {
-                    const foundIndex = playlist.foundTracks.findIndex(t => t.videoId === track.videoId);
-                    if (foundIndex === playlist.currentIndex) {
-                        item.classList.add('active');
-                        // Scroll into view if tracklist is visible
-                        const container = document.getElementById('tracklist-container');
-                        if (container.style.display !== 'none') {
-                            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
+                if (idx === playlist.currentIndex) {
+                    item.classList.add('active');
+                    // Scroll into view if tracklist is visible
+                    const container = document.getElementById('tracklist-container');
+                    if (container.style.display !== 'none') {
+                        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }
             });
