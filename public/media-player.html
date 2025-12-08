@@ -1561,26 +1561,75 @@
         
         // Initialize YouTube Player with API for autoplay detection
         function initYouTubePlayer(videoId) {
+            const container = document.getElementById('youtube-player-container');
+            if (!container) return;
+            
             // Destroy existing player if any
-            if (window.ytPlayer) {
-                window.ytPlayer.destroy();
+            if (window.ytPlayer && window.ytPlayer.destroy) {
+                try {
+                    window.ytPlayer.destroy();
+                } catch (e) {
+                    console.log('Could not destroy old player');
+                }
             }
             
-            // Create new player
-            window.ytPlayer = new YT.Player('youtube-player-container', {
-                height: '100%',
-                width: '100%',
-                videoId: videoId,
-                playerVars: {
-                    autoplay: 1,
-                    modestbranding: 1,
-                    rel: 0,
-                    enablejsapi: 1
-                },
-                events: {
-                    onStateChange: onPlayerStateChange
-                }
-            });
+            // Store current video ID
+            window.currentVideoId = videoId;
+            window.videoErrorCount = 0;
+            
+            // Wait for YT API to be ready
+            if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+                console.log('YouTube API not ready, using iframe fallback');
+                container.innerHTML = `
+                    <iframe 
+                        id="youtube-player-frame"
+                        src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowfullscreen
+                        style="width: 100%; height: 100%; border: none; border-radius: 12px;">
+                    </iframe>
+                `;
+                return;
+            }
+            
+            // Create new player with API
+            try {
+                window.ytPlayer = new YT.Player('youtube-player-container', {
+                    height: '100%',
+                    width: '100%',
+                    videoId: videoId,
+                    playerVars: {
+                        autoplay: 1,
+                        modestbranding: 1,
+                        rel: 0,
+                        enablejsapi: 1,
+                        origin: window.location.origin
+                    },
+                    events: {
+                        onReady: onPlayerReady,
+                        onStateChange: onPlayerStateChange,
+                        onError: onPlayerError
+                    }
+                });
+            } catch (e) {
+                console.error('Failed to create YouTube player:', e);
+                // Fallback to regular iframe
+                container.innerHTML = `
+                    <iframe 
+                        id="youtube-player-frame"
+                        src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowfullscreen
+                        style="width: 100%; height: 100%; border: none; border-radius: 12px;">
+                    </iframe>
+                `;
+            }
+        }
+        
+        // Player ready event
+        function onPlayerReady(event) {
+            console.log('YouTube player ready');
+            updateBlockedStatus(false);
         }
         
         // Handle YouTube player state changes
@@ -1591,6 +1640,73 @@
                 if (window.playerSettings?.autoplay) {
                     autoPlayNext();
                 }
+            }
+            // State 1 = playing - clear any error state
+            if (event.data === YT.PlayerState.PLAYING) {
+                updateBlockedStatus(false);
+                window.videoErrorCount = 0;
+            }
+        }
+        
+        // Handle YouTube player errors
+        function onPlayerError(event) {
+            console.error('YouTube player error:', event.data);
+            
+            // Error codes:
+            // 2 = invalid video ID
+            // 5 = HTML5 player error (often means blocked)
+            // 100 = video not found
+            // 101/150 = video not allowed for embedded playback
+            
+            const errorMessages = {
+                2: 'Invalid video ID',
+                5: 'Video blocked or unavailable',
+                100: 'Video not found (deleted or private)',
+                101: 'Video cannot be embedded',
+                150: 'Video cannot be embedded'
+            };
+            
+            const errorMsg = errorMessages[event.data] || `Error code: ${event.data}`;
+            console.log('Video error:', errorMsg);
+            
+            // Show blocked status
+            updateBlockedStatus(true, errorMsg);
+            
+            // Track consecutive errors
+            window.videoErrorCount = (window.videoErrorCount || 0) + 1;
+            
+            // Auto-skip to next if autoplay is on (up to 5 consecutive errors)
+            if (window.playerSettings?.autoplay && window.videoErrorCount < 5) {
+                console.log(`Auto-skipping blocked video (${window.videoErrorCount}/5)`);
+                setTimeout(() => {
+                    autoPlayNext();
+                }, 1500); // Small delay so user sees what happened
+            } else if (window.videoErrorCount >= 5) {
+                console.log('Too many consecutive errors, stopping auto-skip');
+                showTooManyErrorsMessage();
+            }
+        }
+        
+        // Update UI to show blocked status
+        function updateBlockedStatus(isBlocked, message = '') {
+            const nowPlaying = document.getElementById('now-playing-title');
+            const nowArtist = document.getElementById('now-playing-artist');
+            
+            if (isBlocked && nowPlaying) {
+                const playlist = window.currentPlaylist;
+                const currentTrack = playlist?.foundTracks[playlist.currentIndex];
+                if (currentTrack) {
+                    nowPlaying.innerHTML = `<span style="color: #ef4444;">⚠️ ${currentTrack.name}</span>`;
+                    nowArtist.innerHTML = `<span style="color: #f97316;">${message} - Skipping...</span>`;
+                }
+            }
+        }
+        
+        // Show message when too many errors
+        function showTooManyErrorsMessage() {
+            const nowArtist = document.getElementById('now-playing-artist');
+            if (nowArtist) {
+                nowArtist.innerHTML = `<span style="color: #ef4444;">Multiple videos blocked. Try disabling ad blocker or use Next manually.</span>`;
             }
         }
         
@@ -1707,12 +1823,26 @@
             const playlist = window.currentPlaylist;
             const currentTrack = playlist.foundTracks[playlist.currentIndex];
             
-            // Update YouTube player using API
-            if (window.ytPlayer && window.ytPlayer.loadVideoById) {
-                window.ytPlayer.loadVideoById(currentTrack.videoId);
+            // Reset error count for new video
+            window.videoErrorCount = (window.videoErrorCount || 0);
+            window.currentVideoId = currentTrack.videoId;
+            
+            // Update YouTube player using API if available
+            if (window.ytPlayer && typeof window.ytPlayer.loadVideoById === 'function') {
+                try {
+                    window.ytPlayer.loadVideoById(currentTrack.videoId);
+                } catch (e) {
+                    console.error('Failed to load video:', e);
+                    initYouTubePlayer(currentTrack.videoId);
+                }
             } else {
-                // Fallback: reinitialize player
-                initYouTubePlayer(currentTrack.videoId);
+                // Fallback: reinitialize player or update iframe
+                const iframe = document.getElementById('youtube-player-frame');
+                if (iframe) {
+                    iframe.src = `https://www.youtube.com/embed/${currentTrack.videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`;
+                } else {
+                    initYouTubePlayer(currentTrack.videoId);
+                }
             }
             
             // Update track indicator
