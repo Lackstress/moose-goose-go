@@ -2195,13 +2195,15 @@
             // 5 = HTML5 player error (often means blocked)
             // 100 = video not found
             // 101/150 = video not allowed for embedded playback
+            // 152 = video cannot be embedded
             
             const errorMessages = {
                 2: 'Invalid video ID',
                 5: 'Video blocked or unavailable',
                 100: 'Video not found (deleted or private)',
                 101: 'Video cannot be embedded',
-                150: 'Video cannot be embedded'
+                150: 'Video cannot be embedded',
+                152: 'Video cannot be embedded'
             };
             
             const errorMsg = errorMessages[event.data] || `Error code: ${event.data}`;
@@ -2216,9 +2218,10 @@
             // Auto-skip to next if autoplay is on (up to 5 consecutive errors)
             if (window.playerSettings?.autoplay && window.videoErrorCount < 5) {
                 console.log(`Auto-skipping blocked video (${window.videoErrorCount}/5)`);
+                // Longer delay to allow player cleanup and avoid rapid API calls
                 setTimeout(() => {
                     autoPlayNext();
-                }, 1500); // Small delay so user sees what happened
+                }, 2000); // Increased to 2 seconds
             } else if (window.videoErrorCount >= 5) {
                 console.log('Too many consecutive errors, stopping auto-skip');
                 showTooManyErrorsMessage();
@@ -2368,22 +2371,9 @@
             // Update YouTube player - always reinitialize for clean state
             console.log('Loading track:', currentTrack.name, 'by', currentTrack.artist);
             
-            // Check if player exists and is functional
-            if (window.ytPlayer && typeof window.ytPlayer.loadVideoById === 'function') {
-                try {
-                    // Try to load the video in existing player
-                    window.ytPlayer.loadVideoById(currentTrack.videoId);
-                    console.log('Video loaded via API');
-                } catch (e) {
-                    console.error('Failed to load video via API:', e);
-                    // Reinitialize on error
-                    initYouTubePlayer(currentTrack.videoId);
-                }
-            } else {
-                // Player doesn't exist or isn't functional - reinitialize
-                console.log('Reinitializing player');
-                initYouTubePlayer(currentTrack.videoId);
-            }
+            // Always reinitialize player for better reliability between tracks
+            // This prevents Error 152 and other embedding issues
+            initYouTubePlayer(currentTrack.videoId);
             
             // Update track indicator
             document.getElementById('current-track-num').textContent = playlist.currentIndex + 1;
