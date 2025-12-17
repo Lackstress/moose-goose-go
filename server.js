@@ -1524,6 +1524,86 @@ app.get('/media-player/youtube-search', async (req, res) => {
   }
 });
 
+// YouTube Search Results endpoint (returns multiple videos)
+app.get('/media-player/youtube-search-results', async (req, res) => {
+  try {
+    const { query, maxResults = 12 } = req.query;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Missing search query' });
+    }
+
+    console.log(`🔍 Searching YouTube for multiple results: "${query}" (max: ${maxResults})`);
+    
+    try {
+      // Use yt-search package with timeout
+      const searchPromise = ytsearch(query);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Search timeout')), 15000)
+      );
+      
+      const searchResults = await Promise.race([searchPromise, timeoutPromise]);
+      
+      // Get video results
+      const videos = searchResults?.videos || [];
+      
+      if (videos.length > 0) {
+        // Limit to maxResults
+        const limitedVideos = videos.slice(0, parseInt(maxResults));
+        
+        // Format results
+        const formattedResults = limitedVideos.map(video => ({
+          videoId: video.videoId,
+          title: video.title,
+          thumbnail: video.thumbnail || `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`,
+          channel: video.author?.name || video.author || 'Unknown Channel',
+          duration: video.timestamp || '',
+          views: video.views || 0,
+          url: video.url || `https://www.youtube.com/watch?v=${video.videoId}`
+        }));
+        
+        console.log(`✓ Found ${formattedResults.length} results for "${query}"`);
+        
+        return res.json({
+          success: true,
+          query: query,
+          results: formattedResults,
+          totalResults: formattedResults.length
+        });
+      }
+      
+      // No videos found
+      console.log(`✗ No results found for "${query}"`);
+      return res.json({
+        success: false,
+        query: query,
+        results: [],
+        totalResults: 0,
+        message: 'No results found'
+      });
+      
+    } catch (searchError) {
+      console.error(`✗ Search failed for "${query}":`, searchError.message);
+      return res.status(500).json({
+        success: false,
+        error: 'Search failed',
+        message: searchError?.message || 'Unknown error',
+        query: query,
+        results: []
+      });
+    }
+
+  } catch (error) {
+    console.error('YouTube search results error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to search YouTube',
+      message: error?.message || 'Unknown error',
+      results: []
+    });
+  }
+});
+
 // Static files for games
 // SERAPH GAMING HUB WITH DARK THEME
 // ============================================================================

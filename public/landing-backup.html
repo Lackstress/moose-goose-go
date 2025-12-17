@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gaming Hub - Play Thousands of Games Instantly | No Downloads</title>
+  <title>Gaming Hub - Play Thousands of Games Instantly</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -16,17 +16,16 @@
 
     body {
       font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 30%, #16213e 60%, #0f3460 100%);
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 0;
       position: relative;
       overflow-x: hidden;
+      color: #fff;
     }
 
+    body::before {
+      content: '';
+      position: absolute;
     body::before {
       content: '';
       position: fixed;
@@ -35,129 +34,212 @@
       right: 0;
       bottom: 0;
       background: 
-        radial-gradient(circle at 15% 85%, rgba(255, 0, 150, 0.12) 0%, transparent 50%),
-        radial-gradient(circle at 85% 15%, rgba(0, 150, 255, 0.12) 0%, transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(150, 0, 255, 0.08) 0%, transparent 50%);
-      animation: floatingGradient 15s ease-in-out infinite alternate;
+        radial-gradient(circle at 15% 85%, rgba(255, 0, 150, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 85% 15%, rgba(0, 150, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(150, 0, 255, 0.1) 0%, transparent 50%);
+      animation: floatingGradient 20s ease-in-out infinite alternate;
       pointer-events: none;
       z-index: 0;
     }
 
     @keyframes floatingGradient {
-      0% { transform: translate(0px, 0px) rotate(0deg); }
-      50% { transform: translate(-20px, -20px) rotate(1deg); }
-      100% { transform: translate(20px, -10px) rotate(-1deg); }
+      0% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+      50% { transform: translate(-40px, -40px) rotate(3deg) scale(1.1); }
+      100% { transform: translate(40px, -30px) rotate(-3deg) scale(0.9); }
     }
-
-    .landing-container {
-      max-width: 1200px;
-      width: 100%;
-      padding: 0 1.5rem 2rem;
-      position: relative;
-      z-index: 1;
-    }
-
+    
     /* Hero Section */
     .hero-section {
-      width: 100%;
-      min-height: 60vh;
+      position: relative;
+      min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 4rem 2rem 3rem;
-      position: relative;
-      background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 100%);
+      padding: 2rem 1rem;
+      background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+      overflow: hidden;
     }
-
-    .hero-graphic {
-      font-size: 6rem;
-      margin-bottom: 1.5rem;
-      animation: heroFloat 3s ease-in-out infinite;
-      filter: drop-shadow(0 10px 30px rgba(255, 0, 150, 0.3));
+    
+    .hero-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.15;
+      background: 
+        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><circle cx="200" cy="200" r="150" fill="%23ff0096" opacity="0.1"/><circle cx="1000" cy="300" r="200" fill="%230096ff" opacity="0.1"/><circle cx="600" cy="600" r="180" fill="%239600ff" opacity="0.1"/><rect x="100" y="500" width="120" height="120" fill="%23ff0096" opacity="0.05" transform="rotate(45 160 560)"/><rect x="900" y="100" width="100" height="100" fill="%230096ff" opacity="0.05" transform="rotate(30 950 150)"/></svg>') center/cover no-repeat;
+      animation: heroFloat 30s ease-in-out infinite;
+      z-index: 0;
     }
-
+    
     @keyframes heroFloat {
-      0%, 100% { transform: translateY(0) rotate(-2deg); }
-      50% { transform: translateY(-15px) rotate(2deg); }
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.1) rotate(5deg); }
     }
-
+    
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      animation: fadeInUp 1s ease;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .hero-badge {
+      display: inline-block;
+      padding: 8px 20px;
+      background: linear-gradient(135deg, rgba(255, 0, 150, 0.3), rgba(150, 0, 255, 0.3));
+      border: 2px solid rgba(255, 0, 150, 0.5);
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 2rem;
+      animation: pulse 3s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 0, 150, 0.3); }
+      50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(255, 0, 150, 0.6); }
+    }
+    
     .hero-title {
-      font-size: 3.5rem;
+      font-size: 4.5rem;
       font-weight: 900;
-      color: white;
-      margin-bottom: 1rem;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
       background: linear-gradient(135deg, #fff 0%, #ff0096 50%, #0096ff 100%);
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-size: 200% 200%;
-      animation: gradientShift 4s ease infinite;
-      text-shadow: 0 0 60px rgba(255, 0, 150, 0.4);
+      animation: gradientShift 6s ease infinite;
+      text-shadow: 0 0 80px rgba(255, 0, 150, 0.5);
     }
-
+    
     @keyframes gradientShift {
       0%, 100% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
     }
-
+    
     .hero-subtitle {
-      font-size: 1.4rem;
+      font-size: 1.5rem;
       color: rgba(255, 255, 255, 0.9);
-      margin-bottom: 2rem;
-      max-width: 600px;
-      line-height: 1.6;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      line-height: 1.5;
     }
-
-    .hero-cta {
+    
+    .hero-description {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 3rem;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.7;
+    }
+    
+    .hero-cta-group {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+    
+    .primary-cta {
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      padding: 1.2rem 3rem;
+      padding: 18px 45px;
       background: linear-gradient(135deg, #ff0096 0%, #9600ff 100%);
       color: white;
       text-decoration: none;
       border-radius: 50px;
       font-weight: 700;
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       transition: all 0.3s ease;
-      box-shadow: 0 10px 40px rgba(255, 0, 150, 0.4);
-      border: none;
-      cursor: pointer;
-      animation: ctaPulse 2s ease-in-out infinite;
+      box-shadow: 0 10px 40px rgba(255, 0, 150, 0.4), 0 0 60px rgba(255, 0, 150, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      overflow: hidden;
     }
-
-    @keyframes ctaPulse {
-      0%, 100% { box-shadow: 0 10px 40px rgba(255, 0, 150, 0.4); }
-      50% { box-shadow: 0 15px 50px rgba(255, 0, 150, 0.6), 0 0 80px rgba(255, 0, 150, 0.3); }
+    
+    .primary-cta::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.6s;
     }
-
-    .hero-cta:hover {
+    
+    .primary-cta:hover::before {
+      left: 100%;
+    }
+    
+    .primary-cta:hover {
       transform: translateY(-5px) scale(1.05);
-      box-shadow: 0 20px 60px rgba(255, 0, 150, 0.5);
+      box-shadow: 0 15px 50px rgba(255, 0, 150, 0.6), 0 0 80px rgba(255, 0, 150, 0.4);
     }
-
-    /* Trust Bar */
+    
+    .secondary-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 45px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .secondary-cta:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-5px);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+    
     .trust-bar {
       display: flex;
+      align-items: center;
       justify-content: center;
       gap: 3rem;
       flex-wrap: wrap;
-      padding: 1.5rem 2rem;
+      padding: 2rem;
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
       border-radius: 20px;
-      margin: 2rem auto;
-      max-width: 700px;
       border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 2rem;
     }
-
+    
     .trust-item {
       text-align: center;
-      color: white;
     }
-
+    
     .trust-number {
       font-size: 2rem;
       font-weight: 900;
@@ -165,12 +247,16 @@
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      display: block;
+      margin-bottom: 0.5rem;
     }
-
+    
     .trust-label {
-      font-size: 0.85rem;
-      opacity: 0.8;
-      margin-top: 0.3rem;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 600;
+    } max-width: 1200px;
+      width: 100%;
     }
 
     .header {
@@ -182,10 +268,16 @@
     }
 
     .header h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-      color: white;
-      font-weight: 700;
+      font-size: 4.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      animation: fadeInDown 0.8s ease, glow 2s ease-in-out infinite alternate;
+      background: linear-gradient(45deg, #fff, #f0f0ff, #fff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 200% 200%;
+      animation: fadeInDown 0.8s ease, shimmer 3s ease-in-out infinite;
     }
 
     @keyframes shimmer {
@@ -210,17 +302,17 @@
     }
 
     .platform-card {
-      background: rgba(30, 30, 45, 0.9);
+      background: rgba(30, 30, 45, 0.95);
       backdrop-filter: blur(20px);
       border-radius: 24px;
       padding: 3rem;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(139, 92, 246, 0.12);
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       text-align: center;
       cursor: pointer;
       position: relative;
       overflow: hidden;
-      border: 1px solid rgba(139, 92, 246, 0.3);
+      border: 1px solid rgba(139, 92, 246, 0.35);
     }
 
     .platform-card::before {
@@ -230,7 +322,7 @@
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.15), transparent);
       transition: left 0.6s;
     }
 
@@ -240,9 +332,9 @@
 
     .platform-card:hover {
       transform: translateY(-15px) scale(1.02);
-      box-shadow: 0 30px 80px rgba(139, 92, 246, 0.4);
-      background: rgba(40, 40, 60, 0.95);
-      border-color: rgba(139, 92, 246, 0.6);
+      box-shadow: 0 30px 80px rgba(139, 92, 246, 0.5), 0 0 100px rgba(139, 92, 246, 0.3);
+      background: rgba(40, 40, 60, 0.98);
+      border-color: rgba(139, 92, 246, 0.7);
     }
 
     .platform-icon {
@@ -251,6 +343,32 @@
       display: block;
       animation: bounce 2s ease-in-out infinite;
       filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+    }
+    
+    .outdated-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      color: #f59e0b;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 1rem;
+      animation: pulseWarning 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulseWarning {
+      0%, 100% { 
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+        transform: scale(1);
+      }
+      50% { 
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+        transform: scale(1.03);
+      }
     }
 
     @keyframes bounce {
@@ -294,17 +412,18 @@
       margin-right: 0.5rem;
     }
 
-    .notice {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
+    .warning-notice {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: #1a1a2e;
       padding: 1rem 1.5rem;
-      border-radius: 50px;
+      border-radius: 12px;
       margin-bottom: 2rem;
       text-align: center;
       font-weight: 600;
-      font-size: 1rem;
-      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
-      display: inline-block;
+      font-size: 1.05rem;
+      box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+      animation: pulse 2s ease-in-out infinite;
+      border: 2px solid #fbbf24;
     }
 
     @keyframes pulse {
@@ -371,35 +490,20 @@
     }
 
     .platform-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 1.3rem 2.5rem;
-      background: linear-gradient(135deg, #00d4ff 0%, #0096ff 100%);
+      display: inline-block;
+      padding: 1.2rem 2.8rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       text-decoration: none;
-      border-radius: 50px;
-      font-weight: 700;
-      font-size: 1.15rem;
+      border-radius: 16px;
+      font-weight: bold;
+      font-size: 1.1rem;
       transition: all 0.3s;
       border: none;
       cursor: pointer;
-      box-shadow: 0 10px 30px rgba(0, 150, 255, 0.4);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
       position: relative;
       overflow: hidden;
-      text-transform: none;
-    }
-
-    .platform-btn.primary {
-      background: linear-gradient(135deg, #ff0096 0%, #ff6b35 100%);
-      box-shadow: 0 10px 30px rgba(255, 0, 150, 0.4);
-      font-size: 1.25rem;
-      padding: 1.4rem 3rem;
-    }
-
-    .platform-btn.primary:hover {
-      box-shadow: 0 15px 40px rgba(255, 0, 150, 0.5);
     }
 
     .platform-btn::before {
@@ -418,8 +522,8 @@
     }
 
     .platform-btn:hover {
-      transform: scale(1.08) translateY(-4px);
-      box-shadow: 0 15px 40px rgba(0, 150, 255, 0.5);
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
     }
 
     .platform-btn:active {
@@ -498,100 +602,49 @@
     }
 
     @media (max-width: 768px) {
-      .hero-section {
-        min-height: auto;
-        padding: 3rem 1rem 2rem;
-      }
-
-      .hero-graphic {
-        font-size: 4rem;
-      }
-
-      .hero-title {
-        font-size: 2.2rem;
-      }
-
-      .hero-subtitle {
-        font-size: 1.1rem;
-      }
-
-      .hero-cta {
-        padding: 1rem 2rem;
-        font-size: 1.1rem;
-      }
-
-      .trust-bar {
-        gap: 1.5rem;
-        padding: 1rem;
-      }
-
-      .trust-number {
-        font-size: 1.5rem;
-      }
-
       .header h1 {
-        font-size: 1.8rem;
+        font-size: 2.5rem;
       }
 
       .header p {
-        font-size: 1rem;
+        font-size: 1.1rem;
       }
 
       .platforms-grid {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: 2rem;
       }
 
       .platform-card {
-        padding: 1.5rem;
-      }
-
-      .platform-btn {
-        padding: 1rem 2rem;
-        font-size: 1rem;
+        padding: 2rem;
       }
     }
   </style>
 </head>
 <body>
-  <!-- Hero Section -->
-  <section class="hero-section">
-    <div class="hero-graphic">🎮🕹️🎲</div>
-    <h1 class="hero-title">Your All-in-One Browser Gaming Hub</h1>
-    <p class="hero-subtitle">Play exclusive and classic games instantly — no installs, no login, just pure gaming fun.</p>
-    <a href="#platforms" class="hero-cta">🚀 Start Playing Now</a>
-  </section>
-
-  <!-- Trust Bar -->
-  <div class="trust-bar">
-    <div class="trust-item">
-      <div class="trust-number">500+</div>
-      <div class="trust-label">Games Available</div>
-    </div>
-    <div class="trust-item">
-      <div class="trust-number">100%</div>
-      <div class="trust-label">Browser-Based</div>
-    </div>
-    <div class="trust-item">
-      <div class="trust-number">10K+</div>
-      <div class="trust-label">Happy Players</div>
-    </div>
-  </div>
-
-  <div class="landing-container" id="platforms">
+  <div class="landing-container">
     <div class="header">
-      <h1>🎯 Choose Your Platform</h1>
-      <p>Four unique gaming experiences, one destination</p>
+      <h1>🎮 Gaming Hub</h1>
+      <p>Choose Your Gaming Platform</p>
     </div>
 
-    <div style="text-align: center;">
-      <span class="notice">✨ New Features Coming Soon — Enjoy What's Ready!</span>
+    <div class="url-info">
+      <p><strong>💡 URL Structure:</strong></p>
+      <p>GameHub: <code>/ghub</code></p>
+      <p>DuckMath: <code>/duckmath</code></p>
+      <p>Radon Portal: <code>/radon-g3mes</code></p>
+      <p>Seraph: <code>/seraph</code></p>
+    </div>
+
+    <div class="warning-notice">
+      ⚠️ UNDER PRODUCTION - EXPECT ERRORS ⚠️
     </div>
 
     <div class="platforms-grid">
       <!-- GameHub Card -->
       <div class="platform-card">
         <span class="platform-icon">🎰</span>
+        <div class="outdated-badge">⚠️ Outdated</div>
         <div class="platform-title">GameHub</div>
         <div class="platform-description">
           Our hand-crafted gaming collection with exclusive features and rewards
@@ -611,12 +664,13 @@
             <span class="toggle-label">Hide URL</span>
           </label>
         </div>
-        <a href="/ghub" class="platform-btn primary" id="btn-ghub">🎮 Play GameHub</a>
+        <a href="/ghub" class="platform-btn" id="btn-ghub">Play GameHub →</a>
       </div>
 
       <!-- DuckMath Card -->
       <div class="platform-card">
         <span class="platform-icon">🦆</span>
+        <div class="outdated-badge">⚠️ Outdated - Errors May Appear</div>
         <div class="platform-title">DuckMath Hub</div>
         <div class="platform-description">
           Massive collection of unblocked games from around the web
@@ -636,12 +690,13 @@
             <span class="toggle-label">Hide URL</span>
           </label>
         </div>
-        <a href="/duckmath" class="platform-btn" id="btn-duckmath">🦆 Play DuckMath</a>
+        <a href="/duckmath" class="platform-btn" id="btn-duckmath">Play DuckMath →</a>
       </div>
 
       <!-- Radon Games Card -->
       <div class="platform-card">
         <span class="platform-icon">⚡</span>
+        <div class="outdated-badge">⚠️ Outdated - Errors May Appear</div>
         <div class="platform-title">Radon Portal</div>
         <div class="platform-description">
           Modern gaming platform with built-in web proxy, tab cloaking, and premium games
@@ -661,7 +716,7 @@
             <span class="toggle-label">Hide URL</span>
           </label>
         </div>
-        <a href="/radon-g3mes" class="platform-btn" id="btn-radon">⚡ Access Radon</a>
+        <a href="/radon-g3mes" class="platform-btn" id="btn-radon">Access Radon →</a>
       </div>
 
       <!-- Seraph Card -->
@@ -686,14 +741,13 @@
             <span class="toggle-label">Hide URL</span>
           </label>
         </div>
-        <a href="/seraph" class="platform-btn" id="btn-seraph">👼 Play Seraph</a>
+        <a href="/seraph" class="platform-btn" id="btn-seraph">Play Seraph →</a>
       </div>
     </div>
 
     <div class="footer">
-      <p>⭐ Loved by 10,000+ players and counting! ⭐</p>
-      <p style="margin-top: 12px; opacity: 0.7;">🎮 GameHub • 🦆 DuckMath • ⚡ Radon • 👼 Seraph</p>
-      <p style="margin-top: 8px; font-size: 0.75rem; opacity: 0.4;">© 2024 Gaming Hub — Play Anytime, Anywhere</p>
+      <p>🌟 Enjoy unlimited gaming with GameHub, DuckMath, Radon Portal & Seraph 🌟</p>
+      <p style="margin-top: 8px; font-size: 0.75rem; opacity: 0.5;">Build: codespace-r4wr5p99997jf5gwx-v2024.11.15</p>
     </div>
   </div>
 
