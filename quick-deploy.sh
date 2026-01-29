@@ -92,7 +92,7 @@ if [ ! -d "duckmath" ]; then
     timeout 300 git clone --depth 1 https://github.com/duckmath/duckmath.github.io.git duckmath || echo "⚠️  DuckMath clone failed or timed out, continuing..."
 else
     echo "   Updating DuckMath..."
-    (cd duckmath && timeout 120 git pull --ff-only) || echo "⚠️  DuckMath update failed, continuing..."
+    (cd duckmath && timeout 120 git pull --ff-only 2>&1 </dev/null) || echo "⚠️  DuckMath update failed, continuing..."
 fi
 
 # Install DuckMath dependencies only if it is a Node project
@@ -190,7 +190,7 @@ if [ ! -d "seraph" ]; then
     timeout 900 git clone --depth 1 --progress https://github.com/Lackstress/seraph.git seraph || echo "⚠️  Seraph clone failed or timed out, continuing without Seraph..."
 else
     echo "🔄 Updating Seraph..."
-    (cd seraph && timeout 300 git pull --ff-only) || echo "⚠️  Seraph update failed, using existing version..."
+    (cd seraph && timeout 300 git pull --ff-only 2>&1 </dev/null) || echo "⚠️  Seraph update failed, using existing version..."
 fi
 if [ -d "seraph" ]; then
     echo "✅ Seraph ready"
