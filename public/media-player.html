@@ -1,189 +1,3411 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Secret Media Player</title>
-  <style>
-    :root {color-scheme: dark;}
-    body {font-family: system-ui, Arial; margin:0; background:#0d0d0f; color:#e5e5e5;}
-    header {padding:16px 24px; background:#18181c; display:flex; justify-content:space-between; align-items:center;}
-    h1 {font-size:1.1rem; margin:0; letter-spacing:.5px;}
-    main {display:grid; grid-template-columns:340px 1fr; gap:24px; padding:24px;}
-    @media (max-width:900px){main{grid-template-columns:1fr;}}
-    .card {background:#18181c; border:1px solid #24242a; border-radius:14px; padding:16px;}
-    label {font-size:.75rem; text-transform:uppercase; letter-spacing:.5px; opacity:.7; display:block; margin:12px 0 6px;}
-    input[type=text] {width:100%; padding:10px 12px; border-radius:8px; border:1px solid #2e2e35; background:#111115; color:#eee; font-size:.85rem;}
-    input[type=file] {width:100%;}
-    button {background:#2563eb; color:#fff; border:none; padding:10px 16px; font-size:.8rem; border-radius:8px; cursor:pointer; font-weight:600; letter-spacing:.5px; display:inline-flex; align-items:center; gap:6px;}
-    button.secondary {background:#333;}
-    button:disabled {opacity:.4; cursor:not-allowed;}
-    .row {display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
-    video {width:100%; height:100%; background:#000; border-radius:12px; outline:none;}
-    #playerShell {height:65vh; min-height:360px;}
-    .badge {background:#333; padding:2px 6px; border-radius:4px; font-size:.7rem;}
-    .status {font-size:.65rem; margin-top:6px; opacity:.6;}
-    a.download-link {display:inline-block; margin-top:12px; font-size:.75rem; background:#10b981; padding:8px 12px; border-radius:8px; color:#031; font-weight:600; text-decoration:none;}
-    a.download-link:hover {filter:brightness(1.1);}    
-    footer {text-align:center; font-size:.65rem; padding:12px; opacity:.4;}
-    .error {color:#f87171; font-size:.7rem; margin-top:4px;}
-    .progress {height:6px; width:100%; background:#222; border-radius:3px; overflow:hidden; margin-top:12px;}
-    .progress span {display:block; height:100%; width:0; background:linear-gradient(90deg,#2563eb,#9333ea);}  
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Player - Moose Goose Games</title>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #050510 0%, #0a0a1f 30%, #0f0f2a 60%, #0a0a1f 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            gap: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 0, 150, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.05) 0%, transparent 60%);
+            animation: floatingGradient 20s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* Disabled animation - static gradient background */
+        @keyframes floatingGradient {
+            0%, 100% { transform: translate(0px, 0px) scale(1); }
+        }
+        
+        .container {
+            background: rgba(10, 10, 25, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 100px rgba(0, 255, 255, 0.1);
+            padding: 40px;
+            max-width: 1000px;
+            width: 100%;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ffff, #ff00ff, #00ffff, transparent);
+            animation: scanLine 4s linear infinite;
+        }
+
+        .container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ff00ff, #00ffff, #ff00ff, transparent);
+            animation: scanLine 4s linear infinite reverse;
+        }
+
+        @keyframes scanLine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Main Layout - Sidebar + Content */
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content-area {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* History Section Styles - Futuristic Sidebar */
+        .history-container {
+            width: 320px;
+            flex-shrink: 0;
+            background: rgba(5, 5, 15, 0.95);
+            margin-top: 60px;
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.1), 0 20px 60px rgba(0, 0, 0, 0.5);
+            padding: 24px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        .history-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ffff, transparent);
+            animation: scanLine 3s linear infinite;
+        }
+
+        .history-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+        }
+
+        .history-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00ffff, #ff00ff);
+            border-radius: 3px;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        .history-header h2 {
+            color: #00ffff;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .clear-history-btn {
+            padding: 6px 12px;
+            background: rgba(255, 0, 100, 0.15);
+            border: 1px solid rgba(255, 0, 100, 0.4);
+            color: #ff0064;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .clear-history-btn:hover {
+            background: rgba(255, 0, 100, 0.25);
+            box-shadow: 0 0 15px rgba(255, 0, 100, 0.3);
+        }
+        
+        .history-empty {
+            text-align: center;
+            padding: 30px 20px;
+            color: rgba(0, 255, 255, 0.4);
+            font-size: 13px;
+        }
+        
+        .history-empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.3));
+        }
+        
+        .history-empty-text {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: rgba(0, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 11px;
+        }
+        
+        .history-empty-hint {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .history-item {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            border-color: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+        }
+        
+        .history-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .history-item-type {
+            background: linear-gradient(135deg, #00ffff, #00cc99);
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .history-item-date {
+            color: rgba(0, 255, 255, 0.5);
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .history-link-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+        
+        .history-link-label {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .history-link-label.spotify {
+            color: #1db954;
+        }
+        
+        .history-link-label.youtube {
+            color: #ff0064;
+        }
+        
+        .history-link-url {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: 'Courier New', monospace;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        
+        .copy-btn {
+            flex: 1;
+            padding: 6px 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 9px;
+            transition: all 0.3s;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+        
+        .copy-btn.copied {
+            background: rgba(0, 255, 100, 0.2);
+            border-color: rgba(0, 255, 100, 0.5);
+            color: #00ff64;
+        }
+        
+        .use-link-btn {
+            flex: 1;
+            padding: 6px 10px;
+            background: linear-gradient(135deg, #00ffff 0%, #ff00ff 100%);
+            border: none;
+            color: #000;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 9px;
+            font-weight: 700;
+            transition: all 0.3s;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .use-link-btn:hover {
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+            transform: translateY(-1px);
+        }
+        
+        .history-track-count {
+            font-size: 10px;
+            color: rgba(0, 255, 255, 0.5);
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(0, 255, 255, 0.1);
+            font-family: 'Courier New', monospace;
+        }
+        
+        /* Quick Open Section */
+        .quick-open-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+        }
+        
+        .quick-open-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .quick-open-header h4 {
+            color: #a78bfa;
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .quick-open-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .quick-open-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .quick-open-item:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .quick-open-icon {
+            font-size: 18px;
+        }
+        
+        .quick-open-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .quick-open-title {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .quick-open-meta {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            display: flex;
+            gap: 8px;
+        }
+        
+        .quick-open-play {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .quick-open-play:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .quick-open-empty {
+            text-align: center;
+            padding: 15px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 13px;
+        }
+        
+        /* YouTube Search Results Styles */
+        .search-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .search-result-card {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .search-result-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+        
+        .search-result-thumbnail {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .search-result-info {
+            padding: 12px;
+        }
+        
+        .search-result-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .search-result-channel {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 4px;
+        }
+        
+        .search-result-meta {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .search-loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .search-loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(139, 92, 246, 0.2);
+            border-top: 4px solid #8b5cf6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Custom Playlist Player Controls */
+        .custom-player-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+        }
+        
+        .player-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .player-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .player-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .player-btn.prev-btn, .player-btn.next-btn {
+            padding: 10px 16px;
+        }
+        
+        .player-btn.jump-btn {
+            background: rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+        }
+        
+        .track-indicator {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .player-extras {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .toggle-btn {
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+        
+        .toggle-btn.active {
+            background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.5);
+            color: #a78bfa;
+        }
+        
+        .toggle-btn.shuffle-btn.active {
+            background: rgba(34, 197, 94, 0.3);
+            border-color: rgba(34, 197, 94, 0.5);
+            color: #22c55e;
+        }
+        
+        .track-list-container {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 10px;
+        }
+        
+        .track-list-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .track-list-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .track-list-container::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.5);
+            border-radius: 4px;
+        }
+        
+        .track-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .track-item:hover {
+            background: rgba(139, 92, 246, 0.2);
+        }
+        
+        .track-item.active {
+            background: rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+        }
+        
+        .track-item.not-found {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .track-number {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            flex-shrink: 0;
+        }
+        
+        .track-item.active .track-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        
+        .track-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .track-name {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .track-artist {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .track-play-btn {
+            padding: 6px 12px;
+            background: rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+        
+        .track-item:hover .track-play-btn {
+            opacity: 1;
+        }
+        
+        .track-item.not-found .track-play-btn {
+            display: none;
+        }
+        
+        .tracklist-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .tracklist-toggle:hover {
+            background: rgba(139, 92, 246, 0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 30px;
+            font-size: 36px;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            background: linear-gradient(135deg, #00ffff 0%, #ff00ff 50%, #00ffff 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: shimmerText 3s ease-in-out infinite;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 900;
+        }
+        
+        @keyframes shimmerText {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .tab::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #00ffff, #ff00ff);
+            transition: width 0.3s ease;
+        }
+        
+        .tab:hover {
+            background: rgba(0, 255, 255, 0.1);
+            color: #00ffff;
+            transform: translateY(-2px);
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .tab:hover::before {
+            width: 100%;
+        }
+        
+        .tab.active {
+            background: rgba(0, 255, 255, 0.15);
+            color: #00ffff;
+            border-bottom: 2px solid #00ffff;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+        }
+        
+        .tab.active::before {
+            width: 100%;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid rgba(0, 255, 255, 0.2);
+            border-radius: 50px;
+            font-size: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            color: #ffffff;
+            transition: all 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #00ffff;
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2), inset 0 0 10px rgba(0, 255, 255, 0.05);
+        }
+        
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        button {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #00ffff 0%, #ff00ff 100%);
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 35px rgba(0, 255, 255, 0.4), 0 0 40px rgba(255, 0, 255, 0.2);
+        }
+        
+        button:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        button.loading {
+            pointer-events: none;
+        }
+        
+        button.loading::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        button.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        .video-container, .spotify-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 15px;
+            background: #000;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .spotify-container {
+            padding-bottom: 380px; /* Spotify embed height */
+            height: auto;
+        }
+        
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 15px;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 12px;
+            margin-top: 20px;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.06);
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            line-height: 1.5;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .instructions:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .instructions .summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+        
+        .instructions .summary-icon {
+            font-size: 18px;
+            transition: transform 0.3s;
+        }
+        
+        .instructions.expanded .summary-icon {
+            transform: rotate(180deg);
+        }
+        
+        .instructions .details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .instructions.expanded .details {
+            max-height: 200px;
+            padding-top: 12px;
+        }
+        
+        .instructions h3 {
+            color: #ffffff;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .instructions ul {
+            margin-left: 20px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .instructions li {
+            margin-bottom: 4px;
+        }
+        
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #00ffff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            padding: 10px 18px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 100;
+        }
+        
+        .back-link:hover {
+            color: #ffffff;
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateX(-3px);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .spotify-info {
+            background: linear-gradient(135deg, rgba(30, 215, 96, 0.15), rgba(30, 215, 96, 0.05));
+            border: 1px solid rgba(30, 215, 96, 0.3);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .spotify-feature-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .spotify-feature-icon {
+            font-size: 2.5rem;
+            line-height: 1;
+        }
+        
+        .spotify-feature-text h4 {
+            color: #1db954;
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        
+        .spotify-feature-text p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            margin: 0;
+        }
+        
+        .spotify-features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .spotify-feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .spotify-feature-item .check {
+            color: #1db954;
+            font-weight: bold;
+        }
+        
+        .music-source-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        
+        .music-tab {
+            padding: 8px 16px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            border: none;
+            border-radius: 6px 6px 0 0;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .music-tab:hover {
+            background: rgba(139, 92, 246, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .music-tab.active {
+            background: rgba(139, 92, 246, 0.15);
+            color: #ffffff;
+            border-bottom: 2px solid #8b5cf6;
+        }
+        
+        .music-section {
+            display: none;
+        }
+        
+        .music-section.active {
+            display: block;
+        }
+
+        /* Spotify Search Styles */
+        .spotify-search-filters {
+            display: flex;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filter-btn:hover {
+            border-color: rgba(0, 255, 255, 0.5);
+            color: #00ffff;
+        }
+
+        .filter-btn.active {
+            background: rgba(0, 255, 255, 0.15);
+            border-color: #00ffff;
+            color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .spotify-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .spotify-result-card {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .spotify-result-card:hover {
+            transform: translateY(-4px);
+            border-color: #00ffff;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+        }
+
+        .spotify-result-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .spotify-result-info {
+            padding: 12px;
+        }
+
+        .spotify-result-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .spotify-result-meta {
+            font-size: 11px;
+            color: rgba(0, 255, 255, 0.6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .spotify-result-type {
+            background: linear-gradient(135deg, #00ffff, #00cc99);
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .spotify-result-count {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .spotify-search-loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(0, 255, 255, 0.7);
+        }
+
+        .spotify-search-loading .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 255, 0.2);
+            border-top: 3px solid #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 1100px) {
+            .main-layout {
+                flex-direction: column;
+            }
+
+            .history-container {
+                width: 100%;
+                position: static;
+                max-height: none;
+                order: 2;
+            }
+
+            .content-area {
+                order: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>🔒 Secret Media Player <span class="badge">Beta</span></h1>
-    <nav><a href="/" style="color:#6cf; text-decoration:none;">Home</a></nav>
-  </header>
-  <main>
-    <div class="card">
-      <h2 style="margin:0 0 4px; font-size:.95rem;">Source</h2>
-      <p style="margin:0; font-size:.65rem; opacity:.6;">Play ad-free YouTube videos or your own files. Nothing is uploaded for local files.</p>
-      <label for="ytUrl">YouTube URL</label>
-      <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..." />
-      <label for="qualitySelect" style="margin-top:14px;">Quality</label>
-      <select id="qualitySelect" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #2e2e35; background:#111115; color:#eee; font-size:.8rem;">
-        <option value="">(auto)</option>
-      </select>
-      <div class="row" style="margin-top:14px;">
-        <button id="playBtn">▶ Play</button>
-        <button id="downloadBtn" class="secondary" disabled>⬇ Download</button>
-        <button id="clearBtn" class="secondary">✕ Clear</button>
-      </div>
-      <div id="ytError" class="error" style="display:none;"></div>
-      <div class="progress" id="streamProgress" style="display:none;"><span></span></div>
-      <label for="fileInput">Local File</label>
-      <input type="file" id="fileInput" accept="video/*,audio/*" />
-      <div class="row">
-        <button id="playFileBtn">▶ Play File</button>
-        <button id="downloadFileBtn" class="secondary" disabled>⬇ Get Copy</button>
-      </div>
-      <div id="fileError" class="error" style="display:none;"></div>
-      <div class="status" id="statusMsg"></div>
+    <a href="/" class="back-link">← Back to Hub</a>
+    
+    <div class="main-layout">
+    <!-- Conversion History Sidebar -->
+    <div class="history-container" id="historyContainer">
+        <div class="history-header">
+            <h2>📜 History</h2>
+            <button class="clear-history-btn" onclick="clearHistory()">Clear</button>
+        </div>
+        <div id="historyList">
+            <div class="history-empty">
+                <div class="history-empty-icon">⚡</div>
+                <div class="history-empty-text">No conversions yet</div>
+                <div class="history-empty-hint">Convert a Spotify link to get started</div>
+            </div>
+        </div>
     </div>
-    <div class="card" id="playerShell">
-      <video id="player" controls playsinline></video>
-      <a id="downloadLink" class="download-link" style="display:none;" href="#" download>Download Current</a>
+
+    <div class="content-area">
+    <div class="container">
+        <h1>🎬 Media Player</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('youtube')">📺 YouTube</button>
+            <button class="tab" onclick="switchTab('youtube-search')">🔍 Search</button>
+            <button class="tab" onclick="switchTab('spotify')">🎵 Music</button>
+        </div>
+        
+        <!-- YouTube Tab -->
+        <div id="youtube-tab" class="tab-content active">
+            <div class="instructions" onclick="this.classList.toggle('expanded')">
+                <div class="summary">
+                    <span>▶ Paste a YouTube link and press Play</span>
+                    <span class="summary-icon">ℹ️</span>
+                </div>
+                <div class="details">
+                    <ul>
+                        <li>Full URLs: youtube.com/watch?v=...</li>
+                        <li>Short links: youtu.be/...</li>
+                        <li>Embedded links also work</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="youtubeLink" 
+                    placeholder="Paste YouTube link..."
+                    autocomplete="off"
+                    onkeypress="if(event.key==='Enter')playYouTube()"
+                >
+                <button onclick="playYouTube()" id="ytPlayBtn">▶ Watch Now</button>
+            </div>
+            
+            <div class="error" id="youtubeError"></div>
+            
+            <div id="youtubeWrapper"></div>
+        </div>
+        
+        <!-- YouTube Search Tab -->
+        <div id="youtube-search-tab" class="tab-content">
+            <div class="instructions" onclick="this.classList.toggle('expanded')">
+                <div class="summary">
+                    <span>🔍 Search any video on YouTube</span>
+                    <span class="summary-icon">ℹ️</span>
+                </div>
+                <div class="details">
+                    <ul>
+                        <li>Search music, tutorials, gaming, anything</li>
+                        <li>Click any result to play instantly</li>
+                        <li>No login required</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="youtubeSearchQuery" 
+                    placeholder="Search YouTube..."
+                    autocomplete="off"
+                    onkeypress="if(event.key==='Enter')searchYouTube()"
+                >
+                <button onclick="searchYouTube()" id="ytSearchBtn">🔍 Find Videos</button>
+            </div>
+            
+            <div class="error" id="youtubeSearchError"></div>
+            
+            <!-- Search Results -->
+            <div id="searchResults" style="margin-top: 20px;"></div>
+            
+            <!-- Selected Video Player -->
+            <div id="searchVideoWrapper"></div>
+        </div>
+        
+        <!-- Spotify Tab -->
+        <div id="spotify-tab" class="tab-content">
+            <div class="spotify-info">
+                <div class="spotify-feature-card">
+                    <div class="spotify-feature-icon">🎵</div>
+                    <div class="spotify-feature-text">
+                        <h4>Spotify → YouTube</h4>
+                        <p>Convert any Spotify link to playable YouTube videos</p>
+                    </div>
+                </div>
+                <div class="spotify-features-grid">
+                    <div class="spotify-feature-item"><span class="check">✓</span> No login needed</div>
+                    <div class="spotify-feature-item"><span class="check">✓</span> Full playlists</div>
+                    <div class="spotify-feature-item"><span class="check">✓</span> Auto-convert</div>
+                    <div class="spotify-feature-item"><span class="check">✓</span> Full songs</div>
+                </div>
+            </div>
+            
+            <div class="music-source-tabs">
+                <button class="music-tab active" onclick="switchMusicSource('youtube-music')">🎵 YouTube Music</button>
+                <button class="music-tab" onclick="switchMusicSource('spotify')">🎵 Spotify Link</button>
+                <button class="music-tab" onclick="switchMusicSource('spotify-search')">🔍 Search Spotify</button>
+                <button class="music-tab" onclick="switchMusicSource('soundcloud')">🎧 SoundCloud</button>
+            </div>
+            
+            <!-- YouTube Music Section -->
+            <div id="youtube-music-section" class="music-section active">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="youtubeMusicLink" 
+                        placeholder="Paste YouTube Music link..."
+                        autocomplete="off"
+                        onkeypress="if(event.key==='Enter')playYouTubeMusic()"
+                    >
+                    <button onclick="playYouTubeMusic()">▶ Watch Now</button>
+                </div>
+                <div class="error" id="youtubeMusicError"></div>
+            </div>
+            
+            <!-- Spotify Section -->
+            <div id="spotify-section" class="music-section">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="spotifyLink" 
+                        placeholder="Paste Spotify playlist, album, or track link..."
+                        autocomplete="off"
+                        onkeypress="if(event.key==='Enter')playSpotify()"
+                    >
+                    <button onclick="playSpotify()" id="spotifyPlayBtn">▶ Convert & Play</button>
+                </div>
+                <div class="error" id="spotifyError"></div>
+                
+                <!-- Recently Played Section -->
+                <div class="quick-open-section" id="quickOpenSection">
+                    <div class="quick-open-header">
+                        <h4>⚡ Recently Played</h4>
+                    </div>
+                    <div class="quick-open-list" id="quickOpenList">
+                        <div class="quick-open-empty">No recently played tracks. Play a converted playlist to see tracks here!</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Spotify Search Section -->
+            <div id="spotify-search-section" class="music-section">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="spotifySearchQuery" 
+                        placeholder="Search for playlists, albums, or artists..."
+                        autocomplete="off"
+                        onkeypress="if(event.key==='Enter')searchSpotify()"
+                    >
+                    <button onclick="searchSpotify()" id="spotifySearchBtn">🔍 Search</button>
+                </div>
+                <div class="spotify-search-filters">
+                    <button class="filter-btn active" onclick="setSpotifySearchType('track', this)">🎵 Tracks</button>
+                    <button class="filter-btn" onclick="setSpotifySearchType('album', this)">💿 Albums</button>
+                </div>
+                <div class="error" id="spotifySearchError"></div>
+                <div id="spotifySearchResults"></div>
+            </div>
+            
+            <!-- SoundCloud Section -->
+            <div id="soundcloud-section" class="music-section">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="soundcloudLink" 
+                        placeholder="Paste SoundCloud track or playlist link..."
+                        autocomplete="off"
+                        onkeypress="if(event.key==='Enter')playSoundCloud()"
+                    >
+                    <button onclick="playSoundCloud()">▶ Listen Now</button>
+                </div>
+                <div class="error" id="soundcloudError"></div>
+            </div>
+            
+            <div id="musicWrapper"></div>
+        </div>
     </div>
-  </main>
-  <footer>Ad-free playback powered by server-side stream (ytdl-core). Respect YouTube's Terms of Service. Local files never leave your device.</footer>
-  <script>
-    const el = id => document.getElementById(id);
-    const player = el('player');
-    const ytUrl = el('ytUrl');
-    const playBtn = el('playBtn');
-    const qualitySelect = el('qualitySelect');
-    const downloadBtn = el('downloadBtn');
-    const clearBtn = el('clearBtn');
-    const fileInput = el('fileInput');
-    const playFileBtn = el('playFileBtn');
-    const downloadFileBtn = el('downloadFileBtn');
-    const statusMsg = el('statusMsg');
-    const ytError = el('ytError');
-    const fileError = el('fileError');
-    const progress = el('streamProgress');
-    const progressBar = progress.querySelector('span');
-    const downloadLink = el('downloadLink');
+    </div><!-- end content-area -->
+    </div><!-- end main-layout -->
 
-    function resetErrors(){ytError.style.display='none'; fileError.style.display='none'; ytError.textContent=''; fileError.textContent='';}
+    <script>
+        // Helper functions for micro-interactions
+        function setButtonLoading(btn, loading) {
+            if (loading) {
+                btn.classList.add('loading');
+                btn.disabled = true;
+                btn.dataset.originalText = btn.textContent;
+            } else {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+        
+        function setButtonSuccess(btn, message, duration = 2000) {
+            btn.classList.add('success');
+            const originalText = btn.dataset.originalText || btn.textContent;
+            btn.textContent = message;
+            setTimeout(() => {
+                btn.classList.remove('success');
+                btn.textContent = originalText;
+            }, duration);
+        }
+        
+        function showSuccessToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+                padding: 14px 24px;
+                border-radius: 12px;
+                font-weight: 600;
+                font-size: 14px;
+                z-index: 9999;
+                animation: slideInUp 0.3s ease;
+                box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOutDown 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+        
+        // Add animation keyframes
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = `
+            @keyframes slideInUp {
+                from { transform: translateY(20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            @keyframes slideOutDown {
+                from { transform: translateY(0); opacity: 1; }
+                to { transform: translateY(20px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(styleSheet);
+        
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab + '-tab').classList.add('active');
+        }
+        
+        // YouTube Search Functions
+        async function searchYouTube() {
+            const query = document.getElementById('youtubeSearchQuery').value.trim();
+            const errorMsg = document.getElementById('youtubeSearchError');
+            const resultsContainer = document.getElementById('searchResults');
+            const btn = document.getElementById('ytSearchBtn');
+            
+            // Clear previous error and results
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
+            
+            if (!query) {
+                errorMsg.textContent = '❌ Please enter a search query';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            // Show loading state on button
+            setButtonLoading(btn, true);
+            
+            // Show loading state
+            resultsContainer.innerHTML = `
+                <div class="search-loading">
+                    <div class="search-loading-spinner"></div>
+                    <div>Searching YouTube for "${query}"...</div>
+                </div>
+            `;
+            
+            try {
+                // Call server endpoint for YouTube search
+                const response = await fetch(`/media-player/youtube-search-results?query=${encodeURIComponent(query)}&maxResults=12`);
+                const data = await response.json();
+                
+                setButtonLoading(btn, false);
+                
+                if (data.results && data.results.length > 0) {
+                    displaySearchResults(data.results);
+                    setButtonSuccess(btn, '✓ Found!');
+                } else {
+                    resultsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
+                            <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
+                            <div style="font-size: 16px;">No results found for "${query}"</div>
+                            <div style="font-size: 13px; margin-top: 10px; opacity: 0.7;">Try different search terms</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('YouTube search error:', error);
+                setButtonLoading(btn, false);
+                resultsContainer.innerHTML = '';
+                errorMsg.textContent = '❌ Failed to search YouTube. Please try again.';
+                errorMsg.classList.add('show');
+            }
+        }
+        
+        function displaySearchResults(results) {
+            const resultsContainer = document.getElementById('searchResults');
+            
+            resultsContainer.innerHTML = `
+                <div class="search-results-grid">
+                    ${results.map(video => `
+                        <div class="search-result-card" onclick="playSearchResult('${video.videoId}', '${escapeHtml(video.title)}')">
+                            <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" class="search-result-thumbnail" loading="lazy">
+                            <div class="search-result-info">
+                                <div class="search-result-title">${video.title}</div>
+                                <div class="search-result-channel">${video.channel || 'Unknown Channel'}</div>
+                                <div class="search-result-meta">
+                                    ${video.duration ? `<span>⏱️ ${video.duration}</span>` : ''}
+                                    ${video.views ? `<span>👁️ ${formatViews(video.views)}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function playSearchResult(videoId, title) {
+            const videoWrapper = document.getElementById('searchVideoWrapper');
+            
+            videoWrapper.innerHTML = `
+                <div style="margin-top: 20px;">
+                    <div style="padding: 12px; background: rgba(139, 92, 246, 0.15); border-radius: 8px 8px 0 0; border: 1px solid rgba(139, 92, 246, 0.3); border-bottom: none;">
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">NOW PLAYING</div>
+                        <div style="font-size: 14px; font-weight: 600; color: #fff;">${title}</div>
+                    </div>
+                    <div class="video-container" style="border-radius: 0 0 12px 12px; overflow: hidden;">
+                        <iframe 
+                            src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen
+                            loading="lazy">
+                        </iframe>
+                    </div>
+                </div>
+            `;
+            
+            // Show success toast
+            showSuccessToast('✓ Now playing video');
+            
+            // Scroll to video
+            videoWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatViews(views) {
+            if (views >= 1000000) {
+                return (views / 1000000).toFixed(1) + 'M';
+            } else if (views >= 1000) {
+                return (views / 1000).toFixed(1) + 'K';
+            }
+            return views.toString();
+        }
 
-    function isYouTube(url){return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(url);}
+        function switchMusicSource(source) {
+            // Update music source buttons
+            document.querySelectorAll('.music-tab').forEach(t => t.classList.remove('active'));
+            
+            // Find and activate the correct tab button - use onclick attribute matching
+            const buttons = document.querySelectorAll('.music-tab');
+            buttons.forEach(btn => {
+                const onclick = btn.getAttribute('onclick') || '';
+                if (onclick.includes(`'${source}'`)) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Update music sections
+            document.querySelectorAll('.music-section').forEach(s => s.classList.remove('active'));
+            const section = document.getElementById(source + '-section');
+            if (section) section.classList.add('active');
+            
+            // Clear previous content
+            document.getElementById('musicWrapper').innerHTML = '';
+        }
 
-    async function loadInfo(){
-      resetErrors();
-      const url = ytUrl.value.trim();
-      if(!url || !isYouTube(url)) return;
-      statusMsg.textContent='Fetching format list...';
-      try {
-        const infoRes = await fetch('/media-player/info?url=' + encodeURIComponent(url));
-        if(!infoRes.ok) throw new Error('Info request failed');
-        const data = await infoRes.json();
-        qualitySelect.innerHTML = '<option value="">(auto)</option>';
-        (data.formats||[]).forEach(f => {
-          const opt = document.createElement('option');
-          const q = f.qualityLabel || f.itag;
-          opt.value = f.itag;
-          opt.textContent = `${q} ${f.hasAudio?'':'(no audio)'}`;
-          qualitySelect.appendChild(opt);
+        // Spotify Search Functions
+        let spotifySearchType = 'track';
+        
+        function setSpotifySearchType(type, btn) {
+            spotifySearchType = type;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        
+        async function searchSpotify() {
+            const query = document.getElementById('spotifySearchQuery').value.trim();
+            const errorMsg = document.getElementById('spotifySearchError');
+            const resultsContainer = document.getElementById('spotifySearchResults');
+            const btn = document.getElementById('spotifySearchBtn');
+            
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
+            
+            if (!query) {
+                errorMsg.textContent = '❌ Please enter a search query';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            setButtonLoading(btn, true);
+            
+            resultsContainer.innerHTML = `
+                <div class="spotify-search-loading">
+                    <div class="spinner"></div>
+                    <div>Searching Spotify for "${query}"...</div>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(`/media-player/spotify-search?q=${encodeURIComponent(query)}&type=${spotifySearchType}&limit=20`);
+                const data = await response.json();
+                
+                setButtonLoading(btn, false);
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                if (data.results && data.results.length > 0) {
+                    displaySpotifyResults(data.results);
+                    setButtonSuccess(btn, '✓ Found!');
+                } else {
+                    resultsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: rgba(0, 255, 255, 0.5);">
+                            <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
+                            <div style="font-size: 14px;">No ${spotifySearchType}s found for "${query}"</div>
+                            <div style="font-size: 12px; margin-top: 10px; opacity: 0.7;">Try different search terms</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Spotify search error:', error);
+                setButtonLoading(btn, false);
+                resultsContainer.innerHTML = '';
+                errorMsg.textContent = '❌ ' + (error.message || 'Failed to search Spotify');
+                errorMsg.classList.add('show');
+            }
+        }
+        
+        function displaySpotifyResults(results) {
+            const resultsContainer = document.getElementById('spotifySearchResults');
+            
+            resultsContainer.innerHTML = `
+                <div class="spotify-results-grid">
+                    ${results.map(item => `
+                        <div class="spotify-result-card" onclick="selectSpotifyResult('${item.url}', '${escapeHtml(item.name)}')">
+                            <img src="${item.image || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%2300ffff10%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%2300ffff%22 font-size=%2240%22%3E🎵%3C/text%3E%3C/svg%3E'}" 
+                                 alt="${escapeHtml(item.name)}" 
+                                 class="spotify-result-image" 
+                                 loading="lazy"
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%2300ffff10%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%2300ffff%22 font-size=%2240%22%3E🎵%3C/text%3E%3C/svg%3E'">
+                            <div class="spotify-result-info">
+                                <div class="spotify-result-name" title="${escapeHtml(item.name)}">${item.name}</div>
+                                <div class="spotify-result-meta">
+                                    <span class="spotify-result-type">${item.type}</span>
+                                    <span class="spotify-result-count">
+                                        ${item.trackCount ? item.trackCount + ' tracks' : ''}
+                                        ${item.owner ? 'by ' + item.owner : ''}
+                                        ${item.artist ? item.artist : ''}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function selectSpotifyResult(url, name) {
+            // Switch to Spotify Link tab and paste the URL
+            switchMusicSource('spotify');
+            document.getElementById('spotifyLink').value = url;
+            showSuccessToast(`✓ Selected: ${name}`);
+            
+            // Auto-convert after short delay
+            setTimeout(() => {
+                playSpotify();
+            }, 500);
+        }
+
+        // YouTube Functions
+        function extractYouTubeVideoId(url) {
+            let videoId = '';
+            
+            // Handle youtube.com/watch?v=
+            const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/;
+            const youtubeMatch = url.match(youtubeRegex);
+            if (youtubeMatch) {
+                videoId = youtubeMatch[1];
+            }
+            
+            // Handle youtu.be/
+            const shortRegex = /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})/;
+            const shortMatch = url.match(shortRegex);
+            if (shortMatch) {
+                videoId = shortMatch[1];
+            }
+            
+            // Handle just the video ID
+            if (/^[a-zA-Z0-9_-]{11}$/.test(url)) {
+                videoId = url;
+            }
+            
+            return videoId;
+        }
+
+        function playYouTube() {
+            const link = document.getElementById('youtubeLink').value.trim();
+            const errorMsg = document.getElementById('youtubeError');
+            const videoWrapper = document.getElementById('youtubeWrapper');
+            const btn = document.getElementById('ytPlayBtn');
+            
+            // Clear previous error
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
+            
+            if (!link) {
+                errorMsg.textContent = '❌ Please enter a YouTube link';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            const videoId = extractYouTubeVideoId(link);
+            
+            if (!videoId) {
+                errorMsg.textContent = '❌ Invalid YouTube link. Please check and try again.';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            // Create embed iframe
+            const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            videoWrapper.innerHTML = `
+                <div class="video-container">
+                    <iframe 
+                        src="${embedUrl}" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen
+                        loading="lazy">
+                    </iframe>
+                </div>
+            `;
+            
+            // Show success feedback
+            showSuccessToast('✓ Video loaded successfully!');
+        }
+
+        // YouTube Music Functions
+        function extractYouTubeMusicId(url) {
+            // YouTube Music uses similar URL structure to regular YouTube
+            return extractYouTubeVideoId(url);
+        }
+
+        async function playYouTubeMusic() {
+            const link = document.getElementById('youtubeMusicLink').value.trim();
+            const errorMsg = document.getElementById('youtubeMusicError');
+            const musicWrapper = document.getElementById('musicWrapper');
+            
+            // Clear previous error
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
+            
+            if (!link) {
+                errorMsg.textContent = '❌ Please enter a YouTube Music link or search query';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            // First, try to extract video ID (if it's a YouTube URL)
+            let videoId = extractYouTubeMusicId(link);
+            
+            // If not a direct YouTube URL, treat it as a search query
+            if (!videoId) {
+                musicWrapper.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                        <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
+                        <div>Searching YouTube for: "${link}"</div>
+                        <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">Finding best match...</div>
+                    </div>
+                `;
+                
+                try {
+                    // Search YouTube via server endpoint
+                    const response = await fetch(`/media-player/youtube-search?query=${encodeURIComponent(link)}`);
+                    const data = await response.json();
+                    
+                    if (data.type === 'youtube_video' && data.videoId) {
+                        videoId = data.videoId;
+                        // Continue to embed the video below
+                    } else if (data.searchUrl) {
+                        // Fallback: show search results link
+                        musicWrapper.innerHTML = `
+                            <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                                <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
+                                <div>${data.message || 'Could not find video automatically'}</div>
+                                <a href="${data.searchUrl}" target="_blank" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background: #8b5cf6; color: white; text-decoration: none; border-radius: 8px;">
+                                    Open YouTube Search Results
+                                </a>
+                            </div>
+                        `;
+                        return;
+                    } else {
+                        throw new Error('No video ID found');
+                    }
+                } catch (searchError) {
+                    console.error('YouTube search error:', searchError);
+                    errorMsg.textContent = '❌ Failed to search YouTube. Please enter a direct YouTube URL.';
+                    errorMsg.classList.add('show');
+                    musicWrapper.innerHTML = '';
+                    return;
+                }
+            }
+            
+            if (!videoId) {
+                errorMsg.textContent = '❌ Invalid YouTube Music link. Please check and try again.';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            // Create embed iframe for YouTube Music (same as regular YouTube)
+            const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            musicWrapper.innerHTML = `
+                <div class="video-container">
+                    <iframe 
+                        src="${embedUrl}" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen
+                        loading="lazy">
+                    </iframe>
+                </div>
+            `;
+        }
+
+        // Spotify Functions
+        function extractSpotifyId(url) {
+            const patterns = {
+                track: /(?:https?:\/\/)?(?:open\.)?spotify\.com\/track\/([a-zA-Z0-9]{22})/,
+                playlist: /(?:https?:\/\/)?(?:open\.)?spotify\.com\/playlist\/([a-zA-Z0-9]{22})/,
+                album: /(?:https?:\/\/)?(?:open\.)?spotify\.com\/album\/([a-zA-Z0-9]{22})/,
+                artist: /(?:https?:\/\/)?(?:open\.)?spotify\.com\/artist\/([a-zA-Z0-9]{22})/
+            };
+            
+            for (const [type, pattern] of Object.entries(patterns)) {
+                const match = url.match(pattern);
+                if (match) {
+                    return { type, id: match[1] };
+                }
+            }
+            
+            return null;
+        }
+
+        async function playSpotify() {
+            const link = document.getElementById('spotifyLink').value.trim();
+            const errorMsg = document.getElementById('spotifyError');
+            const musicWrapper = document.getElementById('musicWrapper');
+            
+            // Clear previous error
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
+            
+            if (!link) {
+                errorMsg.textContent = '❌ Please enter a Spotify link';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            const spotifyData = extractSpotifyId(link);
+            
+            if (!spotifyData) {
+                errorMsg.textContent = '❌ Invalid Spotify link. Please check and try again.';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            // Show loading message
+            musicWrapper.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                    <div style="font-size: 24px; margin-bottom: 10px;">🔄</div>
+                    <div>Loading Spotify content...</div>
+                    <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">Checking playback availability</div>
+                </div>
+            `;
+            
+            try {
+                // Check what type of content this is and how to handle it
+                const response = await fetch(`/media-player/spotify-to-youtube?spotifyUrl=${encodeURIComponent(link)}`);
+                const data = await response.json();
+                
+                if (data.type === 'youtube_playlist_conversion') {
+                    // Playlists/albums are being converted to YouTube - search for each track
+                    await convertPlaylistToYouTube(data.tracks, spotifyData, link);
+                    return;
+                    
+                } else if (data.type === 'youtube_playlist_search') {
+                    // Playlists/albums fallback - search for YouTube playlist version
+                    musicWrapper.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                            <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
+                            <div>${data.message}</div>
+                            <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">Searching for YouTube playlist...</div>
+                        </div>
+                    `;
+                    
+                    // Search YouTube for the playlist
+                    const playlistQuery = data.query + ' playlist full album';
+                    
+                    try {
+                        const searchResponse = await fetch(`/media-player/youtube-search?query=${encodeURIComponent(playlistQuery)}&type=playlist`);
+                        const searchData = await searchResponse.json();
+                        
+                        if (searchData.type === 'youtube_playlist' && searchData.playlistId) {
+                            // Found a YouTube playlist - embed it
+                            const playlistEmbedUrl = `https://www.youtube.com/embed/videoseries?list=${searchData.playlistId}`;
+                            musicWrapper.innerHTML = `
+                                <div class="video-container">
+                                    <iframe 
+                                        src="${playlistEmbedUrl}" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen
+                                        loading="lazy">
+                                    </iframe>
+                                </div>
+                            `;
+                            
+                            // Save to history
+                            saveToHistory(link, playlistEmbedUrl, spotifyData.type, 0);
+                            
+                            errorMsg.textContent = `✅ Found YouTube playlist: "${searchData.title || data.query}". Full playback available!`;
+                            errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                            errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                            errorMsg.style.color = '#10b981';
+                            errorMsg.classList.add('show');
+                            setTimeout(() => errorMsg.classList.remove('show'), 8000);
+                        } else if (searchData.type === 'youtube_video' && searchData.videoId) {
+                            // Found a video (might be a full playlist mix)
+                            const videoEmbedUrl = `https://www.youtube.com/embed/${searchData.videoId}`;
+                            musicWrapper.innerHTML = `
+                                <div class="video-container">
+                                    <iframe 
+                                        src="${videoEmbedUrl}" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen
+                                        loading="lazy">
+                                    </iframe>
+                                </div>
+                            `;
+                            
+                            // Save to history
+                            saveToHistory(link, videoEmbedUrl, spotifyData.type, 0);
+                            
+                            errorMsg.textContent = `✅ Found YouTube result for "${data.query}". Full playback available!`;
+                            errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                            errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                            errorMsg.style.color = '#10b981';
+                            errorMsg.classList.add('show');
+                            setTimeout(() => errorMsg.classList.remove('show'), 8000);
+                        } else {
+                            // Fallback: show search link
+                            musicWrapper.innerHTML = `
+                                <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.8);">
+                                    <div style="font-size: 32px; margin-bottom: 15px;">🔍</div>
+                                    <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Search YouTube for "${data.query}"</div>
+                                    <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                                        Click below to find the playlist on YouTube
+                                    </div>
+                                    <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(playlistQuery)}" target="_blank" 
+                                       style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #ff0000, #cc0000); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                                        🎵 Search YouTube
+                                    </a>
+                                </div>
+                            `;
+                        }
+                    } catch (searchError) {
+                        console.error('YouTube playlist search error:', searchError);
+                        // Fallback: show manual search option
+                        musicWrapper.innerHTML = `
+                            <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.8);">
+                                <div style="font-size: 32px; margin-bottom: 15px;">🔍</div>
+                                <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Search YouTube for "${data.query}"</div>
+                                <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(playlistQuery)}" target="_blank" 
+                                   style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #ff0000, #cc0000); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                                    🎵 Open YouTube Search
+                                </a>
+                            </div>
+                        `;
+                    }
+                    return;
+                    
+                } else if (data.type === 'conversion_failed') {
+                    // Conversion failed - show helpful message
+                    musicWrapper.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.8);">
+                            <div style="font-size: 32px; margin-bottom: 15px;">⚠️</div>
+                            <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Could Not Convert ${spotifyData.type}</div>
+                            <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                                ${data.message}
+                            </div>
+                            <div style="background: rgba(139, 92, 246, 0.2); border-radius: 8px; padding: 15px; max-width: 400px; margin: 0 auto; text-align: left;">
+                                <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px;">💡 Try this instead:</div>
+                                <ol style="margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.8;">
+                                    <li>Copy the ${spotifyData.type} name from Spotify</li>
+                                    <li>Switch to the YouTube Music tab above</li>
+                                    <li>Search for the ${spotifyData.type} name</li>
+                                    <li>Play the YouTube version</li>
+                                </ol>
+                            </div>
+                        </div>
+                    `;
+                    errorMsg.textContent = '⚠️ ' + data.message;
+                    errorMsg.style.background = 'rgba(245, 158, 11, 0.1)';
+                    errorMsg.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+                    errorMsg.style.color = '#f59e0b';
+                    errorMsg.classList.add('show');
+                    
+                } else if (data.type === 'spotify_embed_full') {
+                    // Fallback to Spotify embed (shouldn't happen with new implementation)
+                    createSpotifyEmbed(link, spotifyData, 'full');
+                    errorMsg.textContent = `✅ ${spotifyData.type === 'playlist' ? 'Playlist' : 'Album'} loaded in Spotify embed.`;
+                    errorMsg.style.background = 'rgba(29, 185, 84, 0.1)';
+                    errorMsg.style.borderColor = 'rgba(29, 185, 84, 0.3)';
+                    errorMsg.style.color = '#1db954';
+                    errorMsg.classList.add('show');
+                    setTimeout(() => errorMsg.classList.remove('show'), 8000);
+                    
+                } else if (data.type === 'youtube_search') {
+                    // Tracks/playlists get converted to YouTube
+                    const isPlaylistSearch = data.playlistSearch || spotifyData.type === 'playlist' || spotifyData.type === 'album';
+                    
+                    musicWrapper.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                            <div style="font-size: 24px; margin-bottom: 10px;">🔄</div>
+                            <div>${data.message}</div>
+                            <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">
+                                ${isPlaylistSearch ? 'Finding YouTube version of this playlist...' : 'Searching YouTube for full song...'}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Use the search query from the server response
+                    const searchQuery = data.query || await extractSpotifyTrackName(link);
+                    
+                    if (searchQuery) {
+                        // Switch to YouTube Music tab and search for the content
+                        switchMusicSource('youtube-music');
+                        document.getElementById('youtubeMusicLink').value = searchQuery;
+                        await playYouTubeMusic();
+                        
+                        // Show success message
+                        if (isPlaylistSearch) {
+                            errorMsg.textContent = `✅ Found YouTube result for: "${searchQuery}". You can play this or search for more results.`;
+                            errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                            errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                            errorMsg.style.color = '#10b981';
+                            errorMsg.classList.add('show');
+                            setTimeout(() => errorMsg.classList.remove('show'), 8000);
+                        }
+                        return;
+                    }
+                    
+                    // Fallback if search query is not available
+                    errorMsg.textContent = '⚠️ Could not extract search query. Please search YouTube manually.';
+                    errorMsg.classList.add('show');
+                    
+                } else {
+                    // Unexpected response type
+                    createSpotifyEmbed(link, spotifyData, 'preview');
+                    errorMsg.textContent = '⚠️ Using Spotify embed. Log in to Spotify for full playback.';
+                    errorMsg.classList.add('show');
+                }
+                
+            } catch (error) {
+                console.error('Spotify conversion error:', error);
+                errorMsg.textContent = '❌ Error processing Spotify link. Please try again.';
+                errorMsg.classList.add('show');
+            }
+        }
+
+        async function convertPlaylistToYouTube(tracks, spotifyData, spotifyUrl) {
+            const musicWrapper = document.getElementById('musicWrapper');
+            const errorMsg = document.getElementById('spotifyError');
+            
+            // Show conversion progress
+            musicWrapper.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.9);">
+                    <div style="font-size: 32px; margin-bottom: 15px;">🎵</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Converting Spotify ${spotifyData.type} to YouTube</div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                        Searching YouTube for ${tracks.length} tracks...
+                    </div>
+                    <div style="background: rgba(139, 92, 246, 0.2); border-radius: 8px; padding: 15px; max-width: 400px; margin: 0 auto;">
+                        <div id="conversion-progress" style="font-size: 13px; color: rgba(255,255,255,0.8);">
+                            Preparing...
+                        </div>
+                        <div style="margin-top: 10px; background: rgba(0,0,0,0.3); height: 6px; border-radius: 3px; overflow: hidden;">
+                            <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const progressText = document.getElementById('conversion-progress');
+            const progressBar = document.getElementById('progress-bar');
+            
+            // Store full track data with video IDs
+            const playlistData = [];
+            
+            try {
+                // Search YouTube for each track
+                let successCount = 0;
+                let failCount = 0;
+                
+                for (let i = 0; i < tracks.length; i++) {
+                    const track = tracks[i];
+                    const progress = i + 1;
+                    const total = tracks.length;
+                    const percentage = Math.round((progress / total) * 100);
+                    
+                    // Update progress text with clear "X out of Y" format
+                    progressText.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 5px;">Found ${successCount} out of ${total} songs</div>
+                        <div style="font-size: 11px; opacity: 0.8;">Searching: ${track.artist} - ${track.name}</div>
+                        <div style="font-size: 11px; opacity: 0.7; margin-top: 3px;">(${progress}/${total} searched • ${percentage}% complete)</div>
+                    `;
+                    progressBar.style.width = `${percentage}%`;
+                    
+                    try {
+                        const videoId = await searchYouTubeClientSide(track.searchQuery);
+                        
+                        // Store track data with or without videoId
+                        playlistData.push({
+                            name: track.name,
+                            artist: track.artist,
+                            videoId: videoId || null,
+                            found: !!videoId
+                        });
+                        
+                        if (videoId) {
+                            successCount++;
+                            console.log(`  ✓ [${successCount}/${total}] Found: ${videoId} for "${track.searchQuery}"`);
+                        } else {
+                            failCount++;
+                            console.log(`  ✗ [${i+1}/${total}] Not found: "${track.searchQuery}"`);
+                        }
+                        
+                        // Delay between searches to avoid rate limiting
+                        const delay = (i + 1) % 10 === 0 ? 2000 : 800;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    } catch (trackError) {
+                        failCount++;
+                        playlistData.push({
+                            name: track.name,
+                            artist: track.artist,
+                            videoId: null,
+                            found: false
+                        });
+                        console.error(`  ✗ [${i+1}/${total}] Error for: ${track.searchQuery}`, trackError.message);
+                    }
+                }
+                
+                console.log(`\n✅ Search complete: Found ${successCount} out of ${tracks.length} total tracks (${failCount} failed)`);
+                
+                // Get only found tracks for playback
+                const foundTracks = playlistData.filter(t => t.found);
+                
+                if (foundTracks.length > 0) {
+                    const successRate = Math.round((successCount / tracks.length) * 100);
+                    progressText.innerHTML = `
+                        <div style="font-weight: 600; color: #10b981;">✅ Found ${successCount} out of ${tracks.length} songs!</div>
+                        <div style="font-size: 11px; opacity: 0.8; margin-top: 5px;">Success rate: ${successRate}% • Loading player...</div>
+                    `;
+                    
+                    // Store playlist data globally for navigation
+                    window.currentPlaylist = {
+                        tracks: playlistData,
+                        foundTracks: foundTracks,
+                        currentIndex: 0,
+                        spotifyUrl: spotifyUrl,
+                        type: spotifyData.type
+                    };
+                    
+                    // Create backup YouTube playlist URL (for history)
+                    const videoIds = foundTracks.map(t => t.videoId);
+                    const playlistParam = videoIds.join(',');
+                    const backupEmbedUrl = `https://www.youtube.com/embed/${videoIds[0]}?playlist=${playlistParam}`;
+                    
+                    setTimeout(() => {
+                        // Render custom player
+                        renderCustomPlayer(successCount, tracks.length, successRate, failCount);
+                        
+                        // Save to history with track data for custom player reload
+                        saveToHistory(spotifyUrl, backupEmbedUrl, spotifyData.type, foundTracks.length, {
+                            tracks: playlistData,
+                            foundTracks: foundTracks
+                        });
+                        
+                        errorMsg.textContent = `✅ Successfully loaded ${foundTracks.length} tracks with custom controls!`;
+                        errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                        errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                        errorMsg.style.color = '#10b981';
+                        errorMsg.classList.add('show');
+                        setTimeout(() => errorMsg.classList.remove('show'), 5000);
+                    }, 1000);
+                } else {
+                    throw new Error('No tracks found on YouTube');
+                }
+            } catch (conversionError) {
+                console.error('Playlist conversion error:', conversionError);
+                musicWrapper.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
+                        <div style="font-size: 24px; margin-bottom: 10px;">❌</div>
+                        <div>Failed to convert playlist to YouTube</div>
+                        <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">Try using YouTube Music search directly</div>
+                    </div>
+                `;
+                errorMsg.textContent = '❌ Playlist conversion failed. Please try YouTube Music search.';
+                errorMsg.classList.add('show');
+            }
+        }
+        
+        // Render custom player with navigation controls
+        function renderCustomPlayer(successCount, totalTracks, successRate, failCount) {
+            const musicWrapper = document.getElementById('musicWrapper');
+            const playlist = window.currentPlaylist;
+            const currentTrack = playlist.foundTracks[playlist.currentIndex];
+            
+            // Initialize player settings if not set
+            if (window.playerSettings === undefined) {
+                window.playerSettings = {
+                    autoplay: true,
+                    shuffle: false,
+                    originalOrder: null
+                };
+            }
+            
+            musicWrapper.innerHTML = `
+                <div id="custom-player-wrapper">
+                    <!-- Video Player (YouTube API container) -->
+                    <div class="video-container">
+                        <div id="youtube-player-container"></div>
+                    </div>
+                    
+                    <!-- Player Controls -->
+                    <div class="custom-player-controls">
+                        <button class="player-btn prev-btn" onclick="playPreviousTrack()" ${playlist.currentIndex === 0 ? 'disabled' : ''}>
+                            ⏮️ Prev
+                        </button>
+                        <div class="track-indicator">
+                            <span id="current-track-num">${playlist.currentIndex + 1}</span> / ${playlist.foundTracks.length}
+                        </div>
+                        <button class="player-btn next-btn" onclick="playNextTrack()" ${playlist.currentIndex >= playlist.foundTracks.length - 1 && !window.playerSettings.shuffle ? 'disabled' : ''}>
+                            Next ⏭️
+                        </button>
+                    </div>
+                    
+                    <!-- Extra Controls (Autoplay & Shuffle) -->
+                    <div class="player-extras">
+                        <button class="toggle-btn autoplay-btn ${window.playerSettings.autoplay ? 'active' : ''}" onclick="toggleAutoplay()">
+                            🔄 Autoplay ${window.playerSettings.autoplay ? 'ON' : 'OFF'}
+                        </button>
+                        <button class="toggle-btn shuffle-btn ${window.playerSettings.shuffle ? 'active' : ''}" onclick="toggleShuffle()">
+                            🔀 Shuffle ${window.playerSettings.shuffle ? 'ON' : 'OFF'}
+                        </button>
+                    </div>
+                    
+                    <!-- Now Playing -->
+                    <div style="text-align: center; margin-top: 10px; padding: 12px; background: rgba(139, 92, 246, 0.15); border-radius: 8px;">
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">NOW PLAYING</div>
+                        <div id="now-playing-title" style="font-size: 14px; font-weight: 600; color: #fff;">${currentTrack.name}</div>
+                        <div id="now-playing-artist" style="font-size: 12px; color: rgba(255,255,255,0.7);">${currentTrack.artist}</div>
+                    </div>
+                    
+                    <!-- Tracklist Toggle -->
+                    <div class="tracklist-toggle" onclick="toggleTracklist()">
+                        <span>📋</span>
+                        <span id="tracklist-toggle-text">Show Tracklist (${playlist.foundTracks.length} songs)</span>
+                        <span id="tracklist-arrow">▼</span>
+                    </div>
+                    
+                    <!-- Tracklist (hidden by default) -->
+                    <div class="track-list-container" id="tracklist-container" style="display: none;">
+                        ${playlist.foundTracks.map((track, index) => {
+                            const isActive = index === playlist.currentIndex;
+                            const itemClass = isActive ? 'active' : '';
+                            
+                            return `
+                                <div class="track-item ${itemClass}" onclick="jumpToTrack(${index})" data-index="${index}">
+                                    <div class="track-number">${index + 1}</div>
+                                    <div class="track-info">
+                                        <div class="track-name">${track.name}</div>
+                                        <div class="track-artist">${track.artist}</div>
+                                    </div>
+                                    <button class="track-play-btn" onclick="event.stopPropagation(); jumpToTrack(${index})">▶ Play</button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.9); text-align: center;">
+                        ✅ <strong>Custom Player Active!</strong> - Auto-advances when song ends<br>
+                        <span style="font-size: 12px; opacity: 0.9;">
+                            ${successCount} out of ${totalTracks} tracks (${successRate}% success)
+                        </span><br>
+                        <span style="font-size: 11px; opacity: 0.7;">
+                            ${failCount > 0 ? `${failCount} songs couldn't be found on YouTube` : 'All songs found!'}
+                        </span>
+                    </div>
+                </div>
+            `;
+            
+            // Initialize YouTube player with API
+            initYouTubePlayer(currentTrack.videoId);
+            
+            // Save initial track to recently played
+            saveRecentlyPlayed(currentTrack);
+        }
+        
+        // Initialize YouTube Player with API for autoplay detection
+        function initYouTubePlayer(videoId) {
+            const container = document.getElementById('youtube-player-container');
+            if (!container) return;
+            
+            // Destroy existing player if any
+            if (window.ytPlayer) {
+                try {
+                    if (typeof window.ytPlayer.destroy === 'function') {
+                        window.ytPlayer.destroy();
+                    }
+                } catch (e) {
+                    console.log('Could not destroy old player:', e);
+                }
+                window.ytPlayer = null;
+            }
+            
+            // Clear the container
+            container.innerHTML = '';
+            
+            // Store current video ID
+            window.currentVideoId = videoId;
+            window.videoErrorCount = 0;
+            
+            // Wait for YT API to be ready with timeout
+            const initPlayer = () => {
+                if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+                    console.log('YouTube API not ready, using iframe fallback');
+                    container.innerHTML = `
+                        <iframe 
+                            id="youtube-player-frame"
+                            src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen
+                            style="width: 100%; height: 100%; border: none; border-radius: 12px;">
+                        </iframe>
+                    `;
+                    return;
+                }
+                
+                // Create a fresh div for the player
+                const playerDiv = document.createElement('div');
+                playerDiv.id = 'yt-player-' + Date.now();
+                container.appendChild(playerDiv);
+                
+                // Create new player with API
+                try {
+                    window.ytPlayer = new YT.Player(playerDiv.id, {
+                        height: '100%',
+                        width: '100%',
+                        videoId: videoId,
+                        playerVars: {
+                            autoplay: 1,
+                            modestbranding: 1,
+                            rel: 0,
+                            enablejsapi: 1,
+                            origin: window.location.origin
+                        },
+                        events: {
+                            onReady: onPlayerReady,
+                            onStateChange: onPlayerStateChange,
+                            onError: onPlayerError
+                        }
+                    });
+                    console.log('YouTube API player created successfully');
+                } catch (e) {
+                    console.error('Failed to create YouTube player:', e);
+                    // Fallback to regular iframe
+                    container.innerHTML = `
+                        <iframe 
+                            id="youtube-player-frame"
+                            src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen
+                            style="width: 100%; height: 100%; border: none; border-radius: 12px;">
+                        </iframe>
+                    `;
+                }
+            };
+            
+            // Small delay to ensure clean initialization
+            setTimeout(initPlayer, 100);
+        }
+        
+        // Player ready event
+        function onPlayerReady(event) {
+            console.log('YouTube player ready');
+            updateBlockedStatus(false);
+        }
+        
+        // Handle YouTube player state changes
+        function onPlayerStateChange(event) {
+            // State 0 = video ended
+            if (event.data === YT.PlayerState.ENDED) {
+                console.log('Video ended, autoplay:', window.playerSettings?.autoplay);
+                if (window.playerSettings?.autoplay) {
+                    autoPlayNext();
+                }
+            }
+            // State 1 = playing - clear any error state
+            if (event.data === YT.PlayerState.PLAYING) {
+                updateBlockedStatus(false);
+                window.videoErrorCount = 0;
+            }
+        }
+        
+        // Handle YouTube player errors
+        function onPlayerError(event) {
+            console.error('YouTube player error:', event.data);
+            
+            // Error codes:
+            // 2 = invalid video ID
+            // 5 = HTML5 player error (often means blocked)
+            // 100 = video not found
+            // 101/150 = video not allowed for embedded playback
+            // 152 = video cannot be embedded
+            
+            const errorMessages = {
+                2: 'Invalid video ID',
+                5: 'Video blocked or unavailable',
+                100: 'Video not found (deleted or private)',
+                101: 'Video cannot be embedded',
+                150: 'Video cannot be embedded',
+                152: 'Video cannot be embedded'
+            };
+            
+            const errorMsg = errorMessages[event.data] || `Error code: ${event.data}`;
+            console.log('Video error:', errorMsg);
+            
+            // Show blocked status
+            updateBlockedStatus(true, errorMsg);
+            
+            // Track consecutive errors
+            window.videoErrorCount = (window.videoErrorCount || 0) + 1;
+            
+            // Auto-skip to next if autoplay is on (up to 5 consecutive errors)
+            if (window.playerSettings?.autoplay && window.videoErrorCount < 5) {
+                console.log(`Auto-skipping blocked video (${window.videoErrorCount}/5)`);
+                // Longer delay to allow player cleanup and avoid rapid API calls
+                setTimeout(() => {
+                    autoPlayNext();
+                }, 2000); // Increased to 2 seconds
+            } else if (window.videoErrorCount >= 5) {
+                console.log('Too many consecutive errors, stopping auto-skip');
+                showTooManyErrorsMessage();
+            }
+        }
+        
+        // Update UI to show blocked status
+        function updateBlockedStatus(isBlocked, message = '') {
+            const nowPlaying = document.getElementById('now-playing-title');
+            const nowArtist = document.getElementById('now-playing-artist');
+            
+            if (isBlocked && nowPlaying) {
+                const playlist = window.currentPlaylist;
+                const currentTrack = playlist?.foundTracks[playlist.currentIndex];
+                if (currentTrack) {
+                    nowPlaying.innerHTML = `<span style="color: #ef4444;">⚠️ ${currentTrack.name}</span>`;
+                    nowArtist.innerHTML = `<span style="color: #f97316;">${message} - Skipping...</span>`;
+                }
+            }
+        }
+        
+        // Show message when too many errors
+        function showTooManyErrorsMessage() {
+            const nowArtist = document.getElementById('now-playing-artist');
+            if (nowArtist) {
+                nowArtist.innerHTML = `<span style="color: #ef4444;">Multiple videos blocked. Try disabling ad blocker or use Next manually.</span>`;
+            }
+        }
+        
+        // Auto-play next track (handles shuffle and looping)
+        function autoPlayNext() {
+            const playlist = window.currentPlaylist;
+            if (!playlist) return;
+            
+            if (window.playerSettings.shuffle) {
+                // Pick a random track (different from current)
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * playlist.foundTracks.length);
+                } while (randomIndex === playlist.currentIndex && playlist.foundTracks.length > 1);
+                
+                playlist.currentIndex = randomIndex;
+                updatePlayer();
+            } else {
+                // Normal sequential play
+                if (playlist.currentIndex < playlist.foundTracks.length - 1) {
+                    playlist.currentIndex++;
+                    updatePlayer();
+                } else {
+                    // End of playlist - loop back to start
+                    playlist.currentIndex = 0;
+                    updatePlayer();
+                }
+            }
+        }
+        
+        // Toggle autoplay
+        function toggleAutoplay() {
+            window.playerSettings.autoplay = !window.playerSettings.autoplay;
+            const btn = document.querySelector('.autoplay-btn');
+            if (btn) {
+                btn.classList.toggle('active', window.playerSettings.autoplay);
+                btn.innerHTML = `🔄 Autoplay ${window.playerSettings.autoplay ? 'ON' : 'OFF'}`;
+            }
+        }
+        
+        // Toggle shuffle
+        function toggleShuffle() {
+            window.playerSettings.shuffle = !window.playerSettings.shuffle;
+            const btn = document.querySelector('.shuffle-btn');
+            if (btn) {
+                btn.classList.toggle('active', window.playerSettings.shuffle);
+                btn.innerHTML = `🔀 Shuffle ${window.playerSettings.shuffle ? 'ON' : 'OFF'}`;
+            }
+            
+            // Update next button state
+            const nextBtn = document.querySelector('.next-btn');
+            if (nextBtn && window.currentPlaylist) {
+                const playlist = window.currentPlaylist;
+                nextBtn.disabled = !window.playerSettings.shuffle && playlist.currentIndex >= playlist.foundTracks.length - 1;
+            }
+        }
+        
+        // Toggle tracklist visibility
+        function toggleTracklist() {
+            const container = document.getElementById('tracklist-container');
+            const arrow = document.getElementById('tracklist-arrow');
+            const text = document.getElementById('tracklist-toggle-text');
+            
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                arrow.textContent = '▲';
+                text.textContent = 'Hide Tracklist';
+            } else {
+                container.style.display = 'none';
+                arrow.textContent = '▼';
+                text.textContent = `Show Tracklist (${window.currentPlaylist.foundTracks.length} songs)`;
+            }
+        }
+        
+        // Play previous track
+        function playPreviousTrack() {
+            const playlist = window.currentPlaylist;
+            if (playlist.currentIndex > 0) {
+                playlist.currentIndex--;
+                updatePlayer();
+            }
+        }
+        
+        // Play next track
+        function playNextTrack() {
+            const playlist = window.currentPlaylist;
+            
+            if (window.playerSettings?.shuffle) {
+                // Pick a random track (different from current)
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * playlist.foundTracks.length);
+                } while (randomIndex === playlist.currentIndex && playlist.foundTracks.length > 1);
+                
+                playlist.currentIndex = randomIndex;
+                updatePlayer();
+            } else if (playlist.currentIndex < playlist.foundTracks.length - 1) {
+                playlist.currentIndex++;
+                updatePlayer();
+            }
+        }
+        
+        // Jump to specific track
+        function jumpToTrack(index) {
+            const playlist = window.currentPlaylist;
+            if (index >= 0 && index < playlist.foundTracks.length) {
+                playlist.currentIndex = index;
+                updatePlayer();
+            }
+        }
+        
+        // Update player with current track
+        function updatePlayer() {
+            const playlist = window.currentPlaylist;
+            const currentTrack = playlist.foundTracks[playlist.currentIndex];
+            
+            // Reset error count for new video
+            window.videoErrorCount = 0;
+            window.currentVideoId = currentTrack.videoId;
+            
+            // Update YouTube player - always reinitialize for clean state
+            console.log('Loading track:', currentTrack.name, 'by', currentTrack.artist);
+            
+            // Always reinitialize player for better reliability between tracks
+            // This prevents Error 152 and other embedding issues
+            initYouTubePlayer(currentTrack.videoId);
+            
+            // Update track indicator
+            document.getElementById('current-track-num').textContent = playlist.currentIndex + 1;
+            
+            // Update now playing
+            document.getElementById('now-playing-title').textContent = currentTrack.name;
+            document.getElementById('now-playing-artist').textContent = currentTrack.artist;
+            
+            // Save to recently played
+            saveRecentlyPlayed(currentTrack);
+            
+            // Update button states
+            const prevBtn = document.querySelector('.prev-btn');
+            const nextBtn = document.querySelector('.next-btn');
+            prevBtn.disabled = playlist.currentIndex === 0;
+            // Next is always enabled if shuffle is on (loops), otherwise check if at end
+            nextBtn.disabled = !window.playerSettings?.shuffle && playlist.currentIndex >= playlist.foundTracks.length - 1;
+            
+            // Update tracklist active state
+            document.querySelectorAll('.track-item').forEach((item, idx) => {
+                item.classList.remove('active');
+                if (idx === playlist.currentIndex) {
+                    item.classList.add('active');
+                    // Scroll into view if tracklist is visible
+                    const container = document.getElementById('tracklist-container');
+                    if (container.style.display !== 'none') {
+                        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
+        }
+        
+        // Search YouTube using reliable yt-search package (server-side)
+        async function searchYouTubeClientSide(query) {
+            try {
+                // Try multiple search variations for better results
+                const searchVariations = [
+                    query,                                          // Exact: "Artist Song"
+                    query + ' official audio',                      // With official audio
+                    query + ' official video',                      // With official video  
+                    query + ' lyrics',                              // Lyric video
+                    query.replace(/\(feat\..*?\)/gi, '').trim(),   // Remove "(feat. ...)"
+                    query.split(' ').slice(0, -1).join(' ')         // Try without last word
+                ];
+                
+                // Try each variation
+                for (let i = 0; i < searchVariations.length; i++) {
+                    const searchQuery = searchVariations[i];
+                    
+                    try {
+                        const response = await fetch(`/media-player/youtube-search?query=${encodeURIComponent(searchQuery)}`, {
+                            signal: AbortSignal.timeout(15000) // Increased timeout
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.type === 'youtube_video' && data.videoId) {
+                                if (searchQuery !== query) {
+                                    console.log(`    ✓ Found using variation: "${searchQuery}"`);
+                                }
+                                return data.videoId;
+                            } else if (data.error) {
+                                console.log(`    ⚠ Server error: ${data.error}`);
+                            }
+                        } else {
+                            console.log(`    ⚠ HTTP ${response.status} for variation ${i + 1}`);
+                        }
+                        
+                        // Small delay between variations
+                        if (i < searchVariations.length - 1) {
+                            await new Promise(resolve => setTimeout(resolve, 200));
+                        }
+                    } catch (e) {
+                        const errMsg = e?.message || e?.toString() || 'Unknown error';
+                        console.log(`    ⚠ Variation ${i + 1} failed: ${errMsg}`);
+                        continue;
+                    }
+                }
+                
+                return null;
+            } catch (error) {
+                const errMsg = error?.message || error?.toString() || 'Unknown error';
+                console.error(`    ✗ Search error: ${errMsg}`);
+                return null;
+            }
+        }
+        
+        async function extractSpotifyTrackName(spotifyUrl) {
+            try {
+                // Try to get title from Spotify oEmbed API
+                const oEmbedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyUrl)}`;
+                const response = await fetch(oEmbedUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.title) {
+                        return data.title;
+                    }
+                }
+                
+                // Fallback: extract from URL
+                const patterns = {
+                    track: /track\/([a-zA-Z0-9]{22})/,
+                    playlist: /playlist\/([a-zA-Z0-9]{22})/,
+                    album: /album\/([a-zA-Z0-9]{22})/,
+                    artist: /artist\/([a-zA-Z0-9]{22})/
+                };
+                
+                for (const [type, pattern] of Object.entries(patterns)) {
+                    const match = spotifyUrl.match(pattern);
+                    if (match) {
+                        return `spotify ${type} ${match[1]}`;
+                    }
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Error extracting Spotify track name:', error);
+                return null;
+            }
+        }
+
+        function createSpotifyEmbed(link, spotifyData, mode = 'preview') {
+            const musicWrapper = document.getElementById('musicWrapper');
+            const errorMsg = document.getElementById('spotifyError');
+            
+            // Debug logging
+            console.log('Creating Spotify embed:', { link, spotifyData, mode });
+            
+            // Create Spotify embed iframe with proper parameters for full playback
+            let embedUrl;
+            let height = '380';
+            
+            switch (spotifyData.type) {
+                case 'track':
+                    // Tracks always use preview mode
+                    embedUrl = `https://open.spotify.com/embed/track/${spotifyData.id}?utm_source=oembed&theme=0`;
+                    break;
+                case 'playlist':
+                    // Try different embed approaches for playlists
+                    embedUrl = `https://open.spotify.com/embed/playlist/${spotifyData.id}?utm_source=oembed&theme=0`;
+                    height = '520'; // Taller for playlists
+                    break;
+                case 'album':
+                    // Albums with full playback
+                    embedUrl = `https://open.spotify.com/embed/album/${spotifyData.id}?utm_source=oembed&theme=0`;
+                    height = '520';
+                    break;
+                case 'artist':
+                    // Artist pages with full playback
+                    embedUrl = `https://open.spotify.com/embed/artist/${spotifyData.id}?utm_source=oembed&theme=0`;
+                    height = '520';
+                    break;
+            }
+            
+            console.log('Embed URL:', embedUrl);
+            
+            musicWrapper.innerHTML = `
+                <div class="spotify-container" style="height: auto;">
+                    <iframe 
+                        id="spotify-iframe"
+                        src="${embedUrl}" 
+                        allow="encrypted-media; clipboard-write; autoplay; fullscreen; picture-in-picture"
+                        loading="lazy"
+                        style="height: ${height}px; width: 100%; border: none; border-radius: 12px;"
+                        frameborder="0"
+                        onload="console.log('Spotify iframe loaded successfully')"
+                        onerror="console.error('Spotify iframe failed to load')">
+                    </iframe>
+                </div>
+                ${mode === 'full' && (spotifyData.type === 'playlist' || spotifyData.type === 'album') ? `
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(29, 185, 84, 0.15); border: 1px solid rgba(29, 185, 84, 0.3); border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.9); text-align: center;">
+                        <div style="margin-bottom: 5px;">🎵 <strong>Log in to Spotify in the player above for full playback</strong></div>
+                        <div style="font-size: 11px; opacity: 0.8;">Click the "Log in" button in the Spotify embed to play all tracks</div>
+                    </div>
+                ` : ''}
+            `;
+            
+            // Show appropriate message based on mode and content type
+            if (mode === 'full') {
+                // Full playback for playlists, albums (requires login)
+                if (spotifyData.type === 'playlist' || spotifyData.type === 'album') {
+                    errorMsg.textContent = `✅ ${spotifyData.type === 'playlist' ? 'Playlist' : 'Album'} loaded! Log in to Spotify in the player above for full playback.`;
+                    errorMsg.style.background = 'rgba(29, 185, 84, 0.1)';
+                    errorMsg.style.borderColor = 'rgba(29, 185, 84, 0.3)';
+                    errorMsg.style.color = '#1db954';
+                } else {
+                    errorMsg.textContent = '✅ Content loaded in Spotify embed!';
+                    errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                    errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                    errorMsg.style.color = '#10b981';
+                }
+            } else if (mode === 'preview') {
+                // Preview mode for tracks
+                if (spotifyData.type === 'track') {
+                    errorMsg.textContent = '⚠️ Track preview (30 seconds). Try YouTube Music tab for full song.';
+                } else {
+                    errorMsg.textContent = '⚠️ Limited playback. Try YouTube Music for full tracks.';
+                }
+                errorMsg.style.background = 'rgba(245, 158, 11, 0.1)';
+                errorMsg.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+                errorMsg.style.color = '#f59e0b';
+            }
+            
+            errorMsg.classList.add('show');
+            
+            // Auto-hide success messages after 8 seconds
+            if (mode === 'full') {
+                setTimeout(() => {
+                    errorMsg.classList.remove('show');
+                }, 8000);
+            }
+        }
+
+        // SoundCloud Functions
+        function extractSoundCloudId(url) {
+            // SoundCloud URLs can be in various formats
+            // We'll use the full URL for embedding
+            const soundcloudRegex = /(?:https?:\/\/)?(?:www\.)?soundcloud\.com\/(.+)/;
+            const match = url.match(soundcloudRegex);
+            if (match) {
+                return match[1]; // Return the path part
+            }
+            return null;
+        }
+
+        function playSoundCloud() {
+            const link = document.getElementById('soundcloudLink').value.trim();
+            const errorMsg = document.getElementById('soundcloudError');
+            const musicWrapper = document.getElementById('musicWrapper');
+            
+            // Clear previous error
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
+            
+            if (!link) {
+                errorMsg.textContent = '❌ Please enter a SoundCloud link';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            const soundcloudPath = extractSoundCloudId(link);
+            
+            if (!soundcloudPath) {
+                errorMsg.textContent = '❌ Invalid SoundCloud link. Please check and try again.';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            // Create SoundCloud embed iframe
+            const embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(link)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&visual=true`;
+            musicWrapper.innerHTML = `
+                <div class="spotify-container">
+                    <iframe 
+                        src="${embedUrl}" 
+                        allow="autoplay"
+                        loading="lazy"
+                        style="height: 380px;">
+                    </iframe>
+                </div>
+            `;
+        }
+        
+        // Allow pressing Enter to play
+        document.getElementById('youtubeLink').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                playYouTube();
+            }
         });
-        statusMsg.textContent='Formats loaded.';
-      } catch(e){
-        statusMsg.textContent='Failed to load formats.';
-      }
-    }
-
-    // Anti-fail: track retry attempts & degrade quality if needed
-    let playRetries = 0;
-    const MAX_PLAY_RETRIES = 3;
-
-    async function playYouTube(){
-      resetErrors();
-      const url = ytUrl.value.trim();
-      if(!url){ytError.textContent='Enter a URL'; ytError.style.display='block'; return;}
-      if(!isYouTube(url)){ytError.textContent='Provide a valid YouTube URL'; ytError.style.display='block'; return;}
-      statusMsg.textContent='Requesting stream...';
-      downloadBtn.disabled=true; progress.style.display='block'; progressBar.style.width='4%';
-      try {
-        const itag = qualitySelect.value.trim();
-        const streamUrl = '/media-player/stream?url=' + encodeURIComponent(url) + (itag?('&itag='+itag):'');
-        player.src = streamUrl;
-        player.play();
-        downloadBtn.disabled=false;
-        downloadLink.href = '/media-player/download?url=' + encodeURIComponent(url);
-        downloadLink.style.display='inline-block';
-        statusMsg.textContent='Streaming ' + (itag?('itag '+itag):'best available') + '...';
-        let pct=4; const int=setInterval(()=>{pct=Math.min(pct+3,95); progressBar.style.width=pct+'%'; if(pct>=95) clearInterval(int);},300);
-      } catch(err){
-        ytError.textContent='Stream failed.'; ytError.style.display='block'; statusMsg.textContent='';
-      } finally { setTimeout(()=>{progress.style.display='none'; progressBar.style.width='0';},5000); }
-    }
-
-    player.addEventListener('error', () => {
-      // Attempt automatic retry with downgraded quality
-      if(!ytUrl.value.trim() || playRetries >= MAX_PLAY_RETRIES) return;
-      playRetries++;
-      statusMsg.textContent='Recovering from error (attempt '+playRetries+')...';
-      // Choose a lower itag from the list (last option usually lower quality)
-      const opts = [...qualitySelect.options].filter(o=>o.value);
-      if(opts.length){
-        // pick mid or last depending on attempt
-        const idx = Math.min(opts.length-1, playRetries);
-        qualitySelect.value = opts[idx].value;
-      }
-      playYouTube();
-    });
-    playBtn.addEventListener('click', () => { playRetries = 0; playYouTube(); });
-    ytUrl.addEventListener('change', loadInfo);
-    ytUrl.addEventListener('blur', loadInfo);
-    downloadBtn.addEventListener('click', ()=>{
-      const url = ytUrl.value.trim();
-      if(!isYouTube(url)) return;
-      statusMsg.textContent='Download started...';
-      const a = document.createElement('a');
-      a.href = '/media-player/download?url=' + encodeURIComponent(url);
-      a.style.display='none'; document.body.appendChild(a); a.click(); setTimeout(()=>a.remove(),1000);
-    });
-
-    clearBtn.addEventListener('click', ()=>{
-      ytUrl.value=''; player.removeAttribute('src'); player.load(); downloadBtn.disabled=true; downloadLink.style.display='none'; statusMsg.textContent=''; resetErrors();
-    });
-
-    playFileBtn.addEventListener('click', ()=>{
-      resetErrors();
-      const file = fileInput.files[0];
-      if(!file){fileError.textContent='Select a file first'; fileError.style.display='block'; return;}
-      const url = URL.createObjectURL(file);
-      player.src = url; player.play();
-      statusMsg.textContent='Playing local file';
-      downloadLink.href = url; downloadLink.download = file.name; downloadLink.style.display='inline-block';
-      downloadFileBtn.disabled=false;
-    });
-
-    downloadFileBtn.addEventListener('click', ()=>{
-      const file = fileInput.files[0]; if(!file) return;
-      const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; a.click();
-    });
-  </script>
+        
+        document.getElementById('youtubeSearchQuery').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                searchYouTube();
+            }
+        });
+        
+        document.getElementById('youtubeMusicLink').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                playYouTubeMusic();
+            }
+        });
+        
+        document.getElementById('spotifyLink').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                playSpotify();
+            }
+        });
+        
+        document.getElementById('soundcloudLink').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                playSoundCloud();
+            }
+        });
+        
+        // Auto-play if there's a URL in the query parameter
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const youtubeUrl = urlParams.get('youtube');
+            const youtubeMusicUrl = urlParams.get('youtubeMusic');
+            const spotifyUrl = urlParams.get('spotify');
+            const soundcloudUrl = urlParams.get('soundcloud');
+            
+            if (youtubeUrl) {
+                document.getElementById('youtubeLink').value = youtubeUrl;
+                playYouTube();
+            } else if (youtubeMusicUrl) {
+                document.getElementById('youtubeMusicLink').value = youtubeMusicUrl;
+                playYouTubeMusic();
+            } else if (spotifyUrl) {
+                document.getElementById('spotifyLink').value = spotifyUrl;
+                switchMusicSource('spotify');
+                playSpotify();
+            } else if (soundcloudUrl) {
+                document.getElementById('soundcloudLink').value = soundcloudUrl;
+                switchMusicSource('soundcloud');
+                playSoundCloud();
+            }
+            
+            // Load history on page load
+            loadHistory();
+        });
+        
+        // ===== HISTORY FUNCTIONS =====
+        
+        // Save conversion to history
+        function saveToHistory(spotifyUrl, youtubeUrl, type, trackCount, trackData = null) {
+            const history = JSON.parse(localStorage.getItem('spotifyConversionHistory') || '[]');
+            
+            // Create history entry
+            const entry = {
+                id: Date.now(),
+                spotifyUrl: spotifyUrl,
+                youtubeUrl: youtubeUrl,
+                type: type, // 'playlist', 'album', 'track'
+                trackCount: trackCount || 0,
+                trackData: trackData, // Full track data for custom player
+                date: new Date().toISOString()
+            };
+            
+            // Add to beginning of array (newest first)
+            history.unshift(entry);
+            
+            // Keep only last 20 entries
+            if (history.length > 20) {
+                history.pop();
+            }
+            
+            localStorage.setItem('spotifyConversionHistory', JSON.stringify(history));
+            renderHistory();
+            renderQuickOpen();
+        }
+        
+        // Load and render history
+        function loadHistory() {
+            renderHistory();
+            renderQuickOpen();
+        }
+        
+        // Render Recently Played section (tracks played from custom player)
+        function renderQuickOpen() {
+            const quickOpenList = document.getElementById('quickOpenList');
+            const recentlyPlayed = JSON.parse(localStorage.getItem('recentlyPlayedTracks') || '[]');
+            
+            if (recentlyPlayed.length === 0) {
+                quickOpenList.innerHTML = '<div class="quick-open-empty">No recently played tracks. Play a converted playlist to see tracks here!</div>';
+                return;
+            }
+            
+            // Show last 10 played tracks
+            quickOpenList.innerHTML = recentlyPlayed.slice(0, 10).map((track, index) => {
+                const timeAgo = getTimeAgo(new Date(track.playedAt));
+                
+                return `
+                    <div class="quick-open-item" onclick="quickPlayTrack('${track.videoId}', '${track.name.replace(/'/g, "\\'")}', '${track.artist.replace(/'/g, "\\'")}')">
+                        <span class="quick-open-icon">🎵</span>
+                        <div class="quick-open-info">
+                            <div class="quick-open-title">${track.name}</div>
+                            <div class="quick-open-meta">
+                                <span>${track.artist}</span>
+                                <span>•</span>
+                                <span>${timeAgo}</span>
+                            </div>
+                        </div>
+                        <button class="quick-open-play" onclick="event.stopPropagation(); quickPlayTrack('${track.videoId}', '${track.name.replace(/'/g, "\\'")}', '${track.artist.replace(/'/g, "\\'")}')">▶</button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Save a played track to recently played history
+        function saveRecentlyPlayed(track) {
+            if (!track || !track.videoId || !track.name) return;
+            
+            const recentlyPlayed = JSON.parse(localStorage.getItem('recentlyPlayedTracks') || '[]');
+            
+            // Remove duplicate if exists (same videoId)
+            const filtered = recentlyPlayed.filter(t => t.videoId !== track.videoId);
+            
+            // Add to beginning
+            filtered.unshift({
+                videoId: track.videoId,
+                name: track.name,
+                artist: track.artist || 'Unknown Artist',
+                playedAt: new Date().toISOString()
+            });
+            
+            // Keep only last 20 tracks
+            if (filtered.length > 20) {
+                filtered.pop();
+            }
+            
+            localStorage.setItem('recentlyPlayedTracks', JSON.stringify(filtered));
+            renderQuickOpen();
+        }
+        
+        // Quick play a single track from Recently Played
+        function quickPlayTrack(videoId, name, artist) {
+            const musicWrapper = document.getElementById('musicWrapper');
+            
+            musicWrapper.innerHTML = `
+                <div class="video-container">
+                    <iframe 
+                        src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen
+                        loading="lazy">
+                    </iframe>
+                </div>
+                <div style="text-align: center; margin-top: 10px; padding: 12px; background: rgba(139, 92, 246, 0.15); border-radius: 8px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">NOW PLAYING</div>
+                    <div style="font-size: 14px; font-weight: 600; color: #fff;">${name}</div>
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.7);">${artist}</div>
+                </div>
+            `;
+            
+            // Save this play
+            saveRecentlyPlayed({ videoId, name, artist });
+            
+            // Scroll to player
+            musicWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Get time ago string
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return date.toLocaleDateString();
+        }
+        
+        // Load playlist from history with custom player
+        function loadFromHistory(entryId) {
+            const history = JSON.parse(localStorage.getItem('spotifyConversionHistory') || '[]');
+            const entry = history.find(e => e.id === entryId);
+            
+            if (!entry) {
+                console.error('History entry not found:', entryId);
+                return;
+            }
+            
+            const musicWrapper = document.getElementById('musicWrapper');
+            
+            // If we have track data, load the custom player
+            if (entry.trackData && entry.trackData.foundTracks && entry.trackData.foundTracks.length > 0) {
+                // Set up the playlist data globally
+                window.currentPlaylist = {
+                    tracks: entry.trackData.tracks,
+                    foundTracks: entry.trackData.foundTracks,
+                    currentIndex: 0,
+                    spotifyUrl: entry.spotifyUrl,
+                    type: entry.type
+                };
+                
+                // Render custom player
+                const successCount = entry.trackData.foundTracks.length;
+                const totalTracks = entry.trackData.tracks.length;
+                const successRate = Math.round((successCount / totalTracks) * 100);
+                const failCount = totalTracks - successCount;
+                
+                renderCustomPlayer(successCount, totalTracks, successRate, failCount);
+                
+                // Scroll to player
+                musicWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Show success message
+                const errorMsg = document.getElementById('spotifyError');
+                errorMsg.textContent = `✅ Loaded ${successCount} tracks from history with custom controls!`;
+                errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                errorMsg.style.color = '#10b981';
+                errorMsg.classList.add('show');
+                setTimeout(() => errorMsg.classList.remove('show'), 3000);
+            } else {
+                // Fallback: load the YouTube embed URL
+                const url = entry.youtubeUrl;
+                if (url.includes('youtube.com/embed/')) {
+                    musicWrapper.innerHTML = `
+                        <div class="video-container">
+                            <iframe 
+                                src="${url}${url.includes('?') ? '&' : '?'}autoplay=1" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen
+                                loading="lazy">
+                            </iframe>
+                        </div>
+                        <div style="margin-top: 15px; padding: 12px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.9); text-align: center;">
+                            ⚠️ <strong>Playing from YouTube embed</strong> (older history - no custom controls)
+                        </div>
+                    `;
+                    musicWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+        
+        // Render history items
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('spotifyConversionHistory') || '[]');
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="history-empty">No conversions yet. Convert a Spotify playlist to see it here!</div>';
+                return;
+            }
+            
+            historyList.innerHTML = history.map(entry => {
+                const date = new Date(entry.date);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const hasCustomPlayer = entry.trackData && entry.trackData.foundTracks && entry.trackData.foundTracks.length > 0;
+                
+                return `
+                    <div class="history-item">
+                        <div class="history-item-header">
+                            <span class="history-item-type">${entry.type}</span>
+                            <span class="history-item-date">${formattedDate}</span>
+                        </div>
+                        <div class="history-link-row">
+                            <span class="history-link-label spotify">Spotify:</span>
+                            <span class="history-link-url" title="${entry.spotifyUrl}">${entry.spotifyUrl}</span>
+                            <button class="copy-btn" onclick="copyToClipboard('${entry.spotifyUrl}', this)">📋 Copy</button>
+                        </div>
+                        <div class="history-link-row">
+                            <span class="history-link-label youtube">YouTube:</span>
+                            <span class="history-link-url" title="${entry.youtubeUrl}">${entry.youtubeUrl}</span>
+                            <button class="copy-btn" onclick="copyToClipboard('${entry.youtubeUrl}', this)">📋 Copy</button>
+                            <button class="use-link-btn" onclick="loadFromHistory(${entry.id})">▶ Play</button>
+                        </div>
+                        ${entry.trackCount > 0 ? `<div class="history-track-count">🎵 ${entry.trackCount} tracks ${hasCustomPlayer ? '• ⚡ Custom Player' : ''}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Copy text to clipboard
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✅ Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                button.textContent = '✅ Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = '📋 Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+        
+        // Use YouTube link in the player
+        function useYouTubeLink(url) {
+            // Check if it's a playlist or video
+            const isPlaylist = url.includes('playlist=') || url.includes('list=') || url.includes('videoseries');
+            
+            // Switch to YouTube tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.tab').classList.add('active'); // First tab is YouTube
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('youtube-tab').classList.add('active');
+            
+            // Set the URL and play
+            document.getElementById('youtubeLink').value = url;
+            
+            // If it's already an embed URL, extract the info and create embed directly
+            if (url.includes('youtube.com/embed/')) {
+                const videoWrapper = document.getElementById('youtubeWrapper');
+                videoWrapper.innerHTML = `
+                    <div class="video-container">
+                        <iframe 
+                            src="${url}${url.includes('?') ? '&' : '?'}autoplay=1" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen
+                            loading="lazy">
+                        </iframe>
+                    </div>
+                `;
+            } else {
+                playYouTube();
+            }
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Clear all history
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all conversion history?')) {
+                localStorage.removeItem('spotifyConversionHistory');
+                renderHistory();
+                renderQuickOpen();
+            }
+        }
+    </script>
 </body>
 </html>

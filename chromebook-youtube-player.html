@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Player - Chromebook Compatible</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            gap: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
+            animation: floatingGradient 15s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes floatingGradient {
+            0% { transform: translate(0px, 0px) scale(1); }
+            50% { transform: translate(-30px, -30px) scale(1.1); }
+            100% { transform: translate(30px, -20px) scale(0.95); }
+        }
+        
+        .container {
+            background: rgba(30, 30, 45, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(139, 92, 246, 0.2);
+            padding: 40px;
+            max-width: 1200px;
+            width: 100%;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 30px;
+            font-size: 36px;
+            text-shadow: 0 4px 15px rgba(139, 92, 246, 0.5);
+            background: linear-gradient(135deg, #fff, #e0d4ff, #fff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: shimmerText 4s ease-in-out infinite;
+        }
+        
+        @keyframes shimmerText {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .info-box {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .info-box strong {
+            color: #60a5fa;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tab::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+        
+        .tab:hover {
+            background: rgba(139, 92, 246, 0.15);
+            color: rgba(255, 255, 255, 0.95);
+            transform: translateY(-2px);
+        }
+        
+        .tab:hover::before {
+            width: 100%;
+        }
+        
+        .tab.active {
+            background: rgba(139, 92, 246, 0.25);
+            color: #ffffff;
+            border-bottom: 2px solid #8b5cf6;
+        }
+        
+        .tab.active::before {
+            width: 100%;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            min-width: 300px;
+            padding: 14px 20px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.15);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+        
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        button {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 12px;
+            margin-top: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 12px;
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+            animation: shake 0.5s;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #10b981;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .success.show {
+            display: block;
+        }
+        
+        .instructions {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .instructions h3 {
+            color: #a78bfa;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .instructions ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+        
+        .instructions li {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+        
+        .search-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .search-result-card {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .search-result-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+        
+        .search-result-thumbnail {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .search-result-info {
+            padding: 12px;
+        }
+        
+        .search-result-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .search-result-channel {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 4px;
+        }
+        
+        .search-loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .search-loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(139, 92, 246, 0.2);
+            border-top: 4px solid #8b5cf6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 30px;
+            font-size: 13px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            input[type="text"] {
+                min-width: 100%;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 YouTube Player</h1>
+        
+        <div class="info-box">
+            <strong>📱 Chromebook Compatible!</strong> This page works offline - no extensions or apps needed. 
+            Just open this HTML file directly in Chrome. You can save it to your Downloads folder for easy access.
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('play')">▶️ Play Video</button>
+            <button class="tab" onclick="switchTab('search')">🔍 Search YouTube</button>
+        </div>
+        
+        <!-- Play Video Tab -->
+        <div id="play-tab" class="tab-content active">
+            <div class="instructions">
+                <h3>📺 How to use:</h3>
+                <ul>
+                    <li>Paste any YouTube video link (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ)</li>
+                    <li>Or use short links (e.g., https://youtu.be/dQw4w9WgXcQ)</li>
+                    <li>Or just paste the video ID (e.g., dQw4w9WgXcQ)</li>
+                    <li>Click "Play Video" to watch instantly</li>
+                </ul>
+            </div>
+            
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="videoLink" 
+                    placeholder="Paste YouTube video link or ID here..."
+                    autocomplete="off"
+                >
+                <button onclick="playVideo()">▶️ Play Video</button>
+            </div>
+            
+            <div class="error" id="videoError"></div>
+            <div id="videoWrapper"></div>
+        </div>
+        
+        <!-- Search YouTube Tab -->
+        <div id="search-tab" class="tab-content">
+            <div class="instructions">
+                <h3>🔍 Search YouTube:</h3>
+                <ul>
+                    <li>Enter any search query (music, tutorials, gaming, etc.)</li>
+                    <li>Browse results and click to watch</li>
+                    <li>Works with any YouTube content</li>
+                </ul>
+            </div>
+            
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="searchQuery" 
+                    placeholder="Search YouTube... (e.g., music videos, tutorials)"
+                    autocomplete="off"
+                >
+                <button onclick="searchVideos()">🔍 Search</button>
+            </div>
+            
+            <div class="error" id="searchError"></div>
+            <div class="success" id="searchSuccess"></div>
+            
+            <!-- Search Results -->
+            <div id="searchResults"></div>
+            
+            <!-- Selected Video Player -->
+            <div id="searchVideoWrapper"></div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>💡 Tip: Save this file to your Chromebook for offline YouTube access</p>
+        <p style="margin-top: 8px; opacity: 0.7;">Works on any device with a web browser - no installation required</p>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab + '-tab').classList.add('active');
+        }
+        
+        // Extract YouTube video ID from various URL formats
+        function extractVideoId(url) {
+            let videoId = '';
+            
+            // Handle youtube.com/watch?v=
+            const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/;
+            const youtubeMatch = url.match(youtubeRegex);
+            if (youtubeMatch) {
+                videoId = youtubeMatch[1];
+            }
+            
+            // Handle youtu.be/
+            const shortRegex = /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})/;
+            const shortMatch = url.match(shortRegex);
+            if (shortMatch) {
+                videoId = shortMatch[1];
+            }
+            
+            // Handle just the video ID
+            if (/^[a-zA-Z0-9_-]{11}$/.test(url)) {
+                videoId = url;
+            }
+            
+            return videoId;
+        }
+        
+        function playVideo() {
+            const link = document.getElementById('videoLink').value.trim();
+            const errorMsg = document.getElementById('videoError');
+            const videoWrapper = document.getElementById('videoWrapper');
+            
+            // Clear previous error
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
+            
+            if (!link) {
+                errorMsg.textContent = '❌ Please enter a YouTube link or video ID';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            const videoId = extractVideoId(link);
+            
+            if (!videoId) {
+                errorMsg.textContent = '❌ Invalid YouTube link. Please check and try again.';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            // Create embed iframe
+            const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            videoWrapper.innerHTML = `
+                <div class="video-container">
+                    <iframe 
+                        src="${embedUrl}" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen
+                        loading="lazy">
+                    </iframe>
+                </div>
+            `;
+        }
+        
+        // Simulated search function using YouTube's search page
+        function searchVideos() {
+            const query = document.getElementById('searchQuery').value.trim();
+            const errorMsg = document.getElementById('searchError');
+            const successMsg = document.getElementById('searchSuccess');
+            const resultsContainer = document.getElementById('searchResults');
+            
+            // Clear previous messages
+            errorMsg.classList.remove('show');
+            successMsg.classList.remove('show');
+            errorMsg.textContent = '';
+            successMsg.textContent = '';
+            
+            if (!query) {
+                errorMsg.textContent = '❌ Please enter a search query';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            // Show instructions for manual search
+            resultsContainer.innerHTML = `
+                <div style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 30px; margin-top: 20px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
+                    <h3 style="color: #60a5fa; margin-bottom: 15px; font-size: 20px;">Search for: "${escapeHtml(query)}"</h3>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px; line-height: 1.6;">
+                        Since this is an offline HTML file, we'll open YouTube's search page in a new tab where you can:
+                    </p>
+                    <ul style="text-align: left; max-width: 400px; margin: 0 auto 20px; color: rgba(255,255,255,0.7); line-height: 1.8;">
+                        <li>Browse all search results</li>
+                        <li>Watch any video directly</li>
+                        <li>Access playlists and channels</li>
+                    </ul>
+                    <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(query)}" 
+                       target="_blank" 
+                       style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #ff0000, #cc0000); color: white; text-decoration: none; border-radius: 12px; font-weight: 600; transition: all 0.3s; box-shadow: 0 4px 15px rgba(255, 0, 0, 0.4);"
+                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 0, 0, 0.6)';"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 0, 0, 0.4)';">
+                        🔍 Open YouTube Search
+                    </a>
+                    <p style="color: rgba(255,255,255,0.5); margin-top: 20px; font-size: 13px;">
+                        💡 Tip: Copy the video URL from YouTube and paste it in the "Play Video" tab
+                    </p>
+                </div>
+            `;
+            
+            successMsg.textContent = `✅ Ready to search YouTube for "${query}"`;
+            successMsg.classList.add('show');
+            setTimeout(() => successMsg.classList.remove('show'), 3000);
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Allow pressing Enter to play/search
+        document.getElementById('videoLink').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                playVideo();
+            }
+        });
+        
+        document.getElementById('searchQuery').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                searchVideos();
+            }
+        });
+        
+        // Show welcome message on load
+        window.addEventListener('load', function() {
+            console.log('📱 Chromebook YouTube Player loaded!');
+            console.log('💡 This file works completely offline - no server required!');
+        });
+    </script>
+</body>
+</html>

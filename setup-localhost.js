@@ -263,6 +263,27 @@ function setupDuckMath() {
   return true;
 }
 
+// Clone and setup Seraph
+function setupSeraph() {
+  const seraphPath = path.join(__dirname, '..', 'seraph');
+  
+  if (fs.existsSync(seraphPath)) {
+    console.log('✅ Seraph already exists\n');
+    return true;
+  }
+  
+  console.log('📥 Cloning Seraph repository (this may take a while - 5.68 GiB)...');
+  const parentDir = path.join(__dirname, '..');
+  process.chdir(parentDir);
+  
+  if (!runCommand('git clone --depth 1 https://github.com/Lackstress/seraph.git seraph', 'Cloning Seraph')) {
+    console.log('⚠️  Seraph clone failed - continuing without it\n');
+  }
+  
+  process.chdir(__dirname);
+  return true;
+}
+
 // Start the server
 function startServer() {
   console.log('\n🚀 Starting Gaming Hub Server...\n');
@@ -270,10 +291,11 @@ function startServer() {
   console.log('Server will start on http://localhost:3000');
   console.log('');
   console.log('Available routes:');
-  console.log('  - Landing Page: http://localhost:3000/');
-  console.log('  - GameHub:      http://localhost:3000/ghub');
-  console.log('  - DuckMath:     http://localhost:3000/duckmath');
-  console.log('  - Radon Portal: http://localhost:3000/radon-g3mes');
+  console.log('  - Landing Page:    http://localhost:3000/');
+  console.log('  - GameHub:         http://localhost:3000/ghub');
+  console.log('  - DuckMath:        http://localhost:3000/duckmath');
+  console.log('  - Radon Portal:    http://localhost:3000/radon-g3mes');
+  console.log('  - Seraph:          http://localhost:3000/seraph');
   console.log('');
   console.log('Press Ctrl+C to stop the server');
   console.log('================================\n');
@@ -317,6 +339,9 @@ async function main() {
   
   console.log('Step 6: Setting up DuckMath...\n');
   setupDuckMath();
+  
+  console.log('Step 7: Setting up Seraph...\n');
+  setupSeraph();
   
   console.log('✅ Setup complete!\n');
   console.log('📋 Setup Summary:');
