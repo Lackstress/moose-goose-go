@@ -808,6 +808,17 @@ function injectRadonInterceptor(html) {
   return html.replace('</body>', interceptorScript + '</body>');
 }
 
+// Fix Games link to redirect to working double-prefixed URL
+app.get('/radon-g3mes/games', (req, res) => {
+  res.redirect(301, '/radon-g3mes/radon-g3mes/games');
+});
+
+// Fix Proxy link to redirect to working double-prefixed URL
+app.get('/radon-g3mes/proxy', (req, res) => {
+  res.redirect(301, '/radon-g3mes/radon-g3mes/proxy');
+});
+
+
 // Radon Games CDN proxy - MUST BE FIRST to intercept CDN requests
 app.get('/radon-g3mes/cdn/*', async (req, res) => {
   const cdnPath = req.path.replace('/radon-g3mes/cdn/', '');
@@ -902,11 +913,11 @@ app.get(/^\/radon-g3mes\/.*\.js$/i, async (req, res, next) => {
         return quote + '/radon-g3mes/' + path + quote;
       });
       
-      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-      return res.send(js);
+      res.type('js').send(js);
+      return;
     }
-  } catch (e) {
-    console.error('Failed to serve Radon JS file:', e);
+  } catch (error) {
+    console.error('Error processing JS file:', error);
   }
   next();
 });
@@ -1839,6 +1850,133 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API Routes
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
+
+// Spotify Playlist Search API
+app.get('/media-player/spotify-search', async (req, res) => {
+  const query = req.query.q || req.query.query;
+  const type = req.query.type || 'playlist';
+  const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+  
+  if (!query) {
+    return res.status(400).json({ error: 'Missing search query' });
+  }
+  
+  console.log(`🔍 Searching Spotify for ${type}: "${query}"`);
+  
+  // Note: Playlist search often returns null items due to Spotify API limitations with Client Credentials flow
+  // Tracks and albums work reliably
+  
+  try {
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+    
+    if (!clientId || !clientSecret) {
+      return res.status(500).json({ error: 'Spotify API credentials not configured' });
+    }
+    
+    // Get access token
+    const tokenData = `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}`;
+    const tokenResponse = await new Promise((resolve, reject) => {
+      const tokenReq = https.request({
+        hostname: 'accounts.spotify.com',
+        path: '/api/token',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': tokenData.length
+        }
+      }, (tokenRes) => {
+        let data = '';
+        tokenRes.on('data', chunk => { data += chunk; });
+        tokenRes.on('end', () => {
+          resolve({
+            ok: tokenRes.statusCode >= 200 && tokenRes.statusCode < 300,
+            json: () => Promise.resolve(JSON.parse(data))
+          });
+        });
+      });
+      tokenReq.on('error', reject);
+      tokenReq.write(tokenData);
+      tokenReq.end();
+    });
+    
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to get Spotify access token');
+    }
+    
+    const tokenJson = await tokenResponse.json();
+    const accessToken = tokenJson.access_token;
+    
+    // Search Spotify (add market=US to avoid null items from market restrictions)
+    const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${type}&limit=${limit}&market=US`;
+    const searchResponse = await httpsGet(searchUrl, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    
+    if (!searchResponse.ok) {
+      throw new Error('Spotify search failed');
+    }
+    
+    const searchData = await searchResponse.json();
+    
+    // Format results based on type
+    let results = [];
+    
+    if (type === 'playlist' && searchData.playlists?.items) {
+      results = searchData.playlists.items
+        .filter(p => p && p.id)
+        .map(p => ({
+          id: p.id,
+          name: p.name || 'Unknown Playlist',
+          description: p.description || '',
+          owner: p.owner?.display_name || 'Unknown',
+          image: p.images?.[0]?.url || null,
+          trackCount: p.tracks?.total || 0,
+          url: p.external_urls?.spotify || `https://open.spotify.com/playlist/${p.id}`,
+          type: 'playlist'
+        }));
+    } else if (type === 'album' && searchData.albums?.items) {
+      results = searchData.albums.items
+        .filter(a => a && a.id)
+        .map(a => ({
+          id: a.id,
+          name: a.name || 'Unknown Album',
+          artist: a.artists?.[0]?.name || 'Unknown',
+          image: a.images?.[0]?.url || null,
+          trackCount: a.total_tracks || 0,
+          releaseDate: a.release_date || '',
+          url: a.external_urls?.spotify || `https://open.spotify.com/album/${a.id}`,
+          type: 'album'
+        }));
+    } else if (type === 'track' && searchData.tracks?.items) {
+      results = searchData.tracks.items
+        .filter(t => t && t.id)
+        .map(t => ({
+          id: t.id,
+          name: t.name || 'Unknown Track',
+          artist: t.artists?.[0]?.name || 'Unknown',
+          album: t.album?.name || '',
+          image: t.album?.images?.[0]?.url || null,
+          duration: t.duration_ms,
+          url: t.external_urls?.spotify || `https://open.spotify.com/track/${t.id}`,
+          type: 'track'
+        }));
+    }
+    
+    console.log(`✅ Found ${results.length} ${type}s for "${query}"`);
+    
+    res.json({
+      query,
+      type,
+      results,
+      total: results.length
+    });
+    
+  } catch (error) {
+    console.error('Spotify search error:', error.message);
+    res.status(500).json({ error: 'Failed to search Spotify', details: error.message });
+  }
+});
 
 // Start server
 server.listen(PORT, () => {

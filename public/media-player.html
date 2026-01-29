@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Player - YouTube & Spotify</title>
+    <title>Media Player - Moose Goose Games</title>
     <script src="https://www.youtube.com/iframe_api"></script>
     <style>
         * {
@@ -14,7 +14,7 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            background: linear-gradient(135deg, #050510 0%, #0a0a1f 30%, #0f0f2a 60%, #0a0a1f 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -33,32 +33,73 @@
             right: 0;
             bottom: 0;
             background: 
-                radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
-            animation: floatingGradient 15s ease-in-out infinite alternate;
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 0, 150, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.05) 0%, transparent 60%);
+            animation: floatingGradient 20s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
             pointer-events: none;
             z-index: 0;
         }
         
+        /* Disabled animation - static gradient background */
         @keyframes floatingGradient {
-            0% { transform: translate(0px, 0px) scale(1); }
-            50% { transform: translate(-30px, -30px) scale(1.1); }
-            100% { transform: translate(30px, -20px) scale(0.95); }
+            0%, 100% { transform: translate(0px, 0px) scale(1); }
         }
         
         .container {
-            background: rgba(30, 30, 45, 0.95);
+            background: rgba(10, 10, 25, 0.95);
             backdrop-filter: blur(20px);
             border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(139, 92, 246, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 100px rgba(0, 255, 255, 0.1);
             padding: 40px;
             max-width: 1000px;
             width: 100%;
-            border: 1px solid rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(0, 255, 255, 0.2);
             position: relative;
             z-index: 1;
             animation: fadeInUp 0.6s ease;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ffff, #ff00ff, #00ffff, transparent);
+            animation: scanLine 4s linear infinite;
+        }
+
+        .container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ff00ff, #00ffff, #ff00ff, transparent);
+            animation: scanLine 4s linear infinite reverse;
+        }
+
+        @keyframes scanLine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
         
         @keyframes fadeInUp {
@@ -72,16 +113,62 @@
             }
         }
         
-        /* History Section Styles */
+        /* Main Layout - Sidebar + Content */
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content-area {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* History Section Styles - Futuristic Sidebar */
         .history-container {
-            background: rgba(30, 30, 45, 0.9);
+            width: 320px;
+            flex-shrink: 0;
+            background: rgba(5, 5, 15, 0.95);
+            margin-top: 60px;
             backdrop-filter: blur(20px);
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            padding: 30px;
-            max-width: 1000px;
-            width: 100%;
-            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.1), 0 20px 60px rgba(0, 0, 0, 0.5);
+            padding: 24px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        .history-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ffff, transparent);
+            animation: scanLine 3s linear infinite;
+        }
+
+        .history-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+        }
+
+        .history-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00ffff, #ff00ff);
+            border-radius: 3px;
         }
         
         .history-header {
@@ -89,61 +176,80 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
         }
         
         .history-header h2 {
-            color: #ffffff;
-            font-size: 20px;
+            color: #00ffff;
+            font-size: 16px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
         }
         
         .clear-history-btn {
-            padding: 8px 16px;
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            color: #ef4444;
-            border-radius: 8px;
+            padding: 6px 12px;
+            background: rgba(255, 0, 100, 0.15);
+            border: 1px solid rgba(255, 0, 100, 0.4);
+            color: #ff0064;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 11px;
             transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .clear-history-btn:hover {
-            background: rgba(239, 68, 68, 0.3);
+            background: rgba(255, 0, 100, 0.25);
+            box-shadow: 0 0 15px rgba(255, 0, 100, 0.3);
         }
         
         .history-empty {
             text-align: center;
-            padding: 40px 30px;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 14px;
+            padding: 30px 20px;
+            color: rgba(0, 255, 255, 0.4);
+            font-size: 13px;
         }
         
         .history-empty-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            opacity: 0.4;
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.3));
         }
         
         .history-empty-text {
             font-weight: 600;
-            margin-bottom: 8px;
-            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 6px;
+            color: rgba(0, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 11px;
         }
         
         .history-empty-hint {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.4);
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.3);
         }
         
         .history-item {
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            border-color: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
         }
         
         .history-item:last-child {
@@ -154,38 +260,42 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         
         .history-item-type {
-            background: linear-gradient(135deg, #1db954, #1ed760);
+            background: linear-gradient(135deg, #00ffff, #00cc99);
             color: #000;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .history-item-date {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 12px;
+            color: rgba(0, 255, 255, 0.5);
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
         }
         
         .history-link-row {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 10px 12px;
-            border-radius: 8px;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 255, 0.1);
         }
         
         .history-link-label {
-            font-size: 12px;
-            font-weight: 600;
-            min-width: 70px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .history-link-label.spotify {
@@ -193,64 +303,78 @@
         }
         
         .history-link-label.youtube {
-            color: #ff0000;
+            color: #ff0064;
         }
         
         .history-link-url {
-            flex: 1;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
         }
         
         .copy-btn {
-            padding: 6px 12px;
-            background: rgba(139, 92, 246, 0.3);
-            border: 1px solid rgba(139, 92, 246, 0.5);
-            color: #fff;
-            border-radius: 6px;
+            flex: 1;
+            padding: 6px 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 11px;
+            font-size: 9px;
             transition: all 0.3s;
             white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .copy-btn:hover {
-            background: rgba(139, 92, 246, 0.5);
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
         }
         
         .copy-btn.copied {
-            background: rgba(16, 185, 129, 0.3);
-            border-color: rgba(16, 185, 129, 0.5);
-            color: #10b981;
+            background: rgba(0, 255, 100, 0.2);
+            border-color: rgba(0, 255, 100, 0.5);
+            color: #00ff64;
         }
         
         .use-link-btn {
-            padding: 6px 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            flex: 1;
+            padding: 6px 10px;
+            background: linear-gradient(135deg, #00ffff 0%, #ff00ff 100%);
             border: none;
-            color: #fff;
-            border-radius: 6px;
+            color: #000;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 11px;
+            font-size: 9px;
+            font-weight: 700;
             transition: all 0.3s;
             white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .use-link-btn:hover {
-            opacity: 0.9;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
             transform: translateY(-1px);
         }
         
         .history-track-count {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 10px;
+            color: rgba(0, 255, 255, 0.5);
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(0, 255, 255, 0.1);
+            font-family: 'Courier New', monospace;
         }
         
         /* Quick Open Section */
@@ -652,13 +776,16 @@
             color: #ffffff;
             margin-bottom: 30px;
             font-size: 36px;
-            text-shadow: 0 4px 15px rgba(139, 92, 246, 0.5);
-            background: linear-gradient(135deg, #fff, #e0d4ff, #fff);
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            background: linear-gradient(135deg, #00ffff 0%, #ff00ff 50%, #00ffff 100%);
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-size: 200% 200%;
-            animation: shimmerText 4s ease-in-out infinite;
+            animation: shimmerText 3s ease-in-out infinite;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 900;
         }
         
         @keyframes shimmerText {
@@ -670,13 +797,13 @@
             display: flex;
             gap: 10px;
             margin-bottom: 30px;
-            border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+            border-bottom: 2px solid rgba(0, 255, 255, 0.2);
         }
         
         .tab {
             padding: 12px 24px;
             background: transparent;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.6);
             border: none;
             border-radius: 8px 8px 0 0;
             font-size: 16px;
@@ -685,6 +812,8 @@
             transition: all 0.3s;
             position: relative;
             overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .tab::before {
@@ -694,14 +823,15 @@
             left: 0;
             width: 0%;
             height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            background: linear-gradient(90deg, #00ffff, #ff00ff);
             transition: width 0.3s ease;
         }
         
         .tab:hover {
-            background: rgba(139, 92, 246, 0.15);
-            color: rgba(255, 255, 255, 0.95);
+            background: rgba(0, 255, 255, 0.1);
+            color: #00ffff;
             transform: translateY(-2px);
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
         }
         
         .tab:hover::before {
@@ -709,9 +839,10 @@
         }
         
         .tab.active {
-            background: rgba(139, 92, 246, 0.25);
-            color: #ffffff;
-            border-bottom: 2px solid #8b5cf6;
+            background: rgba(0, 255, 255, 0.15);
+            color: #00ffff;
+            border-bottom: 2px solid #00ffff;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
         }
         
         .tab.active::before {
@@ -735,19 +866,19 @@
         input[type="text"] {
             flex: 1;
             padding: 14px 20px;
-            border: 2px solid rgba(139, 92, 246, 0.25);
+            border: 2px solid rgba(0, 255, 255, 0.2);
             border-radius: 50px;
             font-size: 15px;
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.4);
             color: #ffffff;
             transition: all 0.3s;
         }
         
         input[type="text"]:focus {
             outline: none;
-            border-color: rgba(139, 92, 246, 0.6);
-            background: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+            border-color: #00ffff;
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2), inset 0 0 10px rgba(0, 255, 255, 0.05);
         }
         
         input[type="text"]::placeholder {
@@ -756,22 +887,24 @@
         
         button {
             padding: 14px 32px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, #00ffff 0%, #ff00ff 100%);
+            color: #000;
             border: none;
             border-radius: 50px;
             font-size: 15px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
             position: relative;
             overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         button:hover:not(:disabled) {
             transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5), 0 0 30px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 12px 35px rgba(0, 255, 255, 0.4), 0 0 40px rgba(255, 0, 255, 0.2);
         }
         
         button:active:not(:disabled) {
@@ -911,27 +1044,32 @@
         }
         
         .back-link {
-            position: absolute;
+            position: fixed;
             top: 20px;
             left: 20px;
-            color: rgba(255, 255, 255, 0.9);
+            color: #00ffff;
             text-decoration: none;
             font-size: 14px;
             font-weight: 600;
             transition: all 0.3s;
             padding: 10px 18px;
-            background: rgba(139, 92, 246, 0.2);
-            border: 1px solid rgba(139, 92, 246, 0.4);
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.4);
             border-radius: 25px;
             display: flex;
             align-items: center;
             gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 100;
         }
         
         .back-link:hover {
             color: #ffffff;
-            background: rgba(139, 92, 246, 0.4);
+            background: rgba(0, 255, 255, 0.2);
             transform: translateX(-3px);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
         }
         
         .spotify-info {
@@ -1027,7 +1165,138 @@
         .music-section.active {
             display: block;
         }
+
+        /* Spotify Search Styles */
+        .spotify-search-filters {
+            display: flex;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filter-btn:hover {
+            border-color: rgba(0, 255, 255, 0.5);
+            color: #00ffff;
+        }
+
+        .filter-btn.active {
+            background: rgba(0, 255, 255, 0.15);
+            border-color: #00ffff;
+            color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .spotify-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .spotify-result-card {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .spotify-result-card:hover {
+            transform: translateY(-4px);
+            border-color: #00ffff;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+        }
+
+        .spotify-result-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .spotify-result-info {
+            padding: 12px;
+        }
+
+        .spotify-result-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .spotify-result-meta {
+            font-size: 11px;
+            color: rgba(0, 255, 255, 0.6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .spotify-result-type {
+            background: linear-gradient(135deg, #00ffff, #00cc99);
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .spotify-result-count {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .spotify-search-loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(0, 255, 255, 0.7);
+        }
+
+        .spotify-search-loading .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 255, 0.2);
+            border-top: 3px solid #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
         
+        @media (max-width: 1100px) {
+            .main-layout {
+                flex-direction: column;
+            }
+
+            .history-container {
+                width: 100%;
+                position: static;
+                max-height: none;
+                order: 2;
+            }
+
+            .content-area {
+                order: 1;
+            }
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 25px;
@@ -1055,6 +1324,23 @@
 <body>
     <a href="/" class="back-link">← Back to Hub</a>
     
+    <div class="main-layout">
+    <!-- Conversion History Sidebar -->
+    <div class="history-container" id="historyContainer">
+        <div class="history-header">
+            <h2>📜 History</h2>
+            <button class="clear-history-btn" onclick="clearHistory()">Clear</button>
+        </div>
+        <div id="historyList">
+            <div class="history-empty">
+                <div class="history-empty-icon">⚡</div>
+                <div class="history-empty-text">No conversions yet</div>
+                <div class="history-empty-hint">Convert a Spotify link to get started</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-area">
     <div class="container">
         <h1>🎬 Media Player</h1>
         
@@ -1152,7 +1438,8 @@
             
             <div class="music-source-tabs">
                 <button class="music-tab active" onclick="switchMusicSource('youtube-music')">🎵 YouTube Music</button>
-                <button class="music-tab" onclick="switchMusicSource('spotify')">🎵 Spotify</button>
+                <button class="music-tab" onclick="switchMusicSource('spotify')">🎵 Spotify Link</button>
+                <button class="music-tab" onclick="switchMusicSource('spotify-search')">🔍 Search Spotify</button>
                 <button class="music-tab" onclick="switchMusicSource('soundcloud')">🎧 SoundCloud</button>
             </div>
             
@@ -1196,6 +1483,26 @@
                 </div>
             </div>
             
+            <!-- Spotify Search Section -->
+            <div id="spotify-search-section" class="music-section">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="spotifySearchQuery" 
+                        placeholder="Search for playlists, albums, or artists..."
+                        autocomplete="off"
+                        onkeypress="if(event.key==='Enter')searchSpotify()"
+                    >
+                    <button onclick="searchSpotify()" id="spotifySearchBtn">🔍 Search</button>
+                </div>
+                <div class="spotify-search-filters">
+                    <button class="filter-btn active" onclick="setSpotifySearchType('track', this)">🎵 Tracks</button>
+                    <button class="filter-btn" onclick="setSpotifySearchType('album', this)">💿 Albums</button>
+                </div>
+                <div class="error" id="spotifySearchError"></div>
+                <div id="spotifySearchResults"></div>
+            </div>
+            
             <!-- SoundCloud Section -->
             <div id="soundcloud-section" class="music-section">
                 <div class="input-group">
@@ -1214,21 +1521,8 @@
             <div id="musicWrapper"></div>
         </div>
     </div>
-
-    <!-- Conversion History Section -->
-    <div class="history-container" id="historyContainer">
-        <div class="history-header">
-            <h2>📜 Conversion History</h2>
-            <button class="clear-history-btn" onclick="clearHistory()">🗑️ Clear All</button>
-        </div>
-        <div id="historyList">
-            <div class="history-empty">
-                <div class="history-empty-icon">📄</div>
-                <div class="history-empty-text">Your conversions will appear here</div>
-                <div class="history-empty-hint">Paste a Spotify link above to get started</div>
-            </div>
-        </div>
-    </div>
+    </div><!-- end content-area -->
+    </div><!-- end main-layout -->
 
     <script>
         // Helper functions for micro-interactions
@@ -1425,21 +1719,127 @@
             // Update music source buttons
             document.querySelectorAll('.music-tab').forEach(t => t.classList.remove('active'));
             
-            // Find and activate the correct tab button
+            // Find and activate the correct tab button - use onclick attribute matching
             const buttons = document.querySelectorAll('.music-tab');
             buttons.forEach(btn => {
-                if (btn.textContent.includes(source === 'youtube-music' ? 'YouTube Music' : 
-                    source === 'spotify' ? 'Spotify' : 'SoundCloud')) {
+                const onclick = btn.getAttribute('onclick') || '';
+                if (onclick.includes(`'${source}'`)) {
                     btn.classList.add('active');
                 }
             });
             
             // Update music sections
             document.querySelectorAll('.music-section').forEach(s => s.classList.remove('active'));
-            document.getElementById(source + '-section').classList.add('active');
+            const section = document.getElementById(source + '-section');
+            if (section) section.classList.add('active');
             
             // Clear previous content
             document.getElementById('musicWrapper').innerHTML = '';
+        }
+
+        // Spotify Search Functions
+        let spotifySearchType = 'track';
+        
+        function setSpotifySearchType(type, btn) {
+            spotifySearchType = type;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        
+        async function searchSpotify() {
+            const query = document.getElementById('spotifySearchQuery').value.trim();
+            const errorMsg = document.getElementById('spotifySearchError');
+            const resultsContainer = document.getElementById('spotifySearchResults');
+            const btn = document.getElementById('spotifySearchBtn');
+            
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
+            
+            if (!query) {
+                errorMsg.textContent = '❌ Please enter a search query';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            setButtonLoading(btn, true);
+            
+            resultsContainer.innerHTML = `
+                <div class="spotify-search-loading">
+                    <div class="spinner"></div>
+                    <div>Searching Spotify for "${query}"...</div>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(`/media-player/spotify-search?q=${encodeURIComponent(query)}&type=${spotifySearchType}&limit=20`);
+                const data = await response.json();
+                
+                setButtonLoading(btn, false);
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                if (data.results && data.results.length > 0) {
+                    displaySpotifyResults(data.results);
+                    setButtonSuccess(btn, '✓ Found!');
+                } else {
+                    resultsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: rgba(0, 255, 255, 0.5);">
+                            <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
+                            <div style="font-size: 14px;">No ${spotifySearchType}s found for "${query}"</div>
+                            <div style="font-size: 12px; margin-top: 10px; opacity: 0.7;">Try different search terms</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Spotify search error:', error);
+                setButtonLoading(btn, false);
+                resultsContainer.innerHTML = '';
+                errorMsg.textContent = '❌ ' + (error.message || 'Failed to search Spotify');
+                errorMsg.classList.add('show');
+            }
+        }
+        
+        function displaySpotifyResults(results) {
+            const resultsContainer = document.getElementById('spotifySearchResults');
+            
+            resultsContainer.innerHTML = `
+                <div class="spotify-results-grid">
+                    ${results.map(item => `
+                        <div class="spotify-result-card" onclick="selectSpotifyResult('${item.url}', '${escapeHtml(item.name)}')">
+                            <img src="${item.image || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%2300ffff10%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%2300ffff%22 font-size=%2240%22%3E🎵%3C/text%3E%3C/svg%3E'}" 
+                                 alt="${escapeHtml(item.name)}" 
+                                 class="spotify-result-image" 
+                                 loading="lazy"
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%2300ffff10%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%2300ffff%22 font-size=%2240%22%3E🎵%3C/text%3E%3C/svg%3E'">
+                            <div class="spotify-result-info">
+                                <div class="spotify-result-name" title="${escapeHtml(item.name)}">${item.name}</div>
+                                <div class="spotify-result-meta">
+                                    <span class="spotify-result-type">${item.type}</span>
+                                    <span class="spotify-result-count">
+                                        ${item.trackCount ? item.trackCount + ' tracks' : ''}
+                                        ${item.owner ? 'by ' + item.owner : ''}
+                                        ${item.artist ? item.artist : ''}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function selectSpotifyResult(url, name) {
+            // Switch to Spotify Link tab and paste the URL
+            switchMusicSource('spotify');
+            document.getElementById('spotifyLink').value = url;
+            showSuccessToast(`✓ Selected: ${name}`);
+            
+            // Auto-convert after short delay
+            setTimeout(() => {
+                playSpotify();
+            }, 500);
         }
 
         // YouTube Functions
