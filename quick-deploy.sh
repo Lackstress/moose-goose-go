@@ -84,22 +84,9 @@ if [ -f "database/games.db.backup" ]; then
     echo "✅ Database restored"
 fi
 
-# Clone DuckMath in parent directory
-echo "📦 Setting up DuckMath games..."
-cd ..
-if [ ! -d "duckmath" ]; then
-    echo "   Cloning DuckMath repository..."
-    timeout 300 git clone --depth 1 https://github.com/duckmath/duckmath.github.io.git duckmath || echo "⚠️  DuckMath clone failed or timed out, continuing..."
-else
-    echo "   Updating DuckMath..."
-    (cd duckmath && timeout 120 git pull --ff-only 2>&1 </dev/null) || echo "⚠️  DuckMath update failed, continuing..."
-fi
-
-# Install DuckMath dependencies only if it is a Node project
-if [ -f "duckmath/package.json" ]; then
-    echo "📦 Installing DuckMath dependencies..."
-    (cd duckmath && npm install) || echo "⚠️  DuckMath npm install failed, continuing..."
-fi
+# DuckMath setup skipped - original repository no longer exists
+# DuckMath will be served from existing installation on VM
+echo "📦 DuckMath: Using existing installation (original repo unavailable)"
 
 # Clone and build Radon Games
 echo "⚡ Setting up Radon Games..."

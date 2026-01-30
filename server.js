@@ -267,6 +267,16 @@ app.get('/games', (req, res) => {
   `);
 });
 
+// ===== WEBPACK DEV SERVER PROXY (for DuckMath) =====
+// DuckMath may have webpack dev server connections - silently handle these to prevent 404 errors
+app.get('/ws/info', (req, res) => {
+  res.json({ type: 'c', version: '1' });
+});
+
+app.post('/ws/info', (req, res) => {
+  res.json({ type: 'c', version: '1' });
+});
+
 // ===== DUCK MATH ROUTES =====
 // Note: deploy.sh clones DuckMath to the parent directory of this repo
 // so we intentionally resolve to '../duckmath' here. For local dev, we also

@@ -100,18 +100,10 @@ echo -e "${YELLOW}🛑 Stopping existing PM2 process (if any)...${NC}"
 pm2 delete games-hub 2>/dev/null || true
 
 ##############################################
-# Step 5.5/10: Clone/Update DuckMath
+# Step 5.5/10: DuckMath Setup (Using Existing)
 ##############################################
-echo -e "${GREEN}📦 Step 5.5/10: Cloning/Updating DuckMath games...${NC}"
-cd "${REPO_DIR}"
-cd ..
-if [ ! -d "duckmath" ]; then
-    echo -e "${YELLOW}   Cloning DuckMath repository...${NC}"
-    timeout 300 git clone --depth 1 https://github.com/duckmath/duckmath.github.io.git duckmath || echo -e "${YELLOW}⚠️  DuckMath clone failed or timed out, continuing...${NC}"
-else
-    echo -e "${YELLOW}   Updating DuckMath repository...${NC}"
-    (cd duckmath && timeout 120 git pull --ff-only) || echo -e "${YELLOW}⚠️  DuckMath update failed or timed out, continuing...${NC}"
-fi
+echo -e "${GREEN}📦 Step 5.5/10: DuckMath setup...${NC}"
+echo -e "${YELLOW}   DuckMath: Using existing installation (original repo unavailable)${NC}"
 echo -e "${GREEN}   ✅ DuckMath ready${NC}"
 
 ##############################################
