@@ -88,6 +88,19 @@ fi
 # DuckMath will be served from existing installation on VM
 echo "📦 DuckMath: Using existing installation (original repo unavailable)"
 
+# Clone Lunaar
+echo "🌙 Setting up Lunaar gaming hub..."
+if [ ! -d "lunaar.org-main" ]; then
+    echo "📥 Cloning Lunaar..."
+    timeout 300 git clone --depth 1 https://github.com/parcoil/lunaar.org.git lunaar.org-main || echo "⚠️  Lunaar clone failed or timed out, continuing without Lunaar..."
+else
+    echo "🔄 Updating Lunaar..."
+    (cd lunaar.org-main && timeout 120 git pull --ff-only 2>&1 </dev/null) || echo "⚠️  Lunaar update failed, using existing version..."
+fi
+if [ -d "lunaar.org-main" ]; then
+    echo "✅ Lunaar ready"
+fi
+
 # Clone Seraph
 echo "📦 Setting up Seraph gaming hub..."
 if [ ! -d "seraph" ]; then
@@ -228,6 +241,9 @@ echo "📍 Available Routes:"
 echo "  • https://$DOMAIN/ - Landing page (hub selector)"
 echo "  • https://$DOMAIN/ghub - Custom GameHub"
 echo "  • https://$DOMAIN/duckmath - DuckMath educational games"
+if [ -d "../lunaar.org-main" ]; then
+    echo "  • https://$DOMAIN/lunaar - Lunaar (350+ games + proxy)"
+fi
 if [ -d "../seraph" ]; then
     echo "  • https://$DOMAIN/seraph - Seraph (350+ games)"
 fi

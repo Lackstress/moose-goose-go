@@ -952,6 +952,34 @@
         <a href="/duckmath" class="platform-btn" id="btn-duckmath">🦆 Play DuckMath</a>
       </div>
 
+      <!-- Lunaar Card -->
+      <div class="platform-card compact">
+        <div class="card-header" onclick="toggleCardDetails(this)">
+          <span class="platform-icon">🌙</span>
+          <div class="platform-title">Lunaar</div>
+          <span class="expand-arrow">▼</span>
+        </div>
+        <div class="platform-description">The future of unblocked gaming with 350+ games and built-in proxy</div>
+        <div class="card-details">
+          <ul class="feature-list">
+            <li>350+ Built-in Games</li>
+            <li>Built-in Web Proxy</li>
+            <li>AI Chatbot Assistant</li>
+            <li>Tab Cloaking & Panic Key</li>
+            <li>Theme Support</li>
+            <li>Modern UI - No Ads</li>
+          </ul>
+          <div class="hub-controls">
+            <label class="toggle-switch">
+              <input type="checkbox" id="cloak-lunaar" onchange="toggleCloak('lunaar', this.checked)">
+              <span class="slider"></span>
+              <span class="toggle-label">Hide URL</span>
+            </label>
+          </div>
+        </div>
+        <a href="/lunaar" class="platform-btn" id="btn-lunaar">🌙 Play Lunaar</a>
+      </div>
+
       <!-- Seraph Card -->
       <div class="platform-card compact">
         <div class="card-header" onclick="toggleCardDetails(this)">
@@ -1008,7 +1036,7 @@
 
     <div class="footer">
       <p>🦌🦆 Moose Goose Games</p>
-      <p style="margin-top: 12px; opacity: 0.7;">🎮 GameHub • 🦆 DuckMath • 👼 Seraph</p>
+      <p style="margin-top: 12px; opacity: 0.7;">🎮 GameHub • 🦆 DuckMath • 🌙 Lunaar • 👼 Seraph</p>
       <p style="margin-top: 8px; font-size: 0.75rem; opacity: 0.4;">© 2025 Moose Goose Games — Play Anytime, Anywhere</p>
     </div>
   </div>
@@ -1016,7 +1044,7 @@
   <script>
     // Pick random hub function
     function pickRandomHub() {
-      const hubs = ['/ghub', '/duckmath', '/seraph'];
+      const hubs = ['/ghub', '/duckmath', '/lunaar', '/seraph'];
       const randomHub = hubs[Math.floor(Math.random() * hubs.length)];
       window.location.href = randomHub;
     }
@@ -1035,6 +1063,7 @@
     const hubUrls = {
       'ghub': '/ghub',
       'duckmath': '/duckmath',
+      'lunaar': '/lunaar',
       'seraph': '/seraph'
     };
 
