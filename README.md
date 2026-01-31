@@ -9,13 +9,13 @@ A unified gaming platform hosting three major game hubs with 200+ games total.
 | Component | Status | Details |
 |-----------|--------|---------|
 | **GameHub** | ✅ **FULLY WORKING** | All 16 custom games functional |
-| **Radon Portal** | ⚠️ Partial | Main site loads, routing needs fix |
-| **DuckMath** | ❌ Not Available | Repository not accessible |
+| **DuckMath** | ✅ Working | Educational games hub |
+| **Seraph** | ✅ Working | 350+ offline games |
 
 **Quick Summary:**
 - ✅ **16 custom games ready to play** at `/ghub`
-- ⚠️ Radon Games cloned but has routing issues
-- ❌ DuckMath repository not found (gracefully handled)
+- ✅ DuckMath educational games at `/duckmath`
+- ✅ Seraph with 350+ games at `/seraph`
 
 ## 🚀 Quick Start (Localhost)
 
@@ -38,8 +38,7 @@ node setup-localhost.js
 
 This will:
 - ✅ Install all dependencies
-- ✅ Clone and setup Radon Games (if not already present)
-- ⚠️ Attempt to clone DuckMath (may fail - repo not accessible)
+- ✅ Setup DuckMath and Seraph hubs
 - ✅ Build all required projects
 - ✅ Start the server on http://localhost:3000
 
@@ -87,18 +86,16 @@ Access at: **http://localhost:3000**
 
 ---
 
-### 3. **Radon Portal**
-**Route:** `/radon-g3mes`
+### 3. **Seraph Games**
+**Route:** `/seraph`
 
 **Features:**
-- Flash games collection
-- Built-in web proxy
-- Tab cloaking & privacy tools
-- Search functionality
-- Modern dark UI
+- 350+ offline-ready games
+- Emulators for classic consoles
 - No ads or tracking
+- Works offline
 
-**Credits:** [Radon Games](https://github.com/Radon-Games/Radon-Games)
+**Credits:** [Seraph](https://github.com/Lackstress/seraph)
 
 ---
 

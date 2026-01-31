@@ -88,88 +88,6 @@ fi
 # DuckMath will be served from existing installation on VM
 echo "📦 DuckMath: Using existing installation (original repo unavailable)"
 
-# Clone and build Radon Games
-echo "⚡ Setting up Radon Games..."
-
-# Install pnpm if not already installed
-if ! command -v pnpm &> /dev/null; then
-    echo "📦 Installing pnpm..."
-    sudo npm install -g pnpm
-fi
-
-if [ ! -d "radon-games" ]; then
-    echo "📥 Cloning Radon Games repository (this may take a minute)..."
-    timeout 300 git clone --depth 1 https://github.com/Radon-Games/Radon-Games.git radon-games || {
-        echo "❌ Radon Games clone failed or timed out"
-        exit 1
-    }
-else
-    echo "🔄 Updating Radon Games..."
-    cd radon-games
-    git reset --hard HEAD
-    timeout 120 git pull || echo "⚠️  Update failed or timed out, using existing version..."
-    cd ..
-fi
-
-cd radon-games
-
-echo "🔧 Applying configuration patches for /radon-g3mes path..."
-
-# Always reset files to ensure clean patching
-git checkout vite.config.ts src/main.tsx 'src/routes/game/$gameid.tsx' src/components/GameCard.tsx 2>/dev/null || true
-
-# Patch vite.config.ts - add base path
-sed -i '/export default defineConfig({/a\  base: "/radon-g3mes/",' vite.config.ts
-echo "  ✓ vite.config.ts patched (base: '/radon-g3mes/')"
-
-# Patch src/main.tsx - add basepath to router
-# Original: const router = createRouter({ routeTree, defaultPreload: "viewport" });
-# Target:   const router = createRouter({ routeTree, defaultPreload: "viewport", basepath: "/radon-g3mes" });
-sed -i 's/const router = createRouter({ routeTree, defaultPreload: "viewport" });/const router = createRouter({ routeTree, defaultPreload: "viewport", basepath: "\/radon-g3mes" });/' src/main.tsx
-echo "  ✓ src/main.tsx patched (basepath: '/radon-g3mes')"
-
-# Patch src/routes/game/$gameid.tsx - change CDN path for game iframes
-sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' 'src/routes/game/$gameid.tsx'
-echo "  ✓ src/routes/game/\$gameid.tsx patched (CDN paths)"
-
-# Patch src/components/GameCard.tsx - change CDN path for images
-sed -i 's|src={`/cdn/|src={`/radon-g3mes/cdn/|g' src/components/GameCard.tsx
-echo "  ✓ src/components/GameCard.tsx patched (CDN paths)"
-
-# Add missing search.tsx route (bug in upstream Radon Games)
-echo "🔍 Installing missing search.tsx route..."
-cp "$REPO_DIR/radon-search.tsx" src/routes/search.tsx
-echo "  ✓ src/routes/search.tsx installed"
-
-echo "📦 Installing Radon Games dependencies (3-5 minutes)..."
-# Limit memory usage and network concurrency for low-memory VMs
-timeout 600 bash -c "NODE_OPTIONS='--max-old-space-size=1024' pnpm install --no-frozen-lockfile --network-concurrency=1" || {
-    echo "❌ Radon dependency installation failed or timed out"
-    exit 1
-}
-echo "✅ Dependencies installed"
-
-echo "🔨 Generating route tree..."
-# Force regenerate route tree with TypeScript compiler
-timeout 120 bash -c "NODE_OPTIONS='--max-old-space-size=1024' pnpm exec tsc --noEmit false" || echo "⚠️  TSC completed with warnings, continuing..."
-
-echo "🔨 Building Radon Games (2-3 minutes)..."
-# Limit memory usage during build
-timeout 600 bash -c "NODE_OPTIONS='--max-old-space-size=1024' pnpm run build" || {
-    echo "❌ Radon build failed or timed out"
-    exit 1
-}
-
-echo "✅ Radon Games built successfully"
-cd ..
-
-# Verify Radon Games build
-if [ ! -d "radon-games/dist" ]; then
-    echo "❌ Error: Radon Games build failed - dist folder not found"
-    exit 1
-fi
-echo "✅ Radon Games dist folder verified"
-
 # Clone Seraph
 echo "📦 Setting up Seraph gaming hub..."
 if [ ! -d "seraph" ]; then
@@ -310,7 +228,6 @@ echo "📍 Available Routes:"
 echo "  • https://$DOMAIN/ - Landing page (hub selector)"
 echo "  • https://$DOMAIN/ghub - Custom GameHub"
 echo "  • https://$DOMAIN/duckmath - DuckMath educational games"
-echo "  • https://$DOMAIN/radon-g3mes - Radon Games (200+ games)"
 if [ -d "../seraph" ]; then
     echo "  • https://$DOMAIN/seraph - Seraph (350+ games)"
 fi

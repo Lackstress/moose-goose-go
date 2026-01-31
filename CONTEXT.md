@@ -14,8 +14,7 @@ This is a Node.js/Express server that hosts multiple game hub platforms under a 
 
 1. **GameHub** (`/ghub`) - Main custom game collection
 2. **DuckMath** (`/duckmath`) - Educational math games
-3. **Radon Portal** (`/radon-g3mes`) - Radon Games portal
-4. **Seraph** (`/seraph`) - 500+ games with clean UI (Fork: Lackstress/seraph)
+3. **Seraph** (`/seraph`) - 500+ games with clean UI (Fork: Lackstress/seraph)
 5. **Landing Page** (`/`) - Hub selector/portal
 
 ### Server Details
@@ -49,7 +48,6 @@ moose-goose-go/
 │   ├── games/            # Custom GameHub games
 │   └── js/               # Shared JavaScript
 ├── ../duckmath/          # DuckMath hub (git clone)
-├── ../radon-g3mes/       # Radon Portal hub (git clone)
 └── ../seraph/            # Seraph hub (git clone from Lackstress/seraph)
 ```
 
@@ -242,7 +240,6 @@ console.log(`🎮 GameHub server running on port ${PORT}`);
 console.log(`🌐 Landing page: http://localhost:${PORT}/`);
 console.log(`🎰 GameHub: http://localhost:${PORT}/ghub`);
 console.log(`🦆 DuckMath: http://localhost:${PORT}/duckmath`);
-console.log(`⚡ Radon Portal: http://localhost:${PORT}/radon-g3mes`);
 console.log(`👼 Seraph: http://localhost:${PORT}/seraph`);
 console.log(`🎯 NewHub: http://localhost:${PORT}/newhub`);  // Add this
 ```
@@ -348,7 +345,6 @@ node server.js
 
 ### Hub Directories (Parent of Workspace)
 - `C:\Users\LAPTOP\Downloads\duckmath\`
-- `C:\Users\LAPTOP\Downloads\radon-g3mes\`
 - `C:\Users\LAPTOP\Downloads\seraph\`
 
 ### Landing Page
@@ -411,10 +407,6 @@ Select-String -Path "file.html" -Pattern "search term"
   - Thumbnails use absolute paths `/seraph/images/...`
   - Homepage link needs `../../index.html`
 
-### Radon Portal
-- **Route:** `/radon-g3mes`
-- **Special Character:** Hyphen in route name
-- **No subdirectories:** Single-level structure
 
 ### DuckMath
 - **Purpose:** Educational math games
