@@ -443,24 +443,6 @@ const serveDuckmathIndex = (req, res) => {
               }
               return originalOpen.call(this, method, url, ...args);
             };
-            
-            // Intercept fetch requests to fix API calls and asset loading
-            var originalFetch = window.fetch;
-            window.fetch = function(url, options) {
-              if (typeof url === 'string' && url.startsWith('/') && !shouldExclude(url)) {
-                url = basePath + url;
-              }
-              return originalFetch.call(this, url, options);
-            };
-            
-            // Fix XMLHttpRequest for legacy AJAX
-            var originalOpen = XMLHttpRequest.prototype.open;
-            XMLHttpRequest.prototype.open = function(method, url, ...args) {
-              if (typeof url === 'string' && url.startsWith('/') && !shouldExclude(url)) {
-                url = basePath + url;
-              }
-              return originalOpen.call(this, method, url, ...args);
-            };
           })();
         </script>
       `;
@@ -564,7 +546,22 @@ app.get(/^\/duckmath\/.*\.js$/i, async (req, res, next) => {
 });
 
 // Serve static assets (excluding index.html which we handle above)
-app.use('/duckmath', express.static(duckmathPath, { index: false }));
+app.use('/duckmath', express.static(duckmathPath, { 
+  index: false,
+  setHeaders: (res, filePath) => {
+    // Ensure proper MIME types for all assets
+    if (filePath.endsWith('.png')) res.setHeader('Content-Type', 'image/png');
+    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) res.setHeader('Content-Type', 'image/jpeg');
+    if (filePath.endsWith('.gif')) res.setHeader('Content-Type', 'image/gif');
+    if (filePath.endsWith('.svg')) res.setHeader('Content-Type', 'image/svg+xml');
+    if (filePath.endsWith('.webp')) res.setHeader('Content-Type', 'image/webp');
+    if (filePath.endsWith('.ico')) res.setHeader('Content-Type', 'image/x-icon');
+    if (filePath.endsWith('.woff') || filePath.endsWith('.woff2')) res.setHeader('Content-Type', 'font/woff2');
+    if (filePath.endsWith('.ttf')) res.setHeader('Content-Type', 'font/ttf');
+    // Allow iframes for games
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  }
+}));
 // Catch-all for DuckMath subdirectories that need index.html (like /duckmath/g4m3s/)
 app.get('/duckmath/*', (req, res, next) => {
   const fs = require('fs');
@@ -932,8 +929,27 @@ app.get(/^\/radon-g3mes\/.*\.js$/i, async (req, res, next) => {
   next();
 });
 
-// Radon Games assets - serve ONLY /assets/ folder, not everything
-app.use('/radon-g3mes/assets', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'assets')));
+// Radon Games assets - serve static files with proper MIME types
+app.use('/radon-g3mes/assets', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'assets'), {
+  setHeaders: (res, filePath) => {
+    // Ensure proper MIME types for images
+    if (filePath.endsWith('.png')) res.setHeader('Content-Type', 'image/png');
+    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) res.setHeader('Content-Type', 'image/jpeg');
+    if (filePath.endsWith('.gif')) res.setHeader('Content-Type', 'image/gif');
+    if (filePath.endsWith('.svg')) res.setHeader('Content-Type', 'image/svg+xml');
+    if (filePath.endsWith('.webp')) res.setHeader('Content-Type', 'image/webp');
+    if (filePath.endsWith('.ico')) res.setHeader('Content-Type', 'image/x-icon');
+  }
+}));
+
+// Radon Games - serve game files from games directory
+app.use('/radon-g3mes/games', express.static(path.join(__dirname, '..', 'radon-games', 'dist', 'games'), {
+  setHeaders: (res, filePath) => {
+    // Allow iframes to load game content
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+  }
+}));
 
 // ----- Radon fallback helpers -----
 function generateGameList() {
