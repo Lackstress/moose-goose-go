@@ -107,24 +107,7 @@ echo -e "${YELLOW}   DuckMath: Using existing installation (original repo unavai
 echo -e "${GREEN}   ✅ DuckMath ready${NC}"
 
 ##############################################
-# Step 5.6/10: Clone/Update Lunaar
-##############################################
-echo -e "${GREEN}🌙 Step 5.6/10: Cloning/Updating Lunaar...${NC}"
-if [ ! -d "lunaar.org-main" ]; then
-    echo -e "${YELLOW}   Cloning Lunaar...${NC}"
-    timeout 300 git clone --depth 1 https://github.com/parcoil/lunaar.org.git lunaar.org-main || {
-        echo -e "${YELLOW}⚠️  Lunaar clone failed or timed out, continuing without Lunaar...${NC}"
-    }
-else
-    echo -e "${YELLOW}   Updating Lunaar...${NC}"
-    (cd lunaar.org-main && timeout 120 git pull --ff-only) || echo -e "${YELLOW}⚠️  Lunaar update failed, using existing version...${NC}"
-fi
-if [ -d "lunaar.org-main" ]; then
-    echo -e "${GREEN}   ✅ Lunaar ready${NC}"
-fi
-
-##############################################
-# Step 5.7/10: Clone/Update Seraph
+# Step 5.6/10: Clone/Update Seraph
 ##############################################
 echo -e "${GREEN}📦 Step 5.7/10: Cloning/Updating Seraph gaming hub...${NC}"
 if [ ! -d "seraph" ]; then
@@ -318,9 +301,6 @@ echo -e "${YELLOW}📍 Available Routes:${NC}"
 echo -e "   • https://$DOMAIN/ - Landing page (hub selector)"
 echo -e "   • https://$DOMAIN/ghub - Custom GameHub"
 echo -e "   • https://$DOMAIN/duckmath - DuckMath educational games"
-if [ -d "../lunaar.org-main" ]; then
-    echo -e "   • https://$DOMAIN/lunaar - Lunaar (350+ games + proxy)"
-fi
 if [ -d "../seraph" ]; then
     echo -e "   • https://$DOMAIN/seraph - Seraph (350+ games)"
 fi
