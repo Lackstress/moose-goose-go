@@ -607,20 +607,90 @@
       updateAuthUI();
       setupSocketListeners();
       setupChatInput();
+      checkRoomId();
     });
+
+    function checkRoomId() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomId = urlParams.get('roomId');
+      if (roomId) {
+        const joinRoomWhenReady = () => {
+          if (currentUser) {
+            gameState.roomId = roomId;
+            gameState.gameMode = 'online';
+
+            // Notify server that we are joining this room from the game iframe
+            socket.emit('join-room', {
+              roomId: roomId,
+              playerData: {
+                userId: currentUser.id,
+                username: currentUser.username,
+                coins: userCoins
+              }
+            });
+
+            showNotification('Syncing with server...', 'info');
+          } else {
+            // Wait for currentUser to be populated (by main.js)
+            setTimeout(joinRoomWhenReady, 100);
+          }
+        };
+        joinRoomWhenReady();
+      }
+    }
 
     function setupSocketListeners() {
       socket.on('match-found', (data) => {
         console.log('Match found:', data);
         clearTimeout(matchmakingTimeout);
+        handleRoomJoined(data.room, data.opponent);
+        showNotification('🎮 Match found! Good luck!', 'success');
+      });
+
+      socket.on('room-joined', (data) => {
+        if (data.success) {
+          console.log('Room joined successfully:', data.room);
+          const opponent = data.room.players.find(p => p.userId !== currentUser.id) || null;
+          handleRoomJoined(data.room, opponent);
+        }
+      });
+
+      socket.on('room-updated', (room) => {
+        console.log('Room updated:', room);
+        const opponent = room.players.find(p => p.userId !== currentUser.id);
+        if (opponent && !gameState.opponent) {
+          gameState.opponent = opponent;
+          updatePlayerCards();
+        }
         
-        gameState.opponent = data.opponent;
-        gameState.roomId = data.room.id;
+        if (room.status === 'playing' && !gameState.gameActive) {
+          gameState.gameActive = true;
+          updateStatus();
+          renderBoard();
+        }
+      });
+
+      function handleRoomJoined(room, opponent) {
+        gameState.opponent = opponent;
+        gameState.roomId = room.id;
         gameState.gameMode = 'online';
-        gameState.playerSymbol = data.room.players[0].socketId === socket.id ? 'X' : 'O';
-        gameState.isMyTurn = gameState.playerSymbol === 'X';
-        gameState.gameActive = true;
-        gameState.currentPlayer = 'X';
+
+        // Find our symbol - index 0 is X, index 1 is O
+        const ourIndex = room.players.findIndex(p => p.userId === currentUser.id);
+        gameState.playerSymbol = ourIndex === 0 ? 'X' : 'O';
+
+        // Fix: In multiplayer-manager.js, currentPlayer is initialized as a userId string
+        // but here we expect 'X' or 'O'. Let's convert if needed.
+        const rawCurrentPlayer = room.gameState?.currentPlayer;
+        if (rawCurrentPlayer && rawCurrentPlayer.length > 1) { // Likely a userId
+          gameState.currentPlayer = rawCurrentPlayer === currentUser.id ? gameState.playerSymbol : (gameState.playerSymbol === 'X' ? 'O' : 'X');
+        } else {
+          gameState.currentPlayer = rawCurrentPlayer || 'X';
+        }
+
+        gameState.isMyTurn = gameState.playerSymbol === gameState.currentPlayer;
+        gameState.gameActive = room.status === 'playing';
+        gameState.board = room.gameState?.board || Array(9).fill('');
 
         document.getElementById('waitingScreen').style.display = 'none';
         document.getElementById('modeSelection').style.display = 'none';
@@ -630,9 +700,7 @@
         updatePlayerCards();
         updateStatus();
         renderBoard();
-
-        showNotification('🎮 Match found! Good luck!', 'success');
-      });
+      }
 
       socket.on('game-action', (data) => {
         if (data.action === 'move') {
@@ -787,7 +855,14 @@
 
     function handleOpponentMove(data) {
       gameState.board[data.index] = data.gameState.board[data.index];
-      gameState.currentPlayer = data.gameState.currentPlayer;
+
+      const rawCurrentPlayer = data.gameState.currentPlayer;
+      if (rawCurrentPlayer && rawCurrentPlayer.length > 1) { // Likely a userId
+        gameState.currentPlayer = rawCurrentPlayer === currentUser.id ? gameState.playerSymbol : (gameState.playerSymbol === 'X' ? 'O' : 'X');
+      } else {
+        gameState.currentPlayer = rawCurrentPlayer;
+      }
+
       gameState.isMyTurn = gameState.currentPlayer === gameState.playerSymbol;
       
       renderBoard();

@@ -83,7 +83,6 @@
             right: 0;
             height: 2px;
             background: linear-gradient(90deg, transparent, #00ffff, #ff00ff, #00ffff, transparent);
-            animation: scanLine 4s linear infinite;
         }
 
         .container::after {
@@ -94,12 +93,6 @@
             right: 0;
             height: 2px;
             background: linear-gradient(90deg, transparent, #ff00ff, #00ffff, #ff00ff, transparent);
-            animation: scanLine 4s linear infinite reverse;
-        }
-
-        @keyframes scanLine {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
         }
         
         @keyframes fadeInUp {
@@ -154,7 +147,6 @@
             right: 0;
             height: 2px;
             background: linear-gradient(90deg, transparent, #00ffff, transparent);
-            animation: scanLine 3s linear infinite;
         }
 
         .history-container::-webkit-scrollbar {
@@ -781,16 +773,9 @@
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-size: 200% 200%;
-            animation: shimmerText 3s ease-in-out infinite;
             text-transform: uppercase;
             letter-spacing: 3px;
             font-weight: 900;
-        }
-        
-        @keyframes shimmerText {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
         }
         
         .tabs {

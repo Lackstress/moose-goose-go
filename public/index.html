@@ -795,7 +795,8 @@
         if (data.success) {
           showNotification('Server created successfully! 🎮', 'success');
           closeModal();
-          // Don't call refreshServers() - broadcastRoomsUpdate already sends the update
+          // Redirect to the game container with roomId
+          openGameInContainer(`/games/${data.room.gameType}.html`, data.room.id);
         } else {
           showNotification(data.error || 'Failed to create server', 'error');
           console.error('Room creation failed:', data);
@@ -805,13 +806,31 @@
       socket.on('room-joined', (data) => {
         if (data.success) {
           showNotification('Joined server successfully! 🎮', 'success');
-          // Redirect to the game
-          if (data.room && data.room.gameType) {
-            openGameInContainer(`/games/${data.room.gameType}.html`);
-          }
+          // Open game container with roomId
+          openGameInContainer(`/games/${data.room.gameType}.html`, data.room.id);
         } else {
           showNotification(data.error || 'Failed to join server', 'error');
         }
+      });
+
+      socket.on('room-closed', () => {
+        showNotification('The server has been closed by the owner.', 'warning');
+        closeGameContainer();
+        refreshServers();
+      });
+
+      socket.on('player-kicked', (data) => {
+        if (currentUser && data.username === currentUser.username) {
+          showNotification('You have been kicked from the server.', 'error');
+          closeGameContainer();
+        } else {
+          showNotification(`${data.username} was kicked from the server.`, 'info');
+        }
+      });
+
+      socket.on('game-started', (data) => {
+        showNotification('Game is starting! 🚀', 'success');
+        openGameInContainer(`/games/${data.room.gameType}.html`, data.room.id);
       });
 
       socket.on('error', (data) => {
@@ -1066,6 +1085,13 @@
         showLoginModal();
         return;
       }
+
+      const server = activeServers.find(s => s.id === roomId);
+      let password = null;
+      if (server && server.settings?.hasPassword) {
+        password = prompt('This server is password protected. Enter password:');
+        if (password === null) return; // User cancelled
+      }
       
       if (socket) {
         showNotification('Joining server...', 'info');
@@ -1075,7 +1101,8 @@
             userId: currentUser.id,
             username: currentUser.username,
             coins: userCoins
-          }
+          },
+          password: password
         });
       } else {
         showNotification('Connection error. Please refresh the page.', 'error');
@@ -1120,7 +1147,7 @@
                   <span>${server.settings.gameMode}</span>
                 </div>
               ` : ''}
-              ${server.settings?.password ? `
+              ${server.settings?.hasPassword ? `
                 <div class="server-locked">
                   <span class="info-icon">🔒</span>
                   <span>Private</span>
@@ -1232,7 +1259,7 @@
 
     // ===== GAME CONTAINER FUNCTIONS =====
     
-    function openGameInContainer(gameUrl) {
+    function openGameInContainer(gameUrl, roomId = null) {
       // Get game name from URL
       const gameName = gameUrl
         .split('/').pop()
@@ -1246,13 +1273,19 @@
       const titleEl = document.getElementById('gameContainerTitle');
       
       titleEl.textContent = '🎮 ' + gameName;
-      iframe.src = gameUrl;
+
+      // Append roomId to URL if provided
+      let finalUrl = gameUrl;
+      if (roomId) {
+        finalUrl += (finalUrl.includes('?') ? '&' : '?') + 'roomId=' + roomId;
+      }
+      iframe.src = finalUrl;
       
       // Show the container
       container.style.display = 'block';
       document.body.style.overflow = 'hidden'; // Prevent scrolling while playing
       
-      console.log('Opened game in container:', gameUrl);
+      console.log('Opened game in container:', finalUrl);
     }
     
     function closeGameContainer() {
