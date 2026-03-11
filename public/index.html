@@ -830,7 +830,7 @@
 
       socket.on('game-started', (data) => {
         showNotification('Game is starting! 🚀', 'success');
-        openGameInContainer(`/games/${data.room.gameType}.html`);
+        openGameInContainer(`/games/${data.room.gameType}.html`, data.room.id);
       });
 
       socket.on('error', (data) => {
@@ -1087,14 +1087,10 @@
       }
 
       const server = activeServers.find(s => s.id === roomId);
-      if (server && server.settings?.password) {
-        const password = prompt('This server is password protected. Enter password:');
+      let password = null;
+      if (server && server.settings?.hasPassword) {
+        password = prompt('This server is password protected. Enter password:');
         if (password === null) return; // User cancelled
-
-        if (password !== server.settings.password) {
-          showNotification('Incorrect password', 'error');
-          return;
-        }
       }
       
       if (socket) {
@@ -1105,7 +1101,8 @@
             userId: currentUser.id,
             username: currentUser.username,
             coins: userCoins
-          }
+          },
+          password: password
         });
       } else {
         showNotification('Connection error. Please refresh the page.', 'error');
@@ -1150,7 +1147,7 @@
                   <span>${server.settings.gameMode}</span>
                 </div>
               ` : ''}
-              ${server.settings?.password ? `
+              ${server.settings?.hasPassword ? `
                 <div class="server-locked">
                   <span class="info-icon">🔒</span>
                   <span>Private</span>

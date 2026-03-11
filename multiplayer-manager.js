@@ -80,8 +80,9 @@ class MultiplayerManager {
       this.rooms.set(roomId, room);
       this.players.set(socket.id, { socketId: socket.id, ...playerData, roomId });
 
+      const sanitizedRoom = this.sanitizeRoomForClient(room);
       socket.join(roomId);
-      socket.emit('room-created', { success: true, room });
+      socket.emit('room-created', { success: true, room: sanitizedRoom });
       this.broadcastRoomsUpdate();
 
       console.log(`Room created: ${roomId} by ${playerData.username}`);
@@ -93,7 +94,7 @@ class MultiplayerManager {
 
   handleJoinRoom(socket, data) {
     try {
-      const { roomId, playerData } = data;
+      const { roomId, playerData, password } = data;
       
       if (!roomId || !playerData) {
         socket.emit('error', { message: 'Missing required data' });
@@ -103,6 +104,12 @@ class MultiplayerManager {
       const room = this.rooms.get(roomId);
       if (!room) {
         socket.emit('error', { message: 'Room not found' });
+        return;
+      }
+
+      // Server-side password validation
+      if (room.settings.password && room.settings.password !== password) {
+        socket.emit('error', { message: 'Incorrect password' });
         return;
       }
 
@@ -120,11 +127,12 @@ class MultiplayerManager {
       room.players.push({ ...playerData, socketId: socket.id });
       this.players.set(socket.id, { socketId: socket.id, ...playerData, roomId });
 
+      const sanitizedRoom = this.sanitizeRoomForClient(room);
       socket.join(roomId);
-      socket.emit('room-joined', { success: true, room });
+      socket.emit('room-joined', { success: true, room: sanitizedRoom });
       
       // Notify all players in room
-      this.io.to(roomId).emit('room-updated', room);
+      this.io.to(roomId).emit('room-updated', sanitizedRoom);
 
       // Start game if room is full
       if (room.players.length === room.settings.maxPlayers) {
@@ -156,7 +164,7 @@ class MultiplayerManager {
       socket.emit('room-left', { success: true });
 
       // Notify remaining players
-      this.io.to(roomId).emit('room-updated', room);
+      this.io.to(roomId).emit('room-updated', this.sanitizeRoomForClient(room));
 
       // Handle room empty or game interruption
       if (room.players.length === 0) {
@@ -185,7 +193,8 @@ class MultiplayerManager {
       }
 
       // Don't include private rooms in public list
-      rooms = rooms.filter(room => !room.settings.isPrivate);
+      rooms = rooms.filter(room => !room.settings.isPrivate)
+        .map(room => this.sanitizeRoomForClient(room));
 
       socket.emit('rooms-list', { rooms });
     } catch (error) {
@@ -296,8 +305,9 @@ class MultiplayerManager {
     this.io.sockets.sockets.get(player2.socketId)?.join(roomId);
 
     // Notify players
-    this.io.to(player1.socketId).emit('match-found', { room, opponent: player2 });
-    this.io.to(player2.socketId).emit('match-found', { room, opponent: player1 });
+    const sanitizedRoom = this.sanitizeRoomForClient(room);
+    this.io.to(player1.socketId).emit('match-found', { room: sanitizedRoom, opponent: player2 });
+    this.io.to(player2.socketId).emit('match-found', { room: sanitizedRoom, opponent: player1 });
 
     // Start the game
     this.startGame(roomId);
@@ -315,7 +325,7 @@ class MultiplayerManager {
 
     // Notify all players
     this.io.to(roomId).emit('game-started', { 
-      room, 
+      room: this.sanitizeRoomForClient(room),
       gameState: room.gameState 
     });
 
@@ -613,8 +623,21 @@ class MultiplayerManager {
     }
   }
 
+  sanitizeRoomForClient(room) {
+    if (!room) return null;
+    const sanitized = { ...room };
+    if (sanitized.settings) {
+      sanitized.settings = { ...sanitized.settings };
+      sanitized.settings.hasPassword = !!sanitized.settings.password;
+      delete sanitized.settings.password;
+    }
+    return sanitized;
+  }
+
   broadcastRoomsUpdate() {
-    const rooms = Array.from(this.rooms.values()).filter(room => !room.settings.isPrivate);
+    const rooms = Array.from(this.rooms.values())
+      .filter(room => !room.settings.isPrivate)
+      .map(room => this.sanitizeRoomForClient(room));
     this.io.emit('rooms-list-update', { rooms });
   }
 
@@ -641,21 +664,30 @@ class MultiplayerManager {
           break;
         case 'close-server':
           this.io.to(roomId).emit('room-closed');
+          // Clean up player state for all players in the room
+          room.players.forEach(p => {
+            this.players.delete(p.socketId);
+          });
           this.rooms.delete(roomId);
           this.gameStates.delete(roomId);
           this.broadcastRoomsUpdate();
           break;
-        case 'kick-player':
+        case 'kick-player': {
           const { targetUsername } = data;
           const playerToKick = room.players.find(p => p.username === targetUsername);
           if (playerToKick && playerToKick.userId !== ownerId) {
+            // Notify player BEFORE removing them from the room
+            this.io.to(playerToKick.socketId).emit('player-kicked', { username: targetUsername });
+
             this.io.sockets.sockets.get(playerToKick.socketId)?.leave(roomId);
             room.players = room.players.filter(p => p.userId !== playerToKick.userId);
-            this.io.to(roomId).emit('player-kicked', { username: targetUsername });
-            this.io.to(roomId).emit('room-updated', room);
+            this.players.delete(playerToKick.socketId);
+
+            this.io.to(roomId).emit('room-updated', this.sanitizeRoomForClient(room));
             this.broadcastRoomsUpdate();
           }
           break;
+        }
       }
     } catch (error) {
       console.error('Error handling server action:', error);
