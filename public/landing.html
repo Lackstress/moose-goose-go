@@ -42,12 +42,11 @@
         radial-gradient(circle at 20% 80%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, rgba(75, 0, 130, 0.15) 0%, transparent 50%),
         radial-gradient(circle at 50% 50%, rgba(147, 112, 219, 0.08) 0%, transparent 50%);
-      animation: galaxyFloat 20s ease-in-out infinite alternate;
       pointer-events: none;
       z-index: 0;
     }
 
-    /* Animated stars background */
+    /* Animated stars background - Simplified to reduce resource usage */
     body::after {
       content: '';
       position: fixed;
@@ -56,26 +55,13 @@
       right: 0;
       bottom: 0;
       background-image: 
-        radial-gradient(2px 2px at 20% 30%, white, transparent),
-        radial-gradient(2px 2px at 60% 70%, white, transparent),
+        radial-gradient(1px 1px at 20% 30%, white, transparent),
+        radial-gradient(1px 1px at 60% 70%, white, transparent),
         radial-gradient(1px 1px at 50% 50%, white, transparent),
         radial-gradient(1px 1px at 80% 10%, white, transparent),
-        radial-gradient(2px 2px at 90% 60%, white, transparent);
-      background-size: 200% 200%;
-      animation: starsMove 120s linear infinite;
+        radial-gradient(1px 1px at 90% 60%, white, transparent);
       pointer-events: none;
       z-index: 0;
-    }
-
-    @keyframes galaxyFloat {
-      0% { transform: translate(0px, 0px) rotate(0deg); }
-      50% { transform: translate(-30px, -30px) rotate(1deg); }
-      100% { transform: translate(30px, -20px) rotate(-1deg); }
-    }
-
-    @keyframes starsMove {
-      from { transform: translateX(0) translateY(0); }
-      to { transform: translateX(-100px) translateY(-100px); }
     }
 
     .landing-container {
@@ -103,7 +89,6 @@
     .hero-graphic {
       font-size: 6rem;
       margin-bottom: 1.5rem;
-      animation: heroFloat 3s ease-in-out infinite;
       filter: drop-shadow(0 10px 30px rgba(255, 0, 150, 0.3));
     }
 
@@ -111,14 +96,8 @@
       width: 300px;
       height: auto;
       margin-bottom: 1.5rem;
-      animation: heroFloat 3s ease-in-out infinite;
       filter: drop-shadow(0 10px 40px rgba(150, 0, 255, 0.4));
       border-radius: 20px;
-    }
-
-    @keyframes heroFloat {
-      0%, 100% { transform: translateY(0) rotate(-2deg); }
-      50% { transform: translateY(-15px) rotate(2deg); }
     }
 
     .hero-title {
@@ -556,7 +535,6 @@
       right: 0;
       height: 2px;
       background: linear-gradient(90deg, transparent, #00ffff, #ff00ff, #00ffff, transparent);
-      animation: scanLine 3s linear infinite;
     }
 
     .tools-hub::after {
@@ -567,12 +545,6 @@
       right: 0;
       height: 2px;
       background: linear-gradient(90deg, transparent, #ff00ff, #00ffff, #ff00ff, transparent);
-      animation: scanLine 3s linear infinite reverse;
-    }
-
-    @keyframes scanLine {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
     }
 
     .tools-hub-header {

@@ -55,15 +55,8 @@ body.dark-theme::before {
     radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
-  animation: floatingBg 15s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: -1;
-}
-
-@keyframes floatingBg {
-  0% { transform: translate(0px, 0px) rotate(0deg); }
-  50% { transform: translate(-30px, -20px) rotate(1deg); }
-  100% { transform: translate(20px, -30px) rotate(-1deg); }
 }
 
 .header-dark {
@@ -91,18 +84,10 @@ body.dark-theme::before {
   font-weight: 800;
   letter-spacing: 3px;
   background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue), var(--accent-green));
-  background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
-  animation: gradientShift 3s ease-in-out infinite;
-}
-
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
 }
 
 .container-dark {
@@ -126,18 +111,11 @@ body.dark-theme::before {
   font-size: 3.2rem;
   font-weight: 900;
   background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue), var(--accent-green));
-  background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-bottom: 1rem;
   text-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
-  animation: gradientShift 3s ease-in-out infinite, titleGlow 2s ease-in-out infinite alternate;
-}
-
-@keyframes titleGlow {
-  0% { filter: brightness(1) drop-shadow(0 0 20px rgba(139, 92, 246, 0.5)); }
-  100% { filter: brightness(1.2) drop-shadow(0 0 30px rgba(59, 130, 246, 0.7)); }
 }
 
 .hero-subtitle {
@@ -227,14 +205,6 @@ body.dark-theme::before {
   background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-green));
   opacity: 0;
   transition: opacity 0.3s;
-  background-size: 200% 100%;
-  animation: cardGlow 3s ease-in-out infinite;
-}
-
-@keyframes cardGlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
 }
 
 .game-card-modern:hover {
@@ -246,6 +216,15 @@ body.dark-theme::before {
 
 .game-card-modern:hover::before {
   opacity: 1;
+}
+
+.game-card-modern:hover .game-icon {
+  transform: scale(1.2) rotate(5deg);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.game-icon {
+  transition: transform 0.3s ease;
 }
 
 /* Card Banner with Category Colors */

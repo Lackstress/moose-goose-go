@@ -607,20 +607,74 @@
       updateAuthUI();
       setupSocketListeners();
       setupChatInput();
+      checkRoomId();
     });
+
+    function checkRoomId() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomId = urlParams.get('roomId');
+      if (roomId && currentUser) {
+        gameState.roomId = roomId;
+        gameState.gameMode = 'online';
+
+        // Notify server that we are joining this room from the game iframe
+        socket.emit('join-room', {
+          roomId: roomId,
+          playerData: {
+            userId: currentUser.id,
+            username: currentUser.username,
+            coins: userCoins
+          }
+        });
+
+        showNotification('Syncing with server...', 'info');
+      }
+    }
 
     function setupSocketListeners() {
       socket.on('match-found', (data) => {
         console.log('Match found:', data);
         clearTimeout(matchmakingTimeout);
+        handleRoomJoined(data.room, data.opponent);
+        showNotification('🎮 Match found! Good luck!', 'success');
+      });
+
+      socket.on('room-joined', (data) => {
+        if (data.success) {
+          console.log('Room joined successfully:', data.room);
+          const opponent = data.room.players.find(p => p.userId !== currentUser.id);
+          handleRoomJoined(data.room, opponent);
+        }
+      });
+
+      socket.on('room-updated', (room) => {
+        console.log('Room updated:', room);
+        const opponent = room.players.find(p => p.userId !== currentUser.id);
+        if (opponent && !gameState.opponent) {
+          gameState.opponent = opponent;
+          updatePlayerCards();
+        }
         
-        gameState.opponent = data.opponent;
-        gameState.roomId = data.room.id;
+        if (room.status === 'playing' && !gameState.gameActive) {
+          gameState.gameActive = true;
+          updateStatus();
+          renderBoard();
+        }
+      });
+
+      function handleRoomJoined(room, opponent) {
+        gameState.opponent = opponent;
+        gameState.roomId = room.id;
         gameState.gameMode = 'online';
-        gameState.playerSymbol = data.room.players[0].socketId === socket.id ? 'X' : 'O';
-        gameState.isMyTurn = gameState.playerSymbol === 'X';
-        gameState.gameActive = true;
-        gameState.currentPlayer = 'X';
+
+        // Find our symbol - index 0 is X, index 1 is O
+        const ourIndex = room.players.findIndex(p => p.userId === currentUser.id);
+        gameState.playerSymbol = ourIndex === 0 ? 'X' : 'O';
+
+        gameState.currentPlayer = room.gameState?.currentPlayer || 'X';
+        gameState.isMyTurn = gameState.playerSymbol === gameState.currentPlayer;
+        gameState.gameActive = room.status === 'playing';
+        gameState.board = room.gameState?.board || Array(9).fill('');
 
         document.getElementById('waitingScreen').style.display = 'none';
         document.getElementById('modeSelection').style.display = 'none';
@@ -630,9 +684,7 @@
         updatePlayerCards();
         updateStatus();
         renderBoard();
-
-        showNotification('🎮 Match found! Good luck!', 'success');
-      });
+      }
 
       socket.on('game-action', (data) => {
         if (data.action === 'move') {

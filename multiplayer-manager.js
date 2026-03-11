@@ -32,6 +32,9 @@ class MultiplayerManager {
       
       // Connection handling
       socket.on('disconnect', () => this.handleDisconnect(socket));
+
+      // Server actions
+      socket.on('server-action', (data) => this.handleServerAction(socket, data));
     });
   }
 
@@ -613,6 +616,50 @@ class MultiplayerManager {
   broadcastRoomsUpdate() {
     const rooms = Array.from(this.rooms.values()).filter(room => !room.settings.isPrivate);
     this.io.emit('rooms-list-update', { rooms });
+  }
+
+  // Server Management Actions
+  handleServerAction(socket, data) {
+    try {
+      const { action, roomId, ownerId } = data;
+      const room = this.rooms.get(roomId);
+
+      if (!room) {
+        socket.emit('error', { message: 'Room not found' });
+        return;
+      }
+
+      // Verify owner
+      if (room.host.userId !== ownerId) {
+        socket.emit('error', { message: 'Unauthorized action' });
+        return;
+      }
+
+      switch (action) {
+        case 'start-game':
+          this.startGame(roomId);
+          break;
+        case 'close-server':
+          this.io.to(roomId).emit('room-closed');
+          this.rooms.delete(roomId);
+          this.gameStates.delete(roomId);
+          this.broadcastRoomsUpdate();
+          break;
+        case 'kick-player':
+          const { targetUsername } = data;
+          const playerToKick = room.players.find(p => p.username === targetUsername);
+          if (playerToKick && playerToKick.userId !== ownerId) {
+            this.io.sockets.sockets.get(playerToKick.socketId)?.leave(roomId);
+            room.players = room.players.filter(p => p.userId !== playerToKick.userId);
+            this.io.to(roomId).emit('player-kicked', { username: targetUsername });
+            this.io.to(roomId).emit('room-updated', room);
+            this.broadcastRoomsUpdate();
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('Error handling server action:', error);
+    }
   }
 
   // Get room statistics
