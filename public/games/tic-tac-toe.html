@@ -3,1118 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tic Tac Toe - Enhanced Multiplayer</title>
+  <title>Tic Tac Toe - GameHub</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    .game-wrapper {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 2rem;
-      background: var(--bg-card);
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
+    body { background: #000; padding: 0; margin: 0; }
+    .game-viewport { margin: 0; width: 100vw; height: 100vh; border-radius: 0; border: none; }
 
-    .game-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .game-title {
-      font-size: 3rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 1rem;
-      text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
-    }
-
-    .game-modes {
+    .ttt-board {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .mode-card {
-      background: var(--bg-card-hover);
-      border: 2px solid var(--border-color);
-      border-radius: 16px;
-      padding: 2rem;
-      text-align: center;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .mode-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.2), transparent);
-      transition: left 0.6s;
-    }
-
-    .mode-card:hover::before {
-      left: 100%;
-    }
-
-    .mode-card:hover {
-      transform: translateY(-5px);
-      border-color: var(--accent-purple);
-      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
-    }
-
-    .mode-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      display: block;
-    }
-
-    .mode-title {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: var(--text-primary);
-      margin-bottom: 0.5rem;
-    }
-
-    .mode-description {
-      color: var(--text-secondary);
-      margin-bottom: 1.5rem;
-    }
-
-    .mode-btn {
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
-      color: white;
-      border: none;
-      padding: 1rem 2rem;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-size: 1rem;
-    }
-
-    .mode-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 5px 20px rgba(139, 92, 246, 0.4);
-    }
-
-    .game-board {
-      display: grid;
-      grid-template-columns: repeat(3, 120px);
+      grid-template-columns: repeat(3, 100px);
       gap: 10px;
-      margin: 2rem auto;
-      justify-content: center;
-      padding: 2rem;
-      background: var(--bg-card-hover);
-      border-radius: 20px;
-      box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.2);
+      background: var(--border);
+      padding: 10px;
+      border-radius: 12px;
     }
 
     .cell {
-      width: 120px;
-      height: 120px;
-      background: linear-gradient(135deg, #2a2a3e, #1a1a2e);
-      border: 3px solid var(--border-color);
-      border-radius: 16px;
-      font-size: 3rem;
-      font-weight: 900;
-      cursor: pointer;
+      width: 100px;
+      height: 100px;
+      background: var(--bg-card);
+      border-radius: 8px;
+      border: none;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .cell::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent);
-      transition: all 0.4s;
-      transform: translate(-50%, -50%);
-      border-radius: 50%;
-    }
-
-    .cell:hover:not(.disabled) {
-      transform: scale(1.05);
-      border-color: var(--accent-purple);
-      box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
-    }
-
-    .cell:hover:not(.disabled)::before {
-      width: 100%;
-      height: 100%;
-    }
-
-    .cell.x {
-      color: var(--accent-blue);
-      text-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
-      animation: placeX 0.5s ease;
-    }
-
-    .cell.o {
-      color: var(--accent-purple);
-      text-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
-      animation: placeO 0.5s ease;
-    }
-
-    .cell.winner {
-      background: linear-gradient(135deg, var(--accent-green), #059669);
-      border-color: var(--accent-green);
-      animation: winnerGlow 1s ease infinite alternate;
-    }
-
-    .cell.disabled {
-      cursor: not-allowed;
-      opacity: 0.7;
-    }
-
-    @keyframes placeX {
-      0% { transform: scale(0) rotate(180deg); opacity: 0; }
-      50% { transform: scale(1.2) rotate(90deg); }
-      100% { transform: scale(1) rotate(0deg); opacity: 1; }
-    }
-
-    @keyframes placeO {
-      0% { transform: scale(0); opacity: 0; }
-      50% { transform: scale(1.2); opacity: 0.8; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    @keyframes winnerGlow {
-      0% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
-      100% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.9); }
-    }
-
-    .game-info {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .player-card {
-      background: var(--bg-card-hover);
-      border: 2px solid var(--border-color);
-      border-radius: 16px;
-      padding: 1.5rem;
-      text-align: center;
-      transition: all 0.3s;
-    }
-
-    .player-card.active {
-      border-color: var(--accent-green);
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-    }
-
-    .player-card.winner {
-      border-color: var(--accent-green);
-      background: linear-gradient(135deg, var(--accent-green), #059669);
-      animation: winnerPulse 1s ease infinite alternate;
-    }
-
-    @keyframes winnerPulse {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.02); }
-    }
-
-    .player-name {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: var(--text-primary);
-      margin-bottom: 0.5rem;
-    }
-
-    .player-symbol {
-      font-size: 2rem;
-      font-weight: 900;
-      margin-bottom: 0.5rem;
-    }
-
-    .player-status {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-    }
-
-    .status-bar {
-      background: var(--bg-card-hover);
-      border-radius: 16px;
-      padding: 1.5rem;
-      text-align: center;
-      margin-bottom: 2rem;
-      border: 2px solid var(--border-color);
-    }
-
-    .status-text {
-      font-size: 1.3rem;
-      font-weight: bold;
-      color: var(--text-primary);
-    }
-
-    .controls {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      padding: 1rem 2rem;
-      border: none;
-      border-radius: 12px;
-      font-weight: bold;
+      font-size: 3rem;
+      font-weight: 800;
       cursor: pointer;
-      transition: all 0.3s;
-      font-size: 1rem;
+      transition: var(--transition);
+      padding: 0;
+      color: var(--text-main);
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
-      color: white;
-    }
-
-    .btn-secondary {
-      background: var(--bg-card-hover);
-      color: var(--text-primary);
-      border: 2px solid var(--border-color);
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .waiting-screen {
-      text-align: center;
-      padding: 3rem;
-      background: var(--bg-card-hover);
-      border-radius: 20px;
-      border: 2px solid var(--border-color);
-    }
-
-    .spinner {
-      width: 60px;
-      height: 60px;
-      border: 4px solid var(--border-color);
-      border-top: 4px solid var(--accent-purple);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 1rem;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .waiting-text {
-      font-size: 1.2rem;
-      color: var(--text-primary);
-      margin-bottom: 1rem;
-    }
-
-    .cancel-btn {
-      background: var(--accent-red);
-      color: white;
-      border: none;
-      padding: 0.8rem 1.5rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .cancel-btn:hover {
-      background: #dc2626;
-      transform: scale(1.05);
-    }
-
-    .chat-container {
-      background: var(--bg-card-hover);
-      border-radius: 16px;
-      padding: 1.5rem;
-      margin-top: 2rem;
-      border: 2px solid var(--border-color);
-    }
-
-    .chat-messages {
-      height: 200px;
-      overflow-y: auto;
-      background: var(--bg-card);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .chat-message {
-      margin-bottom: 0.5rem;
-      padding: 0.5rem;
-      background: var(--bg-card-hover);
-      border-radius: 8px;
-    }
-
-    .chat-username {
-      font-weight: bold;
-      color: var(--accent-purple);
-      margin-right: 0.5rem;
-    }
-
-    .chat-input-container {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .chat-input {
-      flex: 1;
-      padding: 0.8rem;
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
-      background: var(--bg-card);
-      color: var(--text-primary);
-      font-size: 1rem;
-    }
-
-    .chat-send {
-      background: var(--accent-purple);
-      color: white;
-      border: none;
-      padding: 0.8rem 1.5rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .chat-send:hover {
-      background: #7c3aed;
-    }
-
-    @media (max-width: 768px) {
-      .game-board {
-        grid-template-columns: repeat(3, 100px);
-        gap: 8px;
-        padding: 1rem;
-      }
-
-      .cell {
-        width: 100px;
-        height: 100px;
-        font-size: 2.5rem;
-      }
-
-      .game-info {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-      }
-
-      .game-modes {
-        grid-template-columns: 1fr;
-      }
-    }
+    .cell:hover:not(.taken) { background: var(--bg-card-hover); }
+    .cell.x { color: var(--accent-primary); }
+    .cell.o { color: var(--accent-secondary); }
+    .cell.winner { background: var(--success); color: #000; }
   </style>
 </head>
-<body class="dark-theme">
-  <header class="header-dark">
-    <div class="header-container">
-      <div class="logo"><h1>🎮 TIC TAC TOE</h1></div>
-      <div id="authSection" class="auth-buttons"></div>
-    </div>
-  </header>
-
-  <main class="container-dark">
-    <div class="game-wrapper">
-      <div class="game-header">
-        <h1 class="game-title">Enhanced Tic Tac Toe</h1>
-        <p style="color: var(--text-secondary);">Classic game with modern multiplayer features</p>
+<body>
+  <div class="game-viewport">
+    <div class="game-header">
+      <div class="game-title-area">
+        <h2>❌ Tic Tac Toe ⭕</h2>
       </div>
-
-      <!-- Game Mode Selection -->
-      <div id="modeSelection" class="game-modes">
-        <div class="mode-card">
-          <span class="mode-icon">🤖</span>
-          <div class="mode-title">vs Computer</div>
-          <div class="mode-description">Play against an AI opponent with different difficulty levels</div>
-          <button class="mode-btn" onclick="startComputerGame()">Play Now</button>
-        </div>
-
-        <div class="mode-card">
-          <span class="mode-icon">👥</span>
-          <div class="mode-title">Local Multiplayer</div>
-          <div class="mode-description">Play with a friend on the same device</div>
-          <button class="mode-btn" onclick="startLocalGame()">Play Now</button>
-        </div>
-
-        <div class="mode-card">
-          <span class="mode-icon">🌐</span>
-          <div class="mode-title">Online Multiplayer</div>
-          <div class="mode-description">Find opponents from around the world</div>
-          <button class="mode-btn" onclick="startOnlineGame()">Find Match</button>
-        </div>
-      </div>
-
-      <!-- Waiting Screen -->
-      <div id="waitingScreen" class="waiting-screen" style="display: none;">
-        <div class="spinner"></div>
-        <div class="waiting-text">Finding opponent...</div>
-        <p style="color: var(--text-secondary); margin-bottom: 1rem;">This usually takes less than 30 seconds</p>
-        <button class="cancel-btn" onclick="cancelMatchmaking()">Cancel</button>
-      </div>
-
-      <!-- Game Area -->
-      <div id="gameArea" style="display: none;">
-        <div class="game-info">
-          <div id="player1Card" class="player-card">
-            <div class="player-name" id="player1Name">Player 1</div>
-            <div class="player-symbol" id="player1Symbol">X</div>
-            <div class="player-status" id="player1Status">Waiting</div>
-          </div>
-
-          <div id="player2Card" class="player-card">
-            <div class="player-name" id="player2Name">Player 2</div>
-            <div class="player-symbol" id="player2Symbol">O</div>
-            <div class="player-status" id="player2Status">Waiting</div>
-          </div>
-        </div>
-
-        <div class="status-bar">
-          <div class="status-text" id="statusText">Welcome to Tic Tac Toe!</div>
-        </div>
-
-        <div class="game-board" id="gameBoard"></div>
-
-        <div class="controls">
-          <button class="btn btn-primary" onclick="resetGame()">New Game</button>
-          <button class="btn btn-secondary" onclick="backToMenu()">Main Menu</button>
-        </div>
-      </div>
-
-      <!-- Chat for Online Games -->
-      <div id="chatContainer" class="chat-container" style="display: none;">
-        <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Game Chat</h3>
-        <div id="chatMessages" class="chat-messages"></div>
-        <div class="chat-input-container">
-          <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="100">
-          <button class="chat-send" onclick="sendMessage()">Send</button>
+      <div class="game-stats-grid">
+        <div class="game-stat-item">
+          <span class="game-stat-label">Turn</span>
+          <span class="game-stat-value" id="turnDisplay">X</span>
         </div>
       </div>
     </div>
-  </main>
 
-  <div id="authModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <div id="modalContent"></div>
+    <div class="game-canvas-area">
+      <div class="ttt-board" id="board">
+        <button class="cell" onclick="play(0)" aria-label="Cell 1"></button>
+        <button class="cell" onclick="play(1)" aria-label="Cell 2"></button>
+        <button class="cell" onclick="play(2)" aria-label="Cell 3"></button>
+        <button class="cell" onclick="play(3)" aria-label="Cell 4"></button>
+        <button class="cell" onclick="play(4)" aria-label="Cell 5"></button>
+        <button class="cell" onclick="play(5)" aria-label="Cell 6"></button>
+        <button class="cell" onclick="play(6)" aria-label="Cell 7"></button>
+        <button class="cell" onclick="play(7)" aria-label="Cell 8"></button>
+        <button class="cell" onclick="play(8)" aria-label="Cell 9"></button>
+      </div>
+
+      <div id="overlay" class="game-overlay-screen">
+        <h2 class="game-overlay-title" id="overlayTitle">X Wins!</h2>
+        <p id="overlayText" style="margin-bottom: 2rem;"></p>
+        <button class="btn btn-primary" onclick="initGame()">Play Again</button>
+      </div>
+    </div>
+
+    <div class="game-footer">
+      <div id="status" style="color: var(--text-muted);">Local Multiplayer</div>
+      <button class="btn" onclick="window.parent.closeGameContainer()" style="margin-left: auto;">Exit</button>
     </div>
   </div>
 
-  <div id="notificationContainer" class="notification-container"></div>
-
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script>
-    // Fallback functions if main.js doesn't load
-    let currentUser = null;
-    let userCoins = 1000;
-    let socket = null;
-    
-    // Initialize socket
-    try {
-      socket = io();
-    } catch (error) {
-      console.log('Socket.io not available, using fallback');
-    }
-    
-    // Fallback notification system
-    function showNotification(message, type = 'info') {
-      const notification = document.createElement('div');
-      notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 20px;
-        background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
-        color: white;
-        border-radius: 8px;
-        z-index: 9999;
-        font-family: Arial, sans-serif;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      `;
-      notification.textContent = message;
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.remove();
-      }, 3000);
-    }
-    
-    // Fallback coin update function
-    function updateCoins(amount, gameId, type = 'bet') {
-      userCoins -= amount;
-      console.log(`Coins updated: ${amount} for ${gameId}`);
-    }
-    
-    // Fallback auth functions
-    function updateAuthUI() {
-      console.log('Auth UI updated');
-    }
-    
-    function setupSocketListeners() {
-      console.log('Socket listeners setup');
-    }
-    
-    // Try to load main.js, but don't fail if it doesn't load
-    const script = document.createElement('script');
-    script.src = '/js/main.js';
-    script.onerror = function() {
-      console.log('Main.js failed to load, using fallback functions');
-    };
-    document.head.appendChild(script);
-  </script>
   <script src="/js/main.js"></script>
   <script>
-    // Game State
-    let gameState = {
-      board: Array(9).fill(''),
-      currentPlayer: 'X',
-      gameActive: false,
-      gameMode: null, // 'computer', 'local', 'online'
-      playerSymbol: 'X',
-      opponent: null,
-      roomId: null,
-      isMyTurn: false,
-      difficulty: 'medium' // easy, medium, hard
-    };
+    let board = Array(9).fill('');
+    let turn = 'X';
+    let active = true;
 
-    // Socket is already declared in main.js, just make sure it's initialized
-    if (!socket) {
-      socket = io();
-    }
-    let matchmakingTimeout = null;
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      updateAuthUI();
-      setupSocketListeners();
-      setupChatInput();
-      checkRoomId();
-    });
-
-    function checkRoomId() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const roomId = urlParams.get('roomId');
-      if (roomId) {
-        const joinRoomWhenReady = () => {
-          if (currentUser) {
-            gameState.roomId = roomId;
-            gameState.gameMode = 'online';
-
-            // Notify server that we are joining this room from the game iframe
-            socket.emit('join-room', {
-              roomId: roomId,
-              playerData: {
-                userId: currentUser.id,
-                username: currentUser.username,
-                coins: userCoins
-              }
-            });
-
-            showNotification('Syncing with server...', 'info');
-          } else {
-            // Wait for currentUser to be populated (by main.js)
-            setTimeout(joinRoomWhenReady, 100);
-          }
-        };
-        joinRoomWhenReady();
-      }
-    }
-
-    function setupSocketListeners() {
-      socket.on('match-found', (data) => {
-        console.log('Match found:', data);
-        clearTimeout(matchmakingTimeout);
-        handleRoomJoined(data.room, data.opponent);
-        showNotification('🎮 Match found! Good luck!', 'success');
-      });
-
-      socket.on('room-joined', (data) => {
-        if (data.success) {
-          console.log('Room joined successfully:', data.room);
-          const opponent = data.room.players.find(p => p.userId !== currentUser.id) || null;
-          handleRoomJoined(data.room, opponent);
-        }
-      });
-
-      socket.on('room-updated', (room) => {
-        console.log('Room updated:', room);
-        const opponent = room.players.find(p => p.userId !== currentUser.id);
-        if (opponent && !gameState.opponent) {
-          gameState.opponent = opponent;
-          updatePlayerCards();
-        }
-        
-        if (room.status === 'playing' && !gameState.gameActive) {
-          gameState.gameActive = true;
-          updateStatus();
-          renderBoard();
-        }
-      });
-
-      function handleRoomJoined(room, opponent) {
-        gameState.opponent = opponent;
-        gameState.roomId = room.id;
-        gameState.gameMode = 'online';
-
-        // Find our symbol - index 0 is X, index 1 is O
-        const ourIndex = room.players.findIndex(p => p.userId === currentUser.id);
-        gameState.playerSymbol = ourIndex === 0 ? 'X' : 'O';
-
-        // Fix: In multiplayer-manager.js, currentPlayer is initialized as a userId string
-        // but here we expect 'X' or 'O'. Let's convert if needed.
-        const rawCurrentPlayer = room.gameState?.currentPlayer;
-        if (rawCurrentPlayer && rawCurrentPlayer.length > 1) { // Likely a userId
-          gameState.currentPlayer = rawCurrentPlayer === currentUser.id ? gameState.playerSymbol : (gameState.playerSymbol === 'X' ? 'O' : 'X');
-        } else {
-          gameState.currentPlayer = rawCurrentPlayer || 'X';
-        }
-
-        gameState.isMyTurn = gameState.playerSymbol === gameState.currentPlayer;
-        gameState.gameActive = room.status === 'playing';
-        gameState.board = room.gameState?.board || Array(9).fill('');
-
-        document.getElementById('waitingScreen').style.display = 'none';
-        document.getElementById('modeSelection').style.display = 'none';
-        document.getElementById('gameArea').style.display = 'block';
-        document.getElementById('chatContainer').style.display = 'block';
-
-        updatePlayerCards();
-        updateStatus();
-        renderBoard();
-      }
-
-      socket.on('game-action', (data) => {
-        if (data.action === 'move') {
-          handleOpponentMove(data);
-        }
-      });
-
-      socket.on('game-ended', (data) => {
-        handleGameEnd(data);
-      });
-
-      socket.on('game-chat', (data) => {
-        addChatMessage(data);
-      });
-
-      socket.on('error', (data) => {
-        showNotification(data.message || 'An error occurred', 'error');
-        cancelMatchmaking();
+    function initGame() {
+      board = Array(9).fill('');
+      turn = 'X';
+      active = true;
+      document.getElementById('overlay').classList.remove('active');
+      document.getElementById('turnDisplay').textContent = 'X';
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach(c => {
+        c.textContent = '';
+        c.className = 'cell';
       });
     }
 
-    function updateAuthUI() {
-      document.getElementById('authSection').innerHTML = currentUser
-        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
-        : '<button onclick="showLoginModal()" class="btn">Login</button>';
-    }
-
-    function startComputerGame() {
-      gameState.gameMode = 'computer';
-      gameState.gameActive = true;
-      gameState.currentPlayer = 'X';
-      gameState.playerSymbol = 'X';
-      
-      document.getElementById('modeSelection').style.display = 'none';
-      document.getElementById('gameArea').style.display = 'block';
-      document.getElementById('chatContainer').style.display = 'none';
-      
-      // Update player cards
-      document.getElementById('player1Name').textContent = 'You';
-      document.getElementById('player1Symbol').textContent = 'X';
-      document.getElementById('player2Name').textContent = 'Computer';
-      document.getElementById('player2Symbol').textContent = 'O';
-      
-      updateStatus();
-      renderBoard();
-    }
-
-    function startLocalGame() {
-      gameState.gameMode = 'local';
-      gameState.gameActive = true;
-      gameState.currentPlayer = 'X';
-      
-      document.getElementById('modeSelection').style.display = 'none';
-      document.getElementById('gameArea').style.display = 'block';
-      document.getElementById('chatContainer').style.display = 'none';
-      
-      // Update player cards
-      document.getElementById('player1Name').textContent = 'Player 1';
-      document.getElementById('player1Symbol').textContent = 'X';
-      document.getElementById('player2Name').textContent = 'Player 2';
-      document.getElementById('player2Symbol').textContent = 'O';
-      
-      updateStatus();
-      renderBoard();
-    }
-
-    function startOnlineGame() {
-      if (!currentUser) {
-        showNotification('Please login to play online', 'error');
-        showLoginModal();
-        return;
-      }
-
-      gameState.gameMode = 'online';
-      
-      document.getElementById('modeSelection').style.display = 'none';
-      document.getElementById('waitingScreen').style.display = 'block';
-      
-      // Join matchmaking
-      socket.emit('find-match', {
-        gameType: 'tic-tac-toe',
-        playerData: {
-          userId: currentUser.id,
-          username: currentUser.username,
-          coins: userCoins
-        }
-      });
-
-      // Set timeout for matchmaking
-      matchmakingTimeout = setTimeout(() => {
-        showNotification('Taking longer than expected. Try again?', 'warning');
-      }, 30000);
-    }
-
-    function cancelMatchmaking() {
-      clearTimeout(matchmakingTimeout);
-      socket.emit('cancel-matchmaking', {});
-      document.getElementById('waitingScreen').style.display = 'none';
-      document.getElementById('modeSelection').style.display = 'block';
-    }
-
-    function renderBoard() {
-      const board = document.getElementById('gameBoard');
-      board.innerHTML = gameState.board.map((cell, index) => `
-        <div class="cell ${cell.toLowerCase()} ${!gameState.gameActive || (gameState.gameMode === 'online' && !gameState.isMyTurn) ? 'disabled' : ''}" 
-             onclick="makeMove(${index})" 
-             id="cell-${index}">
-          ${cell}
-        </div>
-      `).join('');
-    }
-
-    function makeMove(index) {
-      if (!gameState.gameActive) return;
-      if (gameState.board[index] !== '') return;
-      if (gameState.gameMode === 'online' && !gameState.isMyTurn) return;
-
-      // Make the move
-      gameState.board[index] = gameState.currentPlayer;
-
-      if (gameState.gameMode === 'online') {
-        // Send move to server
-        socket.emit('game-action', {
-          action: 'move',
-          index: index,
-          playerId: currentUser.id
-        });
-      }
-
-      // Check for winner
-      const winner = checkWinner();
-      if (winner) {
-        endGame(winner);
-      } else if (gameState.board.every(cell => cell !== '')) {
-        endGame('draw');
-      } else {
-        // Switch turns
-        gameState.currentPlayer = gameState.currentPlayer === 'X' ? 'O' : 'X';
-        
-        if (gameState.gameMode === 'computer' && gameState.currentPlayer === 'O') {
-          gameState.isMyTurn = false;
-          setTimeout(computerMove, 500);
-        } else if (gameState.gameMode === 'online') {
-          gameState.isMyTurn = !gameState.isMyTurn;
-        }
-        
-        updateStatus();
-      }
-
-      renderBoard();
-    }
-
-    function handleOpponentMove(data) {
-      gameState.board[data.index] = data.gameState.board[data.index];
-
-      const rawCurrentPlayer = data.gameState.currentPlayer;
-      if (rawCurrentPlayer && rawCurrentPlayer.length > 1) { // Likely a userId
-        gameState.currentPlayer = rawCurrentPlayer === currentUser.id ? gameState.playerSymbol : (gameState.playerSymbol === 'X' ? 'O' : 'X');
-      } else {
-        gameState.currentPlayer = rawCurrentPlayer;
-      }
-
-      gameState.isMyTurn = gameState.currentPlayer === gameState.playerSymbol;
-      
-      renderBoard();
-      updateStatus();
-      
-      const winner = checkWinner();
-      if (winner) {
-        endGame(winner);
-      } else if (gameState.board.every(cell => cell !== '')) {
-        endGame('draw');
+    function play(i) {
+      if(!active || board[i]) return;
+      board[i] = turn;
+      render();
+      checkWin();
+      if(active) {
+        turn = turn === 'X' ? 'O' : 'X';
+        document.getElementById('turnDisplay').textContent = turn;
       }
     }
 
-    function computerMove() {
-      const emptyCells = gameState.board
-        .map((cell, index) => (cell === '' ? index : null))
-        .filter(i => i !== null);
-
-      if (emptyCells.length === 0) return;
-
-      let selectedCell;
-      
-      if (gameState.difficulty === 'easy') {
-        // Random move
-        selectedCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      } else if (gameState.difficulty === 'medium') {
-        // Try to win, block player, or random
-        selectedCell = findBestMove() || emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      } else {
-        // Hard mode - always best move
-        selectedCell = findBestMove() || emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      }
-
-      makeMove(selectedCell);
-    }
-
-    function findBestMove() {
-      // Try to win
-      for (let i = 0; i < 9; i++) {
-        if (gameState.board[i] === '') {
-          gameState.board[i] = 'O';
-          if (checkWinner() === 'O') {
-            gameState.board[i] = '';
-            return i;
-          }
-          gameState.board[i] = '';
-        }
-      }
-
-      // Try to block player
-      for (let i = 0; i < 9; i++) {
-        if (gameState.board[i] === '') {
-          gameState.board[i] = 'X';
-          if (checkWinner() === 'X') {
-            gameState.board[i] = '';
-            return i;
-          }
-          gameState.board[i] = '';
-        }
-      }
-
-      // Take center
-      if (gameState.board[4] === '') return 4;
-
-      // Take corners
-      const corners = [0, 2, 6, 8].filter(i => gameState.board[i] === '');
-      if (corners.length > 0) {
-        return corners[Math.floor(Math.random() * corners.length)];
-      }
-
-      return null;
-    }
-
-    function checkWinner() {
-      const winPatterns = [
-        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-        [0, 4, 8], [2, 4, 6] // Diagonals
-      ];
-
-      for (const pattern of winPatterns) {
-        const [a, b, c] = pattern;
-        if (gameState.board[a] && gameState.board[a] === gameState.board[b] && gameState.board[a] === gameState.board[c]) {
-          highlightWinningCells(pattern);
-          return gameState.board[a];
-        }
-      }
-
-      return null;
-    }
-
-    function highlightWinningCells(pattern) {
-      pattern.forEach(index => {
-        const cell = document.getElementById(`cell-${index}`);
-        if (cell) cell.classList.add('winner');
-      });
-    }
-
-    function endGame(winner) {
-      gameState.gameActive = false;
-      
-      let statusText;
-      if (winner === 'draw') {
-        statusText = "🤝 It's a Draw!";
-      } else if (gameState.gameMode === 'online') {
-        if (winner === gameState.playerSymbol) {
-          statusText = '🎉 You Win!';
-          document.getElementById('player1Card').classList.add('winner');
-        } else {
-          statusText = '😔 You Lose!';
-          document.getElementById('player2Card').classList.add('winner');
-        }
-      } else {
-        statusText = `🎉 Player ${winner} Wins!`;
-        const winnerCard = winner === 'X' ? 'player1Card' : 'player2Card';
-        document.getElementById(winnerCard).classList.add('winner');
-      }
-
-      document.getElementById('statusText').textContent = statusText;
-      
-      // Disable all cells
-      document.querySelectorAll('.cell').forEach(cell => {
-        cell.classList.add('disabled');
-      });
-    }
-
-    function updateStatus() {
-      const statusEl = document.getElementById('statusText');
-      if (!gameState.gameActive) {
-        statusEl.textContent = 'Game Over';
-        return;
-      }
-
-      if (gameState.gameMode === 'online') {
-        statusEl.textContent = gameState.isMyTurn ? '🎯 Your turn' : '⏳ Opponent\'s turn';
-      } else if (gameState.gameMode === 'computer') {
-        statusEl.textContent = gameState.currentPlayer === 'X' ? '🎯 Your turn' : '🤖 Computer thinking...';
-      } else {
-        statusEl.textContent = `Player ${gameState.currentPlayer}'s Turn`;
-      }
-    }
-
-    function updatePlayerCards() {
-      // Reset classes
-      document.getElementById('player1Card').className = 'player-card';
-      document.getElementById('player2Card').className = 'player-card';
-
-      if (gameState.gameMode === 'online') {
-        const isPlayer1 = gameState.playerSymbol === 'X';
-        
-        document.getElementById('player1Name').textContent = isPlayer1 ? currentUser.username : gameState.opponent.username;
-        document.getElementById('player2Name').textContent = isPlayer1 ? gameState.opponent.username : currentUser.username;
-        
-        if (gameState.isMyTurn) {
-          if (isPlayer1) {
-            document.getElementById('player1Card').classList.add('active');
-          } else {
-            document.getElementById('player2Card').classList.add('active');
-          }
-        } else {
-          if (isPlayer1) {
-            document.getElementById('player2Card').classList.add('active');
-          } else {
-            document.getElementById('player1Card').classList.add('active');
-          }
-        }
-      } else {
-        const activeCard = gameState.currentPlayer === 'X' ? 'player1Card' : 'player2Card';
-        document.getElementById(activeCard).classList.add('active');
-      }
-    }
-
-    function resetGame() {
-      gameState.board = Array(9).fill('');
-      gameState.currentPlayer = 'X';
-      gameState.gameActive = true;
-      gameState.isMyTurn = gameState.playerSymbol === 'X';
-
-      // Reset UI
-      document.getElementById('player1Card').className = 'player-card';
-      document.getElementById('player2Card').className = 'player-card';
-      
-      updatePlayerCards();
-      updateStatus();
-      renderBoard();
-    }
-
-    function backToMenu() {
-      // Leave online game if in one
-      if (gameState.gameMode === 'online' && gameState.roomId) {
-        socket.emit('leave-room', { roomId: gameState.roomId });
-      }
-
-      // Reset state
-      gameState = {
-        board: Array(9).fill(''),
-        currentPlayer: 'X',
-        gameActive: false,
-        gameMode: null,
-        playerSymbol: 'X',
-        opponent: null,
-        roomId: null,
-        isMyTurn: false,
-        difficulty: 'medium'
-      };
-
-      // Reset UI
-      document.getElementById('modeSelection').style.display = 'grid';
-      document.getElementById('waitingScreen').style.display = 'none';
-      document.getElementById('gameArea').style.display = 'none';
-      document.getElementById('chatContainer').style.display = 'none';
-      document.getElementById('chatMessages').innerHTML = '';
-    }
-
-    function handleGameEnd(data) {
-      endGame(data.winner === 'draw' ? 'draw' : (data.winner === gameState.playerSymbol ? 'X' : 'O'));
-    }
-
-    // Chat functionality
-    function setupChatInput() {
-      const input = document.getElementById('chatInput');
-      input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          sendMessage();
+    function render() {
+      const cells = document.querySelectorAll('.cell');
+      board.forEach((v, i) => {
+        if(v) {
+          cells[i].textContent = v;
+          cells[i].classList.add('taken', v.toLowerCase());
         }
       });
     }
 
-    function sendMessage() {
-      const input = document.getElementById('chatInput');
-      const message = input.value.trim();
-      
-      if (message && gameState.gameMode === 'online' && gameState.roomId) {
-        socket.emit('game-chat', {
-          message: message,
-          roomId: gameState.roomId
-        });
-        input.value = '';
+    function checkWin() {
+      const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      for(let w of wins) {
+        if(board[w[0]] && board[w[0]] === board[w[1]] && board[w[0]] === board[w[2]]) {
+          active = false;
+          w.forEach(idx => document.querySelectorAll('.cell')[idx].classList.add('winner'));
+          showResult(board[w[0]] + " Wins!");
+          return;
+        }
+      }
+      if(!board.includes('')) {
+        active = false;
+        showResult("It's a Draw!");
       }
     }
 
-    function addChatMessage(data) {
-      const messagesContainer = document.getElementById('chatMessages');
-      const messageEl = document.createElement('div');
-      messageEl.className = 'chat-message';
-      messageEl.innerHTML = `
-        <span class="chat-username">${data.username}:</span>
-        <span>${data.text}</span>
-      `;
-      messagesContainer.appendChild(messageEl);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    function showResult(msg) {
+      const overlay = document.getElementById('overlay');
+      document.getElementById('overlayTitle').textContent = msg;
+      overlay.classList.add('active');
+      // No coins for local multiplayer
     }
+
+    initGame();
   </script>
 </body>
 </html>
