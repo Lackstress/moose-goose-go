@@ -140,20 +140,22 @@
       };
 
       for(let i=0; i<size; i++) {
-        let before, after;
+        let original, current, after;
         if(dir === 'left' || dir === 'right') {
-          before = getRow(i);
-          if(dir === 'right') before.reverse();
-          after = slide(before);
+          original = getRow(i);
+          current = [...original];
+          if(dir === 'right') current.reverse();
+          after = slide(current);
           if(dir === 'right') after.reverse();
-          if(JSON.stringify(before) !== JSON.stringify(after)) moved = true;
+          if(JSON.stringify(original) !== JSON.stringify(after)) moved = true;
           setRow(i, after);
         } else {
-          before = getCol(i);
-          if(dir === 'down') before.reverse();
-          after = slide(before);
+          original = getCol(i);
+          current = [...original];
+          if(dir === 'down') current.reverse();
+          after = slide(current);
           if(dir === 'down') after.reverse();
-          if(JSON.stringify(before) !== JSON.stringify(after)) moved = true;
+          if(JSON.stringify(original) !== JSON.stringify(after)) moved = true;
           setCol(i, after);
         }
       }
@@ -167,8 +169,9 @@
           localStorage.setItem('2048_best', best);
           document.getElementById('best').textContent = best;
         }
-        if(!board.includes(0) && !canMove()) gameOver();
       }
+
+      if(!board.includes(0) && !canMove()) gameOver();
     }
 
     function canMove() {

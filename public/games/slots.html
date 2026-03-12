@@ -101,7 +101,9 @@
     function setBet(amt) {
       if(spinning) return;
       currentBet = amt;
-      window.parent.showNotification(`Bet set to $${amt}`, 'info');
+      if(window.parent && typeof window.parent.showNotification === 'function') {
+        window.parent.showNotification(`Bet set to $${amt}`, 'info');
+      }
     }
 
     function spin() {

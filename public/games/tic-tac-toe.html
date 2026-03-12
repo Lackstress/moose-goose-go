@@ -23,6 +23,7 @@
       height: 100px;
       background: var(--bg-card);
       border-radius: 8px;
+      border: none;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -30,6 +31,8 @@
       font-weight: 800;
       cursor: pointer;
       transition: var(--transition);
+      padding: 0;
+      color: var(--text-main);
     }
 
     .cell:hover:not(.taken) { background: var(--bg-card-hover); }
@@ -54,15 +57,15 @@
 
     <div class="game-canvas-area">
       <div class="ttt-board" id="board">
-        <div class="cell" onclick="play(0)"></div>
-        <div class="cell" onclick="play(1)"></div>
-        <div class="cell" onclick="play(2)"></div>
-        <div class="cell" onclick="play(3)"></div>
-        <div class="cell" onclick="play(4)"></div>
-        <div class="cell" onclick="play(5)"></div>
-        <div class="cell" onclick="play(6)"></div>
-        <div class="cell" onclick="play(7)"></div>
-        <div class="cell" onclick="play(8)"></div>
+        <button class="cell" onclick="play(0)" aria-label="Cell 1"></button>
+        <button class="cell" onclick="play(1)" aria-label="Cell 2"></button>
+        <button class="cell" onclick="play(2)" aria-label="Cell 3"></button>
+        <button class="cell" onclick="play(3)" aria-label="Cell 4"></button>
+        <button class="cell" onclick="play(4)" aria-label="Cell 5"></button>
+        <button class="cell" onclick="play(5)" aria-label="Cell 6"></button>
+        <button class="cell" onclick="play(6)" aria-label="Cell 7"></button>
+        <button class="cell" onclick="play(7)" aria-label="Cell 8"></button>
+        <button class="cell" onclick="play(8)" aria-label="Cell 9"></button>
       </div>
 
       <div id="overlay" class="game-overlay-screen">
@@ -138,7 +141,7 @@
       const overlay = document.getElementById('overlay');
       document.getElementById('overlayTitle').textContent = msg;
       overlay.classList.add('active');
-      if(msg.includes('X') && typeof updateCoins === 'function') updateCoins(20, 'ttt', 'win');
+      // No coins for local multiplayer
     }
 
     initGame();

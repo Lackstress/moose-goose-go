@@ -85,7 +85,12 @@
 
       pipes.forEach(p => {
         p.x -= 2;
-        if(p.x === 50) { score++; document.getElementById('score').textContent = score; }
+        // Increment score when bird passes the pipe (p.x + 50 < bird.x - 15)
+        if (!p.scored && p.x + 50 < bird.x - 15) {
+          p.scored = true;
+          score++;
+          document.getElementById('score').textContent = score;
+        }
         if(bird.x + 15 > p.x && bird.x - 15 < p.x + 50) {
           if(bird.y - 15 < p.top || bird.y + 15 > p.top + 150) return gameOver();
         }

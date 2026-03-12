@@ -123,6 +123,7 @@
     let playerHand = [];
     let dealerHand = [];
     let bankroll = 1000;
+    let gameActive = false;
 
     function createDeck() {
       const suits = ['♠', '♣', '♥', '♦'];
@@ -173,10 +174,17 @@
     }
 
     function deal() {
-      if (userCoins < 10) return window.parent.showNotification('Not enough coins!', 'error');
+      if (gameActive) return;
+      if (userCoins < 10) {
+        if(window.parent && typeof window.parent.showNotification === 'function') {
+          window.parent.showNotification('Not enough coins!', 'error');
+        }
+        return;
+      }
       updateCoins(-10, 'blackjack', 'bet');
       document.getElementById('bankroll').textContent = userCoins;
 
+      gameActive = true;
       deck = createDeck();
       playerHand = [deck.pop(), deck.pop()];
       dealerHand = [deck.pop(), deck.pop()];
@@ -193,6 +201,7 @@
     }
 
     function hit() {
+      if (!gameActive) return;
       playerHand.push(deck.pop());
       renderHand(playerHand, document.getElementById('playerCards'));
       const s = getScore(playerHand);
@@ -201,6 +210,8 @@
     }
 
     function stand() {
+      if (!gameActive) return;
+      gameActive = false;
       document.getElementById('gameControls').style.display = 'none';
       renderHand(dealerHand, document.getElementById('dealerCards'));
       
@@ -220,6 +231,7 @@
     }
 
     function endGame(title, text, payout = 0) {
+      gameActive = false;
       const overlay = document.getElementById('overlay');
       document.getElementById('overlayTitle').textContent = title;
       document.getElementById('overlayText').textContent = text;

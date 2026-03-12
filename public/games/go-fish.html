@@ -152,12 +152,16 @@
       if(matches.length > 0) {
         pHand.push(...matches);
         oHand = oHand.filter(c => c.r !== rank);
-        window.parent.showNotification(`Got ${matches.length} ${rank}'s!`, 'success');
+        if(window.parent && typeof window.parent.showNotification === 'function') {
+          window.parent.showNotification(`Got ${matches.length} ${rank}'s!`, 'success');
+        }
         selectedIdx = -1;
         document.getElementById('askBtn').style.display = 'none';
         render();
       } else {
-        window.parent.showNotification("GO FISH!", "info");
+        if(window.parent && typeof window.parent.showNotification === 'function') {
+          window.parent.showNotification("GO FISH!", "info");
+        }
         draw();
       }
     }
@@ -214,7 +218,9 @@
       document.getElementById('overlayTitle').textContent = pSets > oSets ? 'YOU WIN!' : 'GAME OVER';
       document.getElementById('overlayText').textContent = `Sets: You ${pSets} - Opponent ${oSets}`;
       overlay.classList.add('active');
-      if(pSets > oSets && typeof updateCoins === 'function') updateCoins(100, 'gofish', 'win');
+      if(pSets > oSets && window.parent && typeof window.parent.updateCoins === 'function') {
+        window.parent.updateCoins(100, 'gofish', 'win');
+      }
     }
 
     initGame();

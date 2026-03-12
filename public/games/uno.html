@@ -142,7 +142,7 @@
   <script>
     const COLORS = ['red', 'blue', 'green', 'yellow'];
     const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'S', 'R', '+2'];
-    let deck = [], pHand = [], oHand = [], discard = null, turn = 'p', currentColor = '';
+    let deck = [], pHand = [], oHand = [], discardHistory = [], discard = null, turn = 'p', currentColor = '';
 
     function createDeck() {
       const d = [];
@@ -159,12 +159,23 @@
     function initGame() {
       deck = createDeck();
       pHand = []; oHand = [];
-      for(let i=0; i<7; i++) { pHand.push(deck.pop()); oHand.push(deck.pop()); }
-      do { discard = deck.pop(); } while(discard.c === 'wild');
+      discardHistory = [];
+      for(let i=0; i<7; i++) { pHand.push(drawFromDeck()); oHand.push(drawFromDeck()); }
+      do { discard = drawFromDeck(); } while(discard.c === 'wild');
       currentColor = discard.c;
       turn = 'p';
       document.getElementById('overlay').classList.remove('active');
       render();
+    }
+
+    function drawFromDeck() {
+      if(deck.length === 0) {
+        if(discardHistory.length <= 1) return {c:'wild', v:'W'}; // Fallback
+        const top = discardHistory.pop();
+        deck = discardHistory.sort(() => Math.random() - 0.5);
+        discardHistory = [top];
+      }
+      return deck.pop();
     }
 
     function render() {
@@ -201,14 +212,15 @@
       if(card.c !== 'wild' && card.c !== currentColor && card.v !== discard.v) return;
 
       pHand.splice(idx, 1);
+      discardHistory.push(discard);
       discard = card;
       if(card.c !== 'wild') currentColor = card.c;
       
       if(card.c === 'wild') {
         document.getElementById('picker').style.display = 'flex';
       } else {
-        handleEffect(card);
-        endTurn();
+        const skipNext = handleEffect(card);
+        endTurn(skipNext);
       }
       render();
     }
@@ -216,28 +228,39 @@
     function chooseColor(c) {
       currentColor = c;
       document.getElementById('picker').style.display = 'none';
-      handleEffect(discard);
-      endTurn();
+      const skipNext = handleEffect(discard);
+      endTurn(skipNext);
       render();
     }
 
     function handleEffect(card) {
       const next = turn === 'p' ? oHand : pHand;
-      if(card.v === '+2') for(let i=0; i<2; i++) next.push(deck.pop());
-      if(card.v === '+4') for(let i=0; i<4; i++) next.push(deck.pop());
+      if(card.v === '+2') for(let i=0; i<2; i++) next.push(drawFromDeck());
+      if(card.v === '+4') for(let i=0; i<4; i++) next.push(drawFromDeck());
+      if(card.v === 'S' || card.v === 'R') return true; // In 2-player, Reverse acts like Skip
+      return false;
     }
 
     function draw() {
       if(turn !== 'p') return;
-      pHand.push(deck.pop());
+      pHand.push(drawFromDeck());
       endTurn();
       render();
     }
 
-    function endTurn() {
+    function endTurn(skipNext = false) {
       if(pHand.length === 0) return gameOver('YOU WIN!');
       if(oHand.length === 0) return gameOver('OPPONENT WINS');
-      turn = turn === 'p' ? 'o' : 'p';
+
+      if (!skipNext) {
+        turn = turn === 'p' ? 'o' : 'p';
+      } else {
+        const msg = turn === 'p' ? "You played a special card! Your turn again." : "Opponent played a special card and skipped your turn!";
+        if(window.parent && typeof window.parent.showNotification === 'function') {
+          window.parent.showNotification(msg, 'info');
+        }
+      }
+
       if(turn === 'o') setTimeout(oTurn, 1000);
     }
 
@@ -245,22 +268,33 @@
       const idx = oHand.findIndex(c => c.c === 'wild' || c.c === currentColor || c.v === discard.v);
       if(idx > -1) {
         const card = oHand.splice(idx, 1)[0];
+        discardHistory.push(discard);
         discard = card;
         if(card.c === 'wild') currentColor = COLORS[Math.floor(Math.random()*4)];
         else currentColor = card.c;
-        handleEffect(card);
+        const skipNext = handleEffect(card);
+        endTurn(skipNext);
       } else {
-        oHand.push(deck.pop());
+        oHand.push(drawFromDeck());
+        endTurn();
       }
-      endTurn();
       render();
+    }
+
+    function sayUno() {
+      if(window.parent && typeof window.parent.showNotification === 'function') {
+        window.parent.showNotification('UNO!', 'success');
+      }
+      document.getElementById('unoBtn').style.display = 'none';
     }
 
     function gameOver(msg) {
       const overlay = document.getElementById('overlay');
       document.getElementById('overlayTitle').textContent = msg;
       overlay.classList.add('active');
-      if(msg === 'YOU WIN!' && typeof updateCoins === 'function') updateCoins(100, 'uno', 'win');
+      if(msg === 'YOU WIN!' && window.parent && typeof window.parent.updateCoins === 'function') {
+        window.parent.updateCoins(100, 'uno', 'win');
+      }
     }
 
     initGame();
