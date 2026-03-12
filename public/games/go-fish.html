@@ -3,1172 +3,221 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enhanced Go Fish Multiplayer</title>
+  <title>Go Fish - GameHub</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    .game-wrapper {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-      background: var(--bg-card);
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
+    body { background: #000; padding: 0; margin: 0; }
+    .game-viewport { margin: 0; width: 100vw; height: 100vh; border-radius: 0; border: none; }
 
-    .game-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .game-title {
-      font-size: 3rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #06b6d4, #0891b2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 1rem;
-      text-shadow: 0 0 30px rgba(6, 182, 212, 0.3);
-    }
-
-    .game-modes {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .mode-card {
-      background: var(--bg-card-hover);
-      border: 2px solid var(--border-color);
-      border-radius: 16px;
-      padding: 2rem;
-      text-align: center;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .mode-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.2), transparent);
-      transition: left 0.6s;
-    }
-
-    .mode-card:hover::before {
-      left: 100%;
-    }
-
-    .mode-card:hover {
-      transform: translateY(-5px);
-      border-color: #06b6d4;
-      box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
-    }
-
-    .mode-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      display: block;
-    }
-
-    .mode-title {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: var(--text-primary);
-      margin-bottom: 0.5rem;
-    }
-
-    .mode-description {
-      color: var(--text-secondary);
-      margin-bottom: 1.5rem;
-      font-size: 0.9rem;
-    }
-
-    .mode-btn {
-      background: linear-gradient(135deg, #06b6d4, #0891b2);
-      color: white;
-      border: none;
-      padding: 1rem 2rem;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-size: 1rem;
-    }
-
-    .mode-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 5px 20px rgba(6, 182, 212, 0.4);
-    }
-
-    .game-area {
-      display: none;
-    }
-
-    .game-info {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .info-card {
-      background: var(--bg-card-hover);
-      border: 2px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1.5rem;
-      text-align: center;
-    }
-
-    .info-label {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      margin-bottom: 0.5rem;
-    }
-
-    .info-value {
-      font-size: 1.8rem;
-      font-weight: bold;
-      color: #06b6d4;
-    }
-
-    .game-table {
-      background: radial-gradient(ellipse at center, #1e40af, #1e3a8a);
-      border-radius: 20px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.5);
-      min-height: 400px;
-    }
-
-    .opponent-area {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .opponent-hand {
+    .table-area {
+      flex: 1;
       display: flex;
-      gap: -15px;
-      justify-content: center;
-      margin-bottom: 1rem;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: center;
+      background: radial-gradient(circle, #1e3a8a 0%, #0f172a 100%);
+      padding: 1rem;
     }
 
-    .card-back {
+    .hand {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .card {
       width: 70px;
-      height: 105px;
-      background: linear-gradient(135deg, #1e293b, #0f172a);
-      border: 2px solid #06b6d4;
-      border-radius: 10px;
+      height: 100px;
+      background: white;
+      border-radius: 8px;
+      border: 2px solid #333;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #06b6d4;
-      font-weight: bold;
-      font-size: 1.5rem;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      flex-direction: column;
+      padding: 5px;
+      font-weight: 800;
+      color: #000;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform 0.2s;
     }
 
-    .play-area {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 2rem;
-      margin: 2rem 0;
-    }
+    .card:hover { transform: translateY(-10px); }
+    .card.selected { border-color: var(--accent-primary); transform: translateY(-15px); }
+    .card.red { color: #ef4444; }
 
     .deck-pile {
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .deck-pile:hover {
-      transform: scale(1.05);
-    }
-
-    .player-area {
-      text-align: center;
-      margin-top: 2rem;
-    }
-
-    .player-hand {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-bottom: 1rem;
-    }
-
-    .playing-card {
-      width: 80px;
-      height: 120px;
-      background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-      border: 2px solid #06b6d4;
-      border-radius: 12px;
+      width: 70px;
+      height: 100px;
+      background: #1e1b4b;
+      border: 2px solid #fff;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
+      cursor: pointer;
       font-size: 2rem;
-      cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-      color: #1e293b;
-      position: relative;
-    }
-
-    .playing-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    }
-
-    .playing-card.selected {
-      border-color: #fbbf24;
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-      transform: translateY(-15px);
-      box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
-    }
-
-    .suit {
-      font-size: 1.2rem;
-      position: absolute;
-      top: 5px;
-      left: 5px;
-    }
-
-    .suit.hearts, .suit.diamonds { color: #ef4444; }
-    .suit.clubs, .suit.spades { color: #1e293b; }
-
-    .sets-display {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 1rem;
-      margin: 2rem 0;
-    }
-
-    .set-card {
-      background: linear-gradient(135deg, #10b981, #059669);
-      border: 3px solid white;
-      border-radius: 12px;
-      padding: 1rem;
-      text-align: center;
-      color: white;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-      animation: setComplete 0.5s ease;
-    }
-
-    @keyframes setComplete {
-      0% { transform: scale(0) rotate(180deg); opacity: 0; }
-      50% { transform: scale(1.2) rotate(90deg); }
-      100% { transform: scale(1) rotate(0deg); opacity: 1; }
-    }
-
-    .set-rank {
-      font-size: 2.5rem;
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-    }
-
-    .set-label {
-      font-size: 0.9rem;
-      opacity: 0.9;
-    }
-
-    .controls {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      padding: 1rem 2rem;
-      border: none;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-size: 1rem;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #06b6d4, #0891b2);
-      color: white;
-    }
-
-    .btn-secondary {
-      background: var(--bg-card-hover);
-      color: var(--text-primary);
-      border: 2px solid var(--border-color);
-    }
-
-    .btn-success {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-    }
-
-    .btn-danger {
-      background: var(--accent-red);
-      color: white;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .game-status {
-      background: linear-gradient(135deg, #1e40af, #1e3a8a);
-      color: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      text-align: center;
-      font-size: 1.3rem;
-      font-weight: bold;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    }
-
-    .bet-section {
-      background: var(--bg-card-hover);
-      border: 2px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .bet-controls {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .bet-input {
-      padding: 0.8rem;
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
-      background: var(--bg-card);
-      color: var(--text-primary);
-      font-size: 1rem;
-      width: 120px;
-      text-align: center;
-    }
-
-    .bet-chips {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: center;
-      margin-top: 1rem;
-    }
-
-    .bet-chip {
-      background: var(--bg-card);
-      border: 2px solid var(--border-color);
-      color: var(--text-primary);
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-weight: bold;
-    }
-
-    .bet-chip:hover {
-      background: #06b6d4;
-      color: white;
-      transform: scale(1.05);
-    }
-
-    .multiplayer-info {
-      background: var(--bg-card-hover);
-      border: 2px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      display: none;
-    }
-
-    .player-list {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .player-tag {
-      background: var(--bg-card);
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      font-weight: bold;
-    }
-
-    .player-tag.active {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-    }
-
-    .instruction {
-      background: var(--bg-card-hover);
-      border-left: 4px solid #06b6d4;
-      padding: 1rem;
-      margin: 1rem 0;
-      border-radius: 8px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    .rank-selector {
-      display: none;
-      background: var(--bg-card);
-      border: 3px solid #06b6d4;
-      border-radius: 16px;
-      padding: 1.5rem;
-      margin: 1rem 0;
-      text-align: center;
-    }
-
-    .rank-selector.show {
-      display: block;
-    }
-
-    .rank-options {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-
-    .rank-option {
-      background: var(--bg-card-hover);
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
-      padding: 1rem;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-weight: bold;
-      font-size: 1.2rem;
-    }
-
-    .rank-option:hover {
-      background: #06b6d4;
-      color: white;
-      transform: scale(1.1);
-    }
-
-    @media (max-width: 768px) {
-      .game-modes {
-        grid-template-columns: 1fr;
-      }
-
-      .playing-card {
-        width: 60px;
-        height: 90px;
-        font-size: 1.5rem;
-      }
-
-      .card-back {
-        width: 50px;
-        height: 75px;
-      }
     }
   </style>
 </head>
-<body class="dark-theme">
-  <header class="header-dark">
-    <div class="header-container">
-      <div class="logo"><h1>🐟 ENHANCED GO FISH</h1></div>
-      <div id="authSection" class="auth-buttons"></div>
-    </div>
-  </header>
-
-  <main class="container-dark">
-    <div class="game-wrapper">
-      <div class="game-header">
-        <h1 class="game-title">Enhanced Go Fish Multiplayer</h1>
-        <p style="color: var(--text-secondary);">Classic card game with modern multiplayer features</p>
-      </div>
-
-      <!-- Game Mode Selection -->
-      <div id="modeSelection" class="game-modes">
-        <div class="mode-card">
-          <span class="mode-icon">🤖</span>
-          <div class="mode-title">vs Computer</div>
-          <div class="mode-description">Play against AI opponents with smart strategies</div>
-          <button class="mode-btn" onclick="startComputerGame()">Play Now</button>
+<body>
+  <div class="game-viewport">
+    <div class="game-header">
+      <h2>🐟 Go Fish</h2>
+      <div class="game-stats-grid">
+        <div class="game-stat-item">
+          <span class="game-stat-label">Your Sets</span>
+          <span class="game-stat-value" id="pSets">0</span>
         </div>
-
-        <div class="mode-card">
-          <span class="mode-icon">👥</span>
-          <div class="mode-title">Local Multiplayer</div>
-          <div class="mode-description">Play with friends on the same device</div>
-          <button class="mode-btn" onclick="startLocalGame()">Play Now</button>
-        </div>
-
-        <div class="mode-card">
-          <span class="mode-icon">🌐</span>
-          <div class="mode-title">Online Multiplayer</div>
-          <div class="mode-description">Compete with players worldwide in real-time</div>
-          <button class="mode-btn" onclick="startOnlineGame()">Find Match</button>
-        </div>
-
-        <div class="mode-card">
-          <span class="mode-icon">⚡</span>
-          <div class="mode-title">Speed Mode</div>
-          <div class="mode-description">Fast-paced games with timed turns</div>
-          <button class="mode-btn" onclick="startSpeedGame()">Speed Mode</button>
-        </div>
-      </div>
-
-      <!-- Game Area -->
-      <div id="gameArea" class="game-area">
-        <div class="multiplayer-info" id="multiplayerInfo">
-          <div class="player-list" id="playerList"></div>
-        </div>
-
-        <div class="game-info">
-          <div class="info-card">
-            <div class="info-label">💰 Coins</div>
-            <div class="info-value" id="coinDisplay">1000</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">💵 Current Bet</div>
-            <div class="info-value" id="betDisplay">0</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">🐟 Your Sets</div>
-            <div class="info-value" id="setsDisplay">0</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">🎯 Score</div>
-            <div class="info-value" id="scoreDisplay">0</div>
-          </div>
-        </div>
-
-        <!-- Betting Phase -->
-        <div id="bettingPhase" class="bet-section">
-          <h3 style="text-align: center; margin-bottom: 1rem; color: var(--text-primary);">Place Your Bet</h3>
-          <div class="bet-controls">
-            <input type="number" id="betAmount" class="bet-input" min="10" max="500" value="50">
-            <button class="btn btn-primary" onclick="startGameWithBet()">Start Game</button>
-          </div>
-          <div class="bet-chips">
-            <button class="bet-chip" onclick="setBet(25)">25</button>
-            <button class="bet-chip" onclick="setBet(50)">50</button>
-            <button class="bet-chip" onclick="setBet(100)">100</button>
-            <button class="bet-chip" onclick="setBet(250)">250</button>
-            <button class="bet-chip" onclick="setBet(500)">500</button>
-          </div>
-        </div>
-
-        <!-- Game Phase -->
-        <div id="gamePhase" style="display: none;">
-          <div class="game-status" id="gameStatus">🎮 Your Turn - Select a card to ask for!</div>
-
-          <div class="game-table">
-            <div class="opponent-area">
-              <h4 style="color: white; margin-bottom: 1rem;">Opponent's Hand</h4>
-              <div class="opponent-hand" id="opponentHand"></div>
-            </div>
-
-            <div class="play-area">
-              <div class="deck-pile card-back" onclick="drawCard()">
-                <div>🎴</div>
-              </div>
-            </div>
-
-            <div class="player-area">
-              <h4 style="color: white; margin-bottom: 1rem;">Your Hand</h4>
-              <div class="player-hand" id="playerHand"></div>
-            </div>
-          </div>
-
-          <div class="rank-selector" id="rankSelector">
-            <h4 style="color: var(--text-primary);">Ask opponent for cards of rank:</h4>
-            <div class="rank-options" id="rankOptions"></div>
-          </div>
-
-          <div class="controls">
-            <button class="btn btn-primary" onclick="askForCards()" id="askBtn" disabled>Ask for Cards</button>
-            <button class="btn btn-success" onclick="drawCard()" id="drawBtn">Draw from Deck</button>
-            <button class="btn btn-secondary" onclick="newGame()">New Game</button>
-            <button class="btn btn-danger" onclick="backToMenu()">Menu</button>
-          </div>
-
-          <h3 style="color: var(--text-primary); margin-top: 2rem;">Your Completed Sets</h3>
-          <div class="sets-display" id="completedSets"></div>
+        <div class="game-stat-item">
+          <span class="game-stat-label">Opponent Sets</span>
+          <span class="game-stat-value" id="oSets">0</span>
         </div>
       </div>
     </div>
-  </main>
 
-  <div id="authModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <div id="modalContent"></div>
+    <div class="table-area">
+      <div class="hand" id="oHand"></div>
+
+      <div class="deck-pile" onclick="draw()">🎴</div>
+
+      <div class="hand" id="pHand"></div>
+
+      <div id="overlay" class="game-overlay-screen">
+        <h2 class="game-overlay-title" id="overlayTitle">Game Over</h2>
+        <p id="overlayText" style="margin-bottom: 2rem;"></p>
+        <button class="btn btn-primary" onclick="initGame()">Play Again</button>
+      </div>
+    </div>
+
+    <div class="game-footer">
+      <div id="status" style="color: var(--text-muted); font-size: 0.9rem;">Select a card to ask for</div>
+      <button class="btn btn-primary" id="askBtn" style="display:none;" onclick="ask()">Ask for Rank</button>
+      <button class="btn" onclick="window.parent.closeGameContainer()" style="margin-left: auto;">Exit</button>
     </div>
   </div>
 
-  <div id="notificationContainer" class="notification-container"></div>
-
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/main.js"></script>
   <script>
-    // Fallback functions if main.js doesn't load
-    let currentUser = null;
-    let userCoins = 1000;
-    let socket = null;
-    
-    // Initialize socket
-    try {
-      socket = io();
-    } catch (error) {
-      console.log('Socket.io not available, using fallback');
-    }
-    
-    // Fallback notification system
-    function showNotification(message, type = 'info') {
-      const notification = document.createElement('div');
-      notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 20px;
-        background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
-        color: white;
-        border-radius: 8px;
-        z-index: 9999;
-        font-family: Arial, sans-serif;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      `;
-      notification.textContent = message;
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.remove();
-      }, 3000);
-    }
-    
-    // Fallback coin update function
-    function updateCoins(amount, gameId, type = 'bet') {
-      userCoins -= amount;
-      console.log(`Coins updated: ${amount} for ${gameId}`);
-    }
-    
-    // Fallback auth functions
-    function updateAuthUI() {
-      console.log('Auth UI updated');
-    }
-    
-    function setupSocketListeners() {
-      console.log('Socket listeners setup');
-    }
-    
-    // Try to load main.js, but don't fail if it doesn't load
-    const script = document.createElement('script');
-    script.src = '/js/main.js';
-    script.onerror = function() {
-      console.log('Main.js failed to load, using fallback functions');
-    };
-    document.head.appendChild(script);
-  </script>
-  <script>
-    // Game State
-    let gameState = {
-      deck: [],
-      playerHand: [],
-      opponentHand: [],
-      playerSets: [],
-      opponentSets: [],
-      currentBet: 0,
-      gameActive: false,
-      gameMode: null,
-      selectedCard: null,
-      score: 0,
-      currentPlayer: 'player',
-      multiplayerRoom: null,
-      turnTimer: 30,
-      timerInterval: null
-    };
-
-    // Socket is already declared in main.js, just make sure it's initialized
-    if (!socket) {
-      socket = io();
-    }
-
-    // Card definitions
-    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-    const suits = ['♠', '♥', '♦', '♣'];
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      updateAuthUI();
-      setupSocketListeners();
-    });
-
-    function setupSocketListeners() {
-      socket.on('match-found', (data) => {
-        gameState.multiplayerRoom = data.room;
-        gameState.gameMode = 'multiplayer';
-        
-        document.getElementById('modeSelection').style.display = 'none';
-        document.getElementById('gameArea').style.display = 'block';
-        document.getElementById('multiplayerInfo').style.display = 'flex';
-        
-        updatePlayerList();
-        showBettingPhase();
-        
-        showNotification('🎮 Match found! Good luck!', 'success');
-      });
-
-      socket.on('game-action', (data) => {
-        handleMultiplayerAction(data);
-      });
-
-      socket.on('error', (data) => {
-        showNotification(data.message || 'An error occurred', 'error');
-      });
-    }
-
-    function updateAuthUI() {
-      document.getElementById('authSection').innerHTML = currentUser
-        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
-        : '<button onclick="showLoginModal()" class="btn">Login</button>';
-      
-      document.getElementById('coinDisplay').textContent = userCoins;
-    }
+    const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    const SUITS = ['♠', '♥', '♦', '♣'];
+    let deck = [], pHand = [], oHand = [], pSets = 0, oSets = 0, selectedIdx = -1;
 
     function createDeck() {
-      const deck = [];
-      suits.forEach(suit => {
-        ranks.forEach(rank => {
-          deck.push({ rank, suit });
-        });
+      const d = [];
+      SUITS.forEach(s => RANKS.forEach(r => d.push({s, r})));
+      return d.sort(() => Math.random() - 0.5);
+    }
+
+    function initGame() {
+      deck = createDeck();
+      pHand = []; oHand = []; pSets = 0; oSets = 0; selectedIdx = -1;
+      for(let i=0; i<7; i++) { pHand.push(deck.pop()); oHand.push(deck.pop()); }
+      document.getElementById('overlay').classList.remove('active');
+      render();
+    }
+
+    function render() {
+      const pArea = document.getElementById('pHand');
+      pArea.innerHTML = '';
+      pHand.sort((a,b) => RANKS.indexOf(a.r) - RANKS.indexOf(b.r));
+      pHand.forEach((c, i) => {
+        const el = document.createElement('div');
+        el.className = `card ${['♥', '♦'].includes(c.s) ? 'red' : ''} ${selectedIdx === i ? 'selected' : ''}`;
+        el.innerHTML = `<div>${c.r}</div><div style="flex:1; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">${c.s}</div><div style="text-align:right">${c.r}</div>`;
+        el.onclick = () => { selectedIdx = i; render(); document.getElementById('askBtn').style.display = 'block'; };
+        pArea.appendChild(el);
       });
-      return shuffleDeck(deck);
-    }
 
-    function shuffleDeck(deck) {
-      const shuffled = [...deck];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      return shuffled;
-    }
-
-    function startComputerGame() {
-      console.log('Starting Go Fish computer game...');
-      gameState.gameMode = 'computer';
-      document.getElementById('modeSelection').style.display = 'none';
-      document.getElementById('gameArea').style.display = 'block';
-      document.getElementById('multiplayerInfo').style.display = 'none';
-      showBettingPhase();
-    }
-
-    function startLocalGame() {
-      gameState.gameMode = 'local';
-      document.getElementById('modeSelection').style.display = 'none';
-      document.getElementById('gameArea').style.display = 'block';
-      document.getElementById('multiplayerInfo').style.display = 'none';
-      showBettingPhase();
-    }
-
-    function startOnlineGame() {
-      if (!currentUser) {
-        showNotification('Please login to play online', 'error');
-        showLoginModal();
-        return;
-      }
-
-      socket.emit('find-match', {
-        gameType: 'go-fish',
-        playerData: {
-          userId: currentUser.id,
-          username: currentUser.username,
-          coins: userCoins
-        }
+      const oArea = document.getElementById('oHand');
+      oArea.innerHTML = '';
+      oHand.forEach(() => {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.style.background = 'var(--bg-card-hover)';
+        el.innerHTML = '<div style="flex:1; display:flex; align-items:center; justify-content:center; font-size:2rem; color:var(--accent-primary);">?</div>';
+        oArea.appendChild(el);
       });
+
+      document.getElementById('pSets').textContent = pSets;
+      document.getElementById('oSets').textContent = oSets;
+      checkSets();
     }
 
-    function startSpeedGame() {
-      gameState.gameMode = 'speed';
-      document.getElementById('modeSelection').style.display = 'none';
-      document.getElementById('gameArea').style.display = 'block';
-      document.getElementById('multiplayerInfo').style.display = 'none';
-      showBettingPhase();
-    }
-
-    function showBettingPhase() {
-      document.getElementById('bettingPhase').style.display = 'block';
-      document.getElementById('gamePhase').style.display = 'none';
-    }
-
-    function setBet(amount) {
-      document.getElementById('betAmount').value = amount;
-    }
-
-    function startGameWithBet() {
-      const amount = parseInt(document.getElementById('betAmount').value) || 50;
-      if (amount < 10) {
-        showNotification('Minimum bet is 10 coins', 'error');
-        return;
-      }
-      if (amount > userCoins) {
-        showNotification('Not enough coins!', 'error');
-        return;
-      }
-
-      gameState.currentBet = amount;
-      if (typeof updateCoins === 'function') {
-        updateCoins(-amount, 'go-fish', 'bet');
-      }
+    function ask() {
+      if(selectedIdx === -1) return;
+      const rank = pHand[selectedIdx].r;
+      const matches = oHand.filter(c => c.r === rank);
       
-      startGame();
-    }
-
-    function startGame() {
-      console.log('Starting Go Fish game...');
-      // Reset game state
-      gameState.deck = createDeck();
-      gameState.playerHand = [];
-      gameState.opponentHand = [];
-      gameState.playerSets = [];
-      gameState.opponentSets = [];
-      gameState.gameActive = true;
-      gameState.currentPlayer = 'player';
-      gameState.selectedCard = null;
-      gameState.score = 0;
-
-      console.log('Deck created with', gameState.deck.length, 'cards');
-
-      // Deal initial hands (7 cards each)
-      for (let i = 0; i < 7; i++) {
-        gameState.playerHand.push(gameState.deck.pop());
-        gameState.opponentHand.push(gameState.deck.pop());
-      }
-
-      console.log('Player hand:', gameState.playerHand.length, 'cards');
-      console.log('Opponent hand:', gameState.opponentHand.length, 'cards');
-
-      // Update UI
-      document.getElementById('bettingPhase').style.display = 'none';
-      document.getElementById('gamePhase').style.display = 'block';
-      document.getElementById('betDisplay').textContent = gameState.currentBet;
-
-      updateDisplay();
-      startTurnTimer();
-      
-      console.log('Go Fish game started successfully!');
-    }
-
-    function updateDisplay() {
-      console.log('Updating Go Fish display...');
-      updatePlayerHand();
-      updateOpponentHand();
-      updateSets();
-      updateGameInfo();
-      updateGameStatus();
-      console.log('Go Fish display updated successfully!');
-    }
-
-    function updatePlayerHand() {
-      const container = document.getElementById('playerHand');
-      container.innerHTML = gameState.playerHand.map((card, index) => `
-        <div class="playing-card ${gameState.selectedCard === index ? 'selected' : ''}" 
-             onclick="selectCard(${index})">
-          <span class="suit ${getSuitClass(card.suit)}">${card.suit}</span>
-          ${card.rank}
-        </div>
-      `).join('');
-
-      document.getElementById('askBtn').disabled = gameState.selectedCard === null || gameState.currentPlayer !== 'player';
-    }
-
-    function updateOpponentHand() {
-      const container = document.getElementById('opponentHand');
-      container.innerHTML = gameState.opponentHand.map(() => `
-        <div class="card-back">🎴</div>
-      `).join('');
-    }
-
-    function updateSets() {
-      // Player sets
-      const playerContainer = document.getElementById('completedSets');
-      playerContainer.innerHTML = gameState.playerSets.map(rank => `
-        <div class="set-card">
-          <div class="set-rank">${rank}</div>
-          <div class="set-label">Complete Set</div>
-        </div>
-      `).join('');
-
-      // Update info displays
-      document.getElementById('setsDisplay').textContent = gameState.playerSets.length;
-      document.getElementById('scoreDisplay').textContent = gameState.score;
-    }
-
-    function updateGameInfo() {
-      document.getElementById('coinDisplay').textContent = userCoins;
-      document.getElementById('betDisplay').textContent = gameState.currentBet;
-    }
-
-    function updateGameStatus() {
-      const statusEl = document.getElementById('gameStatus');
-      if (gameState.currentPlayer === 'player') {
-        statusEl.textContent = '🎮 Your Turn - Select a card and ask for cards!';
+      if(matches.length > 0) {
+        pHand.push(...matches);
+        oHand = oHand.filter(c => c.r !== rank);
+        window.parent.showNotification(`Got ${matches.length} ${rank}'s!`, 'success');
+        selectedIdx = -1;
+        document.getElementById('askBtn').style.display = 'none';
+        render();
       } else {
-        statusEl.textContent = '⏳ Opponent\'s Turn - Thinking...';
+        window.parent.showNotification("GO FISH!", "info");
+        draw();
       }
     }
 
-    function getSuitClass(suit) {
-      switch (suit) {
-        case '♥': return 'hearts';
-        case '♦': return 'diamonds';
-        case '♣': return 'clubs';
-        case '♠': return 'spades';
-        default: return '';
-      }
+    function draw() {
+      if(deck.length > 0) pHand.push(deck.pop());
+      selectedIdx = -1;
+      document.getElementById('askBtn').style.display = 'none';
+      render();
+      setTimeout(oTurn, 1000);
     }
 
-    function selectCard(index) {
-      if (gameState.currentPlayer !== 'player' || !gameState.gameActive) return;
-      gameState.selectedCard = gameState.selectedCard === index ? null : index;
-      updatePlayerHand();
-    }
-
-    function askForCards() {
-      if (gameState.selectedCard === null || gameState.currentPlayer !== 'player') return;
-
-      const requestedRank = gameState.playerHand[gameState.selectedCard].rank;
-      const opponentCards = gameState.opponentHand.filter(card => card.rank === requestedRank);
-
-      if (opponentCards.length > 0) {
-        // Transfer cards
-        gameState.opponentHand = gameState.opponentHand.filter(card => card.rank !== requestedRank);
-        gameState.playerHand.push(...opponentCards);
-        
-        showNotification(`Got ${opponentCards.length} ${requestedRank}'s from opponent! 🎉`, 'success');
-        
-        // Check for sets
-        checkForSets('player');
-        
-        // Continue turn (go fish rules)
-        updateDisplay();
-      } else {
-        showNotification('Go Fish! 🐟 Draw a card from the deck.', 'info');
-        drawCard(false); // Don't switch turn after drawing
-        switchTurn();
-      }
-    }
-
-    function drawCard(switchTurnAfter = true) {
-      if (!gameState.gameActive) return;
-      
-      if (gameState.deck.length === 0) {
-        showNotification('Deck is empty!', 'warning');
-        return;
-      }
-
-      const drawnCard = gameState.deck.pop();
-      
-      if (gameState.currentPlayer === 'player') {
-        gameState.playerHand.push(drawnCard);
-        showNotification(`Drew a ${drawnCard.rank}${drawnCard.suit}!`, 'info');
-        checkForSets('player');
-      } else {
-        gameState.opponentHand.push(drawnCard);
-        checkForSets('opponent');
-      }
-
-      updateDisplay();
-
-      if (switchTurnAfter) {
-        switchTurn();
-      }
-    }
-
-    function checkForSets(player) {
-      const hand = player === 'player' ? gameState.playerHand : gameState.opponentHand;
-      const sets = player === 'player' ? gameState.playerSets : gameState.opponentSets;
-
-      ranks.forEach(rank => {
-        const cardsOfRank = hand.filter(card => card.rank === rank);
-        if (cardsOfRank.length === 4 && !sets.includes(rank)) {
-          // Complete set found
-          sets.push(rank);
-          
-          // Remove cards from hand
-          if (player === 'player') {
-            gameState.playerHand = gameState.playerHand.filter(card => card.rank !== rank);
-            gameState.score += gameState.currentBet * 2;
-            if (typeof updateCoins === 'function') {
-              updateCoins(gameState.currentBet * 2, 'go-fish', 'win');
-            }
-            showNotification(`Set complete: ${rank}! +${gameState.currentBet * 2} coins! 🏆`, 'success');
-          } else {
-            gameState.opponentHand = gameState.opponentHand.filter(card => card.rank !== rank);
-          }
+    function checkSets() {
+      const pCounts = {}; pHand.forEach(c => pCounts[c.r] = (pCounts[c.r] || 0) + 1);
+      Object.keys(pCounts).forEach(r => {
+        if(pCounts[r] === 4) {
+          pHand = pHand.filter(c => c.r !== r);
+          pSets++;
+          render();
         }
       });
 
-      // Check for game end
-      if (gameState.deck.length === 0 && (gameState.playerHand.length === 0 || gameState.opponentHand.length === 0)) {
-        endGame();
-      }
-    }
-
-    function switchTurn() {
-      gameState.currentPlayer = gameState.currentPlayer === 'player' ? 'opponent' : 'player';
-      gameState.selectedCard = null;
-      resetTurnTimer();
-      updateDisplay();
-
-      if (gameState.currentPlayer === 'opponent') {
-        setTimeout(opponentTurn, 2000);
-      }
-    }
-
-    function opponentTurn() {
-      if (!gameState.gameActive || gameState.currentPlayer !== 'opponent') return;
-
-      console.log('Go Fish AI turn starting...');
-
-      // Smart AI strategy: ask for ranks we have more of
-      if (gameState.opponentHand.length > 0) {
-        // Count ranks in opponent's hand
-        const rankCount = {};
-        gameState.opponentHand.forEach(card => {
-          rankCount[card.rank] = (rankCount[card.rank] || 0) + 1;
-        });
-        
-        // Prioritize ranks we have more cards of (better chance of getting sets)
-        const sortedRanks = Object.keys(rankCount).sort((a, b) => rankCount[b] - rankCount[a]);
-        const requestedRank = sortedRanks[0];
-        
-        const playerCards = gameState.playerHand.filter(card => card.rank === requestedRank);
-
-        if (playerCards.length > 0) {
-          // Transfer cards
-          gameState.playerHand = gameState.playerHand.filter(card => card.rank !== requestedRank);
-          gameState.opponentHand.push(...playerCards);
-          
-          showNotification(`Opponent asked for ${requestedRank}'s and got ${playerCards.length}!`, 'info');
-          checkForSets('opponent');
-          
-          // Continue turn
-          updateDisplay();
-          setTimeout(opponentTurn, 2000);
-        } else {
-          showNotification(`Opponent asked for ${requestedRank}'s and went fishing!`, 'info');
-          drawCard(); // Opponent draws
-          switchTurn();
+      const oCounts = {}; oHand.forEach(c => oCounts[c.r] = (oCounts[c.r] || 0) + 1);
+      Object.keys(oCounts).forEach(r => {
+        if(oCounts[r] === 4) {
+          oHand = oHand.filter(c => c.r !== r);
+          oSets++;
+          render();
         }
+      });
+
+      if(pHand.length === 0 || oHand.length === 0 || deck.length === 0) {
+        if(pSets + oSets >= 13 || deck.length === 0) gameOver();
+      }
+    }
+
+    function oTurn() {
+      if(oHand.length === 0) return endTurn();
+      const rank = oHand[Math.floor(Math.random()*oHand.length)].r;
+      const matches = pHand.filter(c => c.r === rank);
+      if(matches.length > 0) {
+        oHand.push(...matches);
+        pHand = pHand.filter(c => c.r !== rank);
+        render();
+        setTimeout(oTurn, 1000);
       } else {
-        switchTurn();
+        if(deck.length > 0) oHand.push(deck.pop());
+        render();
       }
     }
 
-    function startTurnTimer() {
-      resetTurnTimer();
-      if (gameState.timerInterval) {
-        clearInterval(gameState.timerInterval);
-      }
-      
-      if (gameState.gameMode === 'speed') {
-        gameState.timerInterval = setInterval(() => {
-          gameState.turnTimer--;
-          if (gameState.turnTimer <= 0) {
-            // Auto-draw and switch turn
-            if (gameState.currentPlayer === 'player') {
-              drawCard();
-            }
-            switchTurn();
-          }
-        }, 1000);
-      }
+    function gameOver() {
+      const overlay = document.getElementById('overlay');
+      document.getElementById('overlayTitle').textContent = pSets > oSets ? 'YOU WIN!' : 'GAME OVER';
+      document.getElementById('overlayText').textContent = `Sets: You ${pSets} - Opponent ${oSets}`;
+      overlay.classList.add('active');
+      if(pSets > oSets && typeof updateCoins === 'function') updateCoins(100, 'gofish', 'win');
     }
 
-    function resetTurnTimer() {
-      gameState.turnTimer = 30;
-    }
-
-    function endGame() {
-      gameState.gameActive = false;
-      clearInterval(gameState.timerInterval);
-
-      const playerScore = gameState.playerSets.length;
-      const opponentScore = gameState.opponentSets.length;
-
-      let result;
-      if (playerScore > opponentScore) {
-        result = '🎉 You Win!';
-        const winnings = gameState.currentBet * 3;
-        if (typeof updateCoins === 'function') {
-          updateCoins(winnings, 'go-fish', 'win');
-        }
-      } else if (opponentScore > playerScore) {
-        result = '😔 You Lose!';
-      } else {
-        result = '🤝 It\'s a Draw!';
-        const refund = gameState.currentBet;
-        if (typeof updateCoins === 'function') {
-          updateCoins(refund, 'go-fish', 'refund');
-        }
-      }
-
-      showNotification(`${result} Sets: You ${playerScore} - ${opponentScore} Opponent`, playerScore > opponentScore ? 'success' : 'error');
-      
-      // Show betting phase again
-      setTimeout(() => {
-        showBettingPhase();
-      }, 3000);
-    }
-
-    function newGame() {
-      clearInterval(gameState.timerInterval);
-      showBettingPhase();
-    }
-
-    function backToMenu() {
-      clearInterval(gameState.timerInterval);
-      
-      // Leave multiplayer room if in one
-      if (gameState.multiplayerRoom) {
-        socket.emit('leave-room', { roomId: gameState.multiplayerRoom.id });
-      }
-      
-      // Reset UI
-      document.getElementById('modeSelection').style.display = 'grid';
-      document.getElementById('gameArea').style.display = 'none';
-      document.getElementById('multiplayerInfo').style.display = 'none';
-    }
-
-    function updatePlayerList() {
-      if (!gameState.multiplayerRoom) return;
-      
-      const container = document.getElementById('playerList');
-      container.innerHTML = gameState.multiplayerRoom.players.map(player => `
-        <div class="player-tag ${player.socketId === socket.id ? 'active' : ''}">
-          ${player.username}
-        </div>
-      `).join('');
-    }
-
-    function handleMultiplayerAction(data) {
-      // Handle multiplayer game actions
-      console.log('Multiplayer action:', data);
-    }
+    initGame();
   </script>
 </body>
 </html>
