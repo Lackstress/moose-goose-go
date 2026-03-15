@@ -10,13 +10,14 @@
   <link rel="icon" type="image/png" href="/images/moose-goose-logo.png">
   <link rel="shortcut icon" type="image/png" href="/images/moose-goose-logo.png">
   <style>
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
-    body, html {
+    body {
       font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background:
         radial-gradient(circle at top left, #25152f 0%, transparent 55%),
@@ -24,10 +25,15 @@
         linear-gradient(180deg, #020617 0%, #020716 45%, #020617 100%);
       color: #f9fafb;
       height: 100vh;
-      width: 100%;
-      overflow: hidden; /* Ensure it autofits screen, no scroll */
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: clamp(8px, 2vh, 24px);
+      gap: clamp(8px, 2vh, 24px);
     }
 
+    /* Cyber grid background */
     .cyber-grid {
       position: fixed;
       inset: 0;
@@ -39,666 +45,454 @@
       z-index: 0;
     }
 
-    .page-layout {
-      position: relative;
+    /* Top Section (Hero + Stats) */
+    .top-section {
+      display: flex;
+      flex-direction: row;
+      gap: clamp(8px, 2vw, 24px);
+      flex-shrink: 0;
+      height: clamp(120px, 20vh, 180px);
       z-index: 1;
+    }
+
+    .hero-box {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(0, 255, 255, 0.1);
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      padding: clamp(10px, 2vh, 24px) clamp(16px, 4vw, 48px);
-      justify-content: space-between;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: clamp(8px, 1.5vh, 16px);
+      gap: 8px;
     }
 
-    /* ── Header Area ── */
-    .header-area {
+    .hero-logo-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: clamp(10px, 2vh, 20px) 24px;
-      background: rgba(15,23,42,0.85);
-      border-radius: 20px;
-      border: 1px solid rgba(148,163,253,0.35);
-      backdrop-filter: blur(10px);
-      flex-shrink: 0;
-    }
-
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+      gap: 12px;
     }
 
     .hero-logo {
-      width: clamp(40px, 6vh, 60px);
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(59,130,246,0.4);
-    }
-
-    .title-group {
-      display: flex;
-      flex-direction: column;
+      height: clamp(30px, 4vh, 50px);
+      width: auto;
+      border-radius: 12px;
     }
 
     .hero-title {
-      font-size: clamp(1.2rem, 3vh, 1.8rem);
-      font-weight: 700;
-      color: #f9fafb;
-      line-height: 1.1;
+      font-size: clamp(1.2rem, 3vh, 2rem);
+      font-weight: 900;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(0,255,255,0.3);
     }
 
     .hero-subtitle {
       font-size: clamp(0.7rem, 1.5vh, 0.9rem);
-      color: rgba(226,232,240,0.7);
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
     }
 
     .hero-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: clamp(8px, 1.5vh, 12px) clamp(16px, 2vw, 24px);
-      background: radial-gradient(circle at top left, #4f46e5, #0ea5e9);
-      color: white;
-      text-decoration: none;
-      border-radius: 999px;
-      font-weight: 600;
-      font-size: clamp(0.8rem, 1.5vh, 1rem);
+      padding: clamp(6px, 1vh, 10px) clamp(16px, 2vw, 24px);
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: #fff;
       border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: clamp(0.8rem, 1.5vh, 1rem);
       cursor: pointer;
-      box-shadow: 0 4px 16px rgba(37,99,235,0.4);
-      transition: transform 0.18s ease, box-shadow 0.18s ease;
-      white-space: nowrap;
+      box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+      transition: all 0.2s;
     }
 
     .hero-cta:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 8px 24px rgba(37,99,235,0.6);
+      transform: translateY(-2px);
     }
 
-    /* ── Main Content Area ── */
-    .main-grid {
+    .stats-box {
+      flex: 0 0 clamp(200px, 25vw, 350px);
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
       display: flex;
-      gap: clamp(16px, 2vw, 24px);
-      flex: 1;
-      min-height: 0; /* Important for flex-shrink to work */
-      margin: clamp(12px, 2vh, 24px) 0;
-    }
-
-    /* ── Left Side: Platforms ── */
-    .platforms-container {
-      flex: 2;
-      display: flex;
-      flex-direction: column;
-      gap: clamp(12px, 2vh, 16px);
-      height: 100%;
-    }
-
-    .section-title {
-      font-size: clamp(1rem, 2vh, 1.4rem);
-      font-weight: 700;
-      margin-bottom: 4px;
-      color: white;
-      display: flex;
+      flex-direction: row;
       align-items: center;
-      gap: 8px;
+      justify-content: space-around;
+      padding: clamp(8px, 1.5vh, 16px);
     }
 
-    .platform-cards {
+    .stat-item {
       display: flex;
       flex-direction: column;
-      gap: clamp(10px, 1.5vh, 16px);
+      align-items: center;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: clamp(1.2rem, 3vh, 1.8rem);
+      font-weight: 900;
+      color: #00ffff;
+    }
+
+    .stat-lbl {
+      font-size: clamp(0.6rem, 1.2vh, 0.8rem);
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* Middle Section (Platforms) */
+    .platforms-section {
       flex: 1;
+      display: flex;
+      flex-direction: row;
+      gap: clamp(8px, 2vw, 24px);
       min-height: 0;
+      z-index: 1;
     }
 
     .platform-card {
       flex: 1;
-      background: rgba(17, 24, 39, 0.8);
-      border-radius: 16px;
-      padding: clamp(12px, 2vh, 20px);
-      border: 1px solid #1f2937;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      transition: all 0.2s ease;
-      position: relative;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 12px;
       overflow: hidden;
-      min-height: 0;
+      transition: all 0.2s;
     }
 
     .platform-card:hover {
-      transform: translateX(4px);
-      background: rgba(31, 41, 55, 0.9);
-      border-color: #374151;
-    }
-
-    .platform-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-      transition: left 0.6s;
-    }
-
-    .platform-card:hover::before {
-      left: 100%;
+      background: rgba(30, 41, 59, 0.8);
+      border-color: rgba(0, 255, 255, 0.3);
+      transform: translateY(-2px);
     }
 
     .card-top {
+      flex: 1;
       display: flex;
-      align-items: flex-start;
-      gap: 16px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(12px, 2vh, 24px);
+      text-align: center;
+      gap: clamp(8px, 1.5vh, 16px);
+      min-height: 0;
     }
 
     .platform-icon {
-      font-size: clamp(2rem, 5vh, 3rem);
-      line-height: 1;
-    }
-
-    .platform-info {
-      flex: 1;
-      min-width: 0;
+      font-size: clamp(2rem, 5vh, 4rem);
+      width: clamp(60px, 10vh, 80px);
+      height: clamp(60px, 10vh, 80px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
     .platform-title {
-      font-size: clamp(1.2rem, 2.5vh, 1.5rem);
-      font-weight: 600;
-      color: #f9fafb;
-      margin-bottom: 4px;
+      font-size: clamp(1.1rem, 2.5vh, 1.5rem);
+      font-weight: 700;
+      color: #fff;
     }
 
-    .platform-description {
-      font-size: clamp(0.75rem, 1.5vh, 0.9rem);
-      color: #9ca3af;
+    .platform-desc {
+      font-size: clamp(0.7rem, 1.4vh, 0.9rem);
+      color: #94a3b8;
       display: -webkit-box;
-      -webkit-line-clamp: 2;
+      -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      line-height: 1.4;
-    }
-
-    .feature-list {
-      list-style: none;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: clamp(6px, 1vh, 10px);
-      overflow: hidden;
-    }
-
-    .feature-list li {
-      font-size: clamp(0.65rem, 1.2vh, 0.75rem);
-      color: #d1d5db;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 2px 8px;
-      border-radius: 4px;
-      white-space: nowrap;
     }
 
     .card-bottom {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 1.5vh, 12px);
+      padding: clamp(12px, 2vh, 16px);
+      background: rgba(0,0,0,0.2);
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .cloak-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: clamp(8px, 1.5vh, 12px);
-      padding-top: clamp(8px, 1.5vh, 12px);
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .platform-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: clamp(6px, 1vh, 10px) clamp(16px, 2vw, 24px);
-      background: #f97373;
-      color: #111827;
-      text-decoration: none;
-      border-radius: 999px;
+    .cloak-label {
+      font-size: clamp(0.65rem, 1.2vh, 0.8rem);
+      color: #64748b;
       font-weight: 600;
-      font-size: clamp(0.8rem, 1.5vh, 0.95rem);
-      transition: all 0.2s ease;
-      border: none;
-      cursor: pointer;
+      text-transform: uppercase;
     }
 
-    .platform-btn:hover {
-      background: #f05252;
-      transform: scale(1.05);
-    }
-
-    /* ── Cloak Toggle ── */
-    .toggle-switch {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .slider {
+    /* Switch styling */
+    .switch {
       position: relative;
       display: inline-block;
-      width: 36px;
-      height: 20px;
-      background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      transition: 0.3s;
-      margin-right: 8px;
+      width: clamp(28px, 4vh, 36px);
+      height: clamp(16px, 2.2vh, 20px);
     }
-
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .4s;
+      border-radius: 20px;
+    }
     .slider:before {
       position: absolute;
       content: "";
-      height: 14px;
-      width: 14px;
-      left: 3px;
-      bottom: 3px;
+      height: clamp(12px, 1.8vh, 16px);
+      width: clamp(12px, 1.8vh, 16px);
+      left: 2px;
+      bottom: 2px;
       background-color: white;
+      transition: .4s;
       border-radius: 50%;
-      transition: 0.3s;
     }
-
-    input:checked + .slider {
-      background-color: #10b981;
-    }
-
+    input:checked + .slider { background-color: #10b981; }
     input:checked + .slider:before {
-      transform: translateX(16px);
+      transform: translateX(calc(clamp(28px, 4vh, 36px) - clamp(12px, 1.8vh, 16px) - 4px));
     }
 
-    .toggle-label {
-      color: rgba(255, 255, 255, 0.6);
-      font-size: clamp(0.7rem, 1.2vh, 0.8rem);
-    }
-
-    /* ── Right Side: Tools & Info ── */
-    .sidebar-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: clamp(12px, 2vh, 16px);
-      max-width: 350px;
-    }
-
-    /* Tools Hub */
-    .tools-hub {
-      background: rgba(20, 20, 35, 0.8);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      border: 1px solid rgba(0, 255, 255, 0.2);
-      padding: clamp(16px, 2.5vh, 24px);
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow: hidden;
-      flex: 1;
-    }
-
-    .tools-hub::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #00ffff, #ff00ff, #00ffff, transparent);
-    }
-
-    .tools-hub-title {
-      font-size: clamp(1.2rem, 2vh, 1.5rem);
-      font-weight: 800;
-      background: linear-gradient(135deg, #00ffff 0%, #ff00ff 50%, #00ffff 100%);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: clamp(12px, 2vh, 20px);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-align: center;
-    }
-
-    .tool-card {
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(255, 0, 150, 0.3);
-      border-radius: 12px;
-      padding: clamp(12px, 2vh, 20px);
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
+    .play-btn {
+      padding: clamp(8px, 1.5vh, 12px);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
       text-decoration: none;
+      border-radius: 8px;
+      font-size: clamp(0.8rem, 1.5vh, 1rem);
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.2s;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .play-btn:hover {
+      background: rgba(0,255,255,0.15);
+      border-color: rgba(0,255,255,0.4);
+      color: #00ffff;
+    }
+
+    /* Bottom Section (Tools + Footer) */
+    .bottom-section {
+      flex-shrink: 0;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      gap: clamp(8px, 2vw, 24px);
+      height: clamp(60px, 10vh, 80px);
+      z-index: 1;
+    }
+
+    .tools-box {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 12px;
+      display: flex;
       align-items: center;
       justify-content: center;
-      flex: 1;
+      padding: 0 clamp(16px, 2vw, 24px);
     }
 
-    .tool-card:hover {
-      transform: translateY(-4px);
-      border-color: #ff0096;
-      box-shadow: 0 4px 20px rgba(255, 0, 150, 0.2);
-      background: rgba(0, 0, 0, 0.6);
-    }
-
-    .tool-icon {
-      font-size: clamp(2.5rem, 6vh, 4rem);
-      margin-bottom: 8px;
-      filter: drop-shadow(0 0 10px rgba(255, 0, 150, 0.4));
-    }
-
-    .tool-name {
-      font-size: clamp(1rem, 2vh, 1.2rem);
-      font-weight: 700;
+    .tool-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      padding: clamp(6px, 1vh, 10px) clamp(16px, 2vw, 24px);
+      border-radius: 8px;
       color: #fff;
-      margin-bottom: 4px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .tool-btn:hover {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: #8b5cf6;
     }
 
-    .tool-desc {
-      font-size: clamp(0.75rem, 1.5vh, 0.85rem);
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    /* Trust / Stats Block */
-    .trust-block {
-      background: rgba(15,23,42,0.8);
-      border: 1px solid rgba(56,189,248,0.2);
-      border-radius: 16px;
-      padding: clamp(12px, 2vh, 20px);
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .trust-item {
-      text-align: center;
-      background: rgba(255,255,255,0.03);
-      padding: 10px;
-      border-radius: 10px;
-    }
-
-    .trust-number {
-      font-size: clamp(1.1rem, 2vh, 1.5rem);
-      font-weight: 800;
-      background: linear-gradient(135deg, #9370db, #4b0082);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 2px;
-    }
-
-    .trust-label {
-      font-size: clamp(0.6rem, 1.1vh, 0.75rem);
-      color: rgba(255,255,255,0.6);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    /* ── Footer ── */
-    .footer {
+    .footer-box {
+      flex: 0 0 clamp(200px, 25vw, 350px);
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
-      padding-top: clamp(8px, 1.5vh, 16px);
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      flex-shrink: 0;
+      padding: 0 clamp(16px, 2vw, 24px);
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      font-size: clamp(0.65rem, 1.2vh, 0.8rem);
+      color: #64748b;
     }
 
-    .footer-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .footer-brand {
-      font-size: clamp(0.8rem, 1.5vh, 0.9rem);
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.8);
-    }
-
-    .footer-links {
-      font-size: clamp(0.7rem, 1.2vh, 0.8rem);
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    .version-badge {
-      font-size: clamp(0.65rem, 1.2vh, 0.75rem);
-      color: #00ffff;
-      background: rgba(0, 255, 255, 0.1);
-      padding: 4px 8px;
+    .version {
+      padding: 2px 8px;
+      background: rgba(255,255,255,0.05);
       border-radius: 4px;
       font-family: monospace;
-      border: 1px solid rgba(0, 255, 255, 0.2);
     }
 
     /* Notification */
     #notification-container {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
+      bottom: 24px;
+      right: 24px;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      z-index: 9999;
+      pointer-events: none;
     }
-
     .notification {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      color: #fff;
       padding: 12px 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      font-size: 14px;
       font-weight: 500;
-      font-size: 0.9rem;
-      animation: slideIn 0.3s ease forwards;
-      opacity: 0;
-      transform: translateX(100%);
+      animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
-
     @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOut {
-      to { transform: translateX(100%); opacity: 0; }
     }
 
     /* Responsive adjustments */
-    @media (max-width: 900px) {
-      .main-grid {
+    @media (max-width: 768px) {
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+      }
+      .top-section, .platforms-section, .bottom-section {
         flex-direction: column;
-      }
-      .sidebar-container {
-        max-width: none;
-        flex-direction: row;
-        height: 180px; /* Fixed height for tools area on mobile */
-      }
-      .trust-block {
-        flex: 1;
-      }
-      .feature-list {
-        display: none; /* Hide features on small screens to save space */
+        height: auto;
       }
     }
 
-    @media (max-width: 600px) {
-      .sidebar-container {
-        flex-direction: column;
-        height: auto;
-      }
-      .header-area {
-        flex-direction: column;
-        gap: 12px;
-        text-align: center;
-      }
-      .logo-container {
-        flex-direction: column;
-      }
-      .footer {
-        flex-direction: column;
-        gap: 8px;
-      }
-      body, html {
-        overflow-y: auto; /* Allow scroll on very small screens */
-        height: auto;
-      }
-      .page-layout {
-        height: auto;
-        min-height: 100vh;
-      }
-    }
   </style>
 </head>
 <body>
+
   <div class="cyber-grid"></div>
 
-  <div class="page-layout">
-    <!-- Header -->
-    <header class="header-area">
-      <div class="logo-container">
+  <!-- Top Section -->
+  <div class="top-section">
+    <div class="hero-box">
+      <div class="hero-logo-row">
         <img src="/images/moose-goose-logo.png" alt="Logo" class="hero-logo">
-        <div class="title-group">
-          <h1 class="hero-title">Moose Goose Games</h1>
-          <span class="hero-subtitle">Play instantly • No installs • No login</span>
-        </div>
+        <h1 class="hero-title">Moose Goose Games</h1>
       </div>
+      <div class="hero-subtitle">Play instantly • No installs • No login</div>
       <button class="hero-cta" onclick="pickRandomHub()">🎲 Pick For Me!</button>
-    </header>
+    </div>
 
-    <!-- Main Content -->
-    <main class="main-grid">
-
-      <!-- Platforms Container -->
-      <div class="platforms-container">
-        <h2 class="section-title">🎯 Choose Your Platform</h2>
-
-        <div class="platform-cards">
-          <!-- GameHub -->
-          <div class="platform-card">
-            <div class="card-top">
-              <span class="platform-icon">🎰</span>
-              <div class="platform-info">
-                <h3 class="platform-title">GameHub</h3>
-                <p class="platform-description">Our hand-crafted gaming collection with exclusive features, multiplayer lobbies, and coin rewards.</p>
-                <ul class="feature-list">
-                  <li>Casino</li>
-                  <li>Arcade</li>
-                  <li>Multiplayer</li>
-                  <li>Leaderboards</li>
-                </ul>
-              </div>
-            </div>
-            <div class="card-bottom">
-              <label class="toggle-switch">
-                <input type="checkbox" id="cloak-ghub" onchange="toggleCloak('ghub', this.checked)">
-                <span class="slider"></span>
-                <span class="toggle-label">Hide URL</span>
-              </label>
-              <a href="/ghub" class="platform-btn" id="btn-ghub">🎮 Play GameHub</a>
-            </div>
-          </div>
-
-          <!-- DuckMath -->
-          <div class="platform-card">
-            <div class="card-top">
-              <span class="platform-icon">🦆</span>
-              <div class="platform-info">
-                <h3 class="platform-title">DuckMath Hub</h3>
-                <p class="platform-description">Massive collection of 100+ unblocked Flash & HTML5 games from around the web.</p>
-                <ul class="feature-list">
-                  <li>Action</li>
-                  <li>Puzzle</li>
-                  <li>Slope</li>
-                  <li>Retro Bowl</li>
-                </ul>
-              </div>
-            </div>
-            <div class="card-bottom">
-              <label class="toggle-switch">
-                <input type="checkbox" id="cloak-duckmath" onchange="toggleCloak('duckmath', this.checked)">
-                <span class="slider"></span>
-                <span class="toggle-label">Hide URL</span>
-              </label>
-              <a href="/duckmath" class="platform-btn" id="btn-duckmath">🦆 Play DuckMath</a>
-            </div>
-          </div>
-
-          <!-- Seraph -->
-          <div class="platform-card">
-            <div class="card-top">
-              <span class="platform-icon">👼</span>
-              <div class="platform-info">
-                <h3 class="platform-title">Seraph Games</h3>
-                <p class="platform-description">Massive offline-ready collection with 350+ games, custom themes, and retro emulators.</p>
-                <ul class="feature-list">
-                  <li>350+ Games</li>
-                  <li>Offline Mode</li>
-                  <li>Emulators</li>
-                  <li>Panic Key</li>
-                </ul>
-              </div>
-            </div>
-            <div class="card-bottom">
-              <label class="toggle-switch">
-                <input type="checkbox" id="cloak-seraph" onchange="toggleCloak('seraph', this.checked)">
-                <span class="slider"></span>
-                <span class="toggle-label">Hide URL</span>
-              </label>
-              <a href="/seraph" class="platform-btn" id="btn-seraph">👼 Play Seraph</a>
-            </div>
-          </div>
-        </div>
+    <div class="stats-box">
+      <div class="stat-item">
+        <div class="stat-val">450+</div>
+        <div class="stat-lbl">Games</div>
       </div>
-
-      <!-- Sidebar Container -->
-      <div class="sidebar-container">
-        <!-- Tools Hub -->
-        <div class="tools-hub">
-          <h2 class="tools-hub-title">⚡ Tools Hub ⚡</h2>
-          <a href="/media-player" class="tool-card">
-            <span class="tool-icon">🎵</span>
-            <div class="tool-name">Media Player</div>
-            <div class="tool-desc">YouTube & Spotify streaming</div>
-          </a>
-        </div>
-
-        <!-- Trust Block -->
-        <div class="trust-block">
-          <div class="trust-item">
-            <div class="trust-number">450+</div>
-            <div class="trust-label">Games</div>
-          </div>
-          <div class="trust-item">
-            <div class="trust-number">100%</div>
-            <div class="trust-label">Browser</div>
-          </div>
-          <div class="trust-item">
-            <div class="trust-number">Free</div>
-            <div class="trust-label">No DLs</div>
-          </div>
-          <div class="trust-item">
-            <div class="trust-number">24/7</div>
-            <div class="trust-label">Access</div>
-          </div>
-        </div>
+      <div class="stat-item">
+        <div class="stat-val">100%</div>
+        <div class="stat-lbl">Browser</div>
       </div>
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-left">
-        <span class="footer-brand">🦌🦆 Moose Goose Games</span>
-        <span class="footer-links">GameHub • DuckMath • Seraph</span>
+      <div class="stat-item">
+        <div class="stat-val">Free</div>
+        <div class="stat-lbl">No DLs</div>
       </div>
-      <div class="version-badge">v2.52</div>
-    </footer>
+    </div>
+  </div>
+
+  <!-- Middle Section -->
+  <div class="platforms-section">
+    <!-- GameHub -->
+    <div class="platform-card">
+      <div class="card-top">
+        <div class="platform-icon">🎰</div>
+        <div class="platform-title">GameHub</div>
+        <div class="platform-desc">Hand-crafted gaming collection with exclusive features, multiplayer lobbies, and coin rewards.</div>
+      </div>
+      <div class="card-bottom">
+        <div class="cloak-row">
+          <span class="cloak-label">Hide URL</span>
+          <label class="switch">
+            <input type="checkbox" id="cloak-ghub" onchange="toggleCloak('ghub', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <a href="/ghub" class="play-btn" id="btn-ghub">Play GameHub</a>
+      </div>
+    </div>
+
+    <!-- DuckMath -->
+    <div class="platform-card">
+      <div class="card-top">
+        <div class="platform-icon">🦆</div>
+        <div class="platform-title">DuckMath</div>
+        <div class="platform-desc">Massive collection of 100+ unblocked Flash & HTML5 games from around the web.</div>
+      </div>
+      <div class="card-bottom">
+        <div class="cloak-row">
+          <span class="cloak-label">Hide URL</span>
+          <label class="switch">
+            <input type="checkbox" id="cloak-duckmath" onchange="toggleCloak('duckmath', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <a href="/duckmath" class="play-btn" id="btn-duckmath">Play DuckMath</a>
+      </div>
+    </div>
+
+    <!-- Seraph -->
+    <div class="platform-card">
+      <div class="card-top">
+        <div class="platform-icon">👼</div>
+        <div class="platform-title">Seraph Games</div>
+        <div class="platform-desc">Massive offline-ready collection with 350+ games, custom themes, and retro emulators.</div>
+      </div>
+      <div class="card-bottom">
+        <div class="cloak-row">
+          <span class="cloak-label">Hide URL</span>
+          <label class="switch">
+            <input type="checkbox" id="cloak-seraph" onchange="toggleCloak('seraph', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <a href="/seraph" class="play-btn" id="btn-seraph">Play Seraph</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Section -->
+  <div class="bottom-section">
+    <div class="tools-box">
+      <a href="/media-player" class="tool-btn">
+        <span style="font-size: clamp(1.2rem, 2vh, 1.5rem);">🎵</span>
+        <div style="text-align: left;">
+          <div style="font-weight: 700; font-size: clamp(0.9rem, 1.5vh, 1.1rem);">Media Player</div>
+          <div style="font-size: clamp(0.7rem, 1.2vh, 0.8rem); opacity: 0.8;">YouTube & Spotify</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="footer-box">
+      <span>Moose Goose Games</span>
+      <span class="version">v2.52</span>
+    </div>
   </div>
 
   <div id="notification-container"></div>
@@ -706,18 +500,32 @@
   <script>
     // Pick random hub function
     function pickRandomHub() {
-      const hubs = ['ghub', 'duckmath', 'seraph'];
+      const hubs = [
+        { id: 'ghub', url: '/ghub' },
+        { id: 'duckmath', url: '/duckmath' },
+        { id: 'seraph', url: '/seraph' }
+      ];
       const randomHub = hubs[Math.floor(Math.random() * hubs.length)];
 
-      if (cloakedTabs[randomHub]) {
-        openCloakedTab(randomHub, hubUrls[randomHub]);
+      const isCloaked = localStorage.getItem(`${randomHub.id}-cloak`) === 'true';
+      if (isCloaked) {
+        openCloakedTab(randomHub.id, randomHub.url);
       } else {
-        window.location.href = hubUrls[randomHub];
+        window.location.href = randomHub.url;
       }
+    }
+
+    // Toggle card details dropdown
+    function toggleCardDetails(header) {
+      const card = header.closest('.platform-card');
+      card.classList.toggle('expanded');
     }
 
     // Tab cloaking functionality
     let cloakedTabs = {};
+    let originalTitles = {};
+
+    // Store original URLs for each hub
     const hubUrls = {
       'ghub': '/ghub',
       'duckmath': '/duckmath',
@@ -726,16 +534,23 @@
 
     function toggleCloak(hub, enabled) {
       if (enabled) {
+        // Store current state
         cloakedTabs[hub] = true;
+
+        // Update button to open in new window with cloaking
         const btn = document.getElementById(`btn-${hub}`);
         const href = btn.getAttribute('href');
-        btn.setAttribute('data-original-href', href);
+        btn.setAttribute('data-original-href', href); // Store original
         btn.setAttribute('href', 'javascript:void(0)');
         btn.setAttribute('onclick', `openCloakedTab('${hub}', '${href}'); return false;`);
         
+        // Show notification
         showNotification(`🔒 URL hiding enabled for ${hub.toUpperCase()}`);
       } else {
+        // Disable cloaking
         delete cloakedTabs[hub];
+
+        // Restore normal link
         const btn = document.getElementById(`btn-${hub}`);
         const originalHref = btn.getAttribute('data-original-href') || hubUrls[hub];
         btn.setAttribute('href', originalHref);
@@ -747,11 +562,14 @@
     }
 
     function openCloakedTab(hub, url) {
+      // Create a new blank window
       const newWindow = window.open('about:blank', '_blank');
       
       if (newWindow) {
+        // Convert relative URL to absolute
         const absoluteUrl = url.startsWith('http') ? url : window.location.origin + url;
         
+        // Set up the cloaked page
         newWindow.document.open();
         newWindow.document.write('<!DOCTYPE html><html><head><title>Google Classroom</title><link rel="icon" href="https://ssl.gstatic.com/classroom/favicon.png"><style>* { margin: 0; padding: 0; } body, html { width: 100%; height: 100%; overflow: hidden; } iframe { width: 100%; height: 100%; border: none; }</style></head><body><iframe src="' + absoluteUrl + '" frameborder="0" allowfullscreen></iframe></body></html>');
         newWindow.document.close();
@@ -763,17 +581,44 @@
     }
 
     function showNotification(message) {
-      const container = document.getElementById('notification-container');
+      // Create notification element
       const notification = document.createElement('div');
-      notification.className = 'notification';
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+        font-weight: 500;
+      `;
       notification.textContent = message;
       
-      container.appendChild(notification);
+      // Add animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+
+      document.body.appendChild(notification);
       
+      // Remove after 3 seconds
       setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease forwards';
+        notification.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => {
-          notification.remove();
+          document.body.removeChild(notification);
         }, 300);
       }, 3000);
     }
