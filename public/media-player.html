@@ -12,34 +12,11 @@
             box-sizing: border-box;
         }
         
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0f0f10;
-            color: #f9fafb;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding: 56px 0 24px;
-            gap: 0;
-            position: relative;
-            overflow-x: hidden;
-        }
-        
         body::before,
         body::after {
             display: none;
         }
         
-        .container {
-            background: transparent;
-            border-radius: 0;
-            box-shadow: none;
-            padding: 0;
-            width: 100%;
-            border: none;
-            position: relative;
-            z-index: 1;
-        }
         
         @keyframes fadeInUp {
             from {
@@ -53,54 +30,23 @@
         }
         
         /* Main Layout - Sidebar + Content */
-        .main-layout {
-            display: flex;
-            flex-direction: row-reverse;
-            gap: 18px;
-            width: 100%;
-            padding: 0 16px;
-            position: relative;
-            z-index: 1;
-            align-items: flex-start;
-            margin: 16px 0 0;
-            flex: 1;
-        }
         
-        .content-area {
-            flex: 1;
-            min-width: 0;
-        }
 
-        /* History Section Styles - Futuristic Sidebar */
-        .history-container {
-            width: 320px;
+        /* Left Sidebar Menu Styles */
+        .sidebar-menu {
+            background: #18181b;
+            width: 240px;
             flex-shrink: 0;
-            background: rgba(5, 5, 15, 0.95);
-            margin-top: 0;
-            border-radius: 12px;
-            box-shadow: none;
-            padding: 16px 12px;
-            border: 1px solid #262626;
-            position: sticky;
-            top: 20px;
-            height: fit-content;
-            max-height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px 0;
+            height: 100%;
             overflow-y: auto;
         }
 
         /* YouTube-like header */
-        .mp-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 56px;
-            background: #0f0f10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 90;
-        }
+
 
         .mp-header-inner {
             width: 100%;
@@ -111,8 +57,8 @@
         }
 
         .mp-logo {
-            font-weight: 600;
-            font-size: 1.1rem;
+            font-weight: 700;
+            font-size: 1.3rem;
             color: #f9fafb;
             white-space: nowrap;
         }
@@ -125,29 +71,65 @@
             flex: 1;
             display: flex;
             align-items: center;
+            justify-content: center;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
-        .mp-search input {
+        .mp-header .mp-search input {
             width: 100%;
-            background: #181818;
+            background: #121212;
             border: 1px solid #303030;
             border-radius: 999px;
-            padding: 6px 12px;
+            padding: 10px 20px;
             color: #e5e5e5;
-            font-size: 0.85rem;
+            font-size: 1rem;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
         }
 
-        .mp-search input::placeholder {
+        .mp-header .mp-search input::placeholder {
             color: #6b7280;
         }
 
-        .mp-search input:focus {
+        .mp-header .mp-search input:focus {
             outline: none;
             border-color: #f97373;
         }
 
         .mp-header-spacer {
             width: 40px;
+        }
+
+        .mp-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-link-icon {
+            color: #e5e5e5;
+            text-decoration: none;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-icon {
+            font-size: 1.2rem;
+        }
+
+        .history-label {
+            padding: 10px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #aaa;
+        }
+
+        .history-header-integrated {
+            padding: 0 12px;
+            margin-bottom: 12px;
+        }
+
+        .history-list-integrated {
+            padding: 0 8px;
         }
 
         .history-container::before {
@@ -160,18 +142,52 @@
             background: linear-gradient(90deg, transparent, #00ffff, transparent);
         }
 
-        .history-container::-webkit-scrollbar {
-            width: 6px;
+        /* Navigation / Sidebar Menu Buttons */
+        .sidebar-menu .tab {
+    box-shadow: none;
+    height: auto;
+    min-height: 40px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 10px 16px;
+            background: transparent;
+            color: #f1f1f1;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-align: left;
+            width: 100%;
         }
 
-        .history-container::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 3px;
+        .sidebar-menu .tab:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        .history-container::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #00ffff, #ff00ff);
-            border-radius: 3px;
+        .sidebar-menu .tab.active {
+            background: rgba(255, 255, 255, 0.15);
+            font-weight: 600;
+        }
+
+        /* Container adjustments to remove border radius */
+        .container {
+            background: transparent;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 24px 0 0 0;
+            width: 100%;
+            border: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 12px 0;
         }
         
         .history-header {
@@ -778,42 +794,14 @@
         h1 {
             text-align: left;
             color: #f9fafb;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-        
-        .tabs {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-        
-        .tab {
-            padding: 6px 12px;
-            background: #272727;
-            color: #e5e5e5;
-            border: none;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.15s ease, color 0.15s ease;
-        }
-        
-        .tab:hover {
-            background: #3f3f3f;
-        }
-        
-        .tab.active {
-            background: #f97373;
-            color: #111827;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 700;
         }
         
         .tab-content {
             display: none;
+            padding-bottom: 40px;
         }
         
         .tab-content.active {
@@ -845,7 +833,7 @@
             box-shadow:
                 0 0 0 1px rgba(15, 23, 42, 1),
                 0 0 0 2px rgba(56, 189, 248, 0.7),
-                0 18px 40px rgba(15, 23, 42, 0.9);
+                none;
             background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
         }
         
@@ -855,15 +843,15 @@
         
         button {
             padding: 10px 20px;
-            background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%);
-            color: #e5f2ff;
+            background: #272727;
+            color: #f1f1f1;
             border: none;
             border-radius: 999px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.25s ease;
-            box-shadow: 0 14px 38px rgba(37, 99, 235, 0.55);
+            box-shadow: none;
             position: relative;
             overflow: hidden;
             text-transform: none;
@@ -871,12 +859,11 @@
         }
         
         button:hover:not(:disabled) {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 12px 35px rgba(0, 255, 255, 0.4), 0 0 40px rgba(255, 0, 255, 0.2);
+            background: #3f3f3f;
         }
         
         button:active:not(:disabled) {
-            transform: scale(0.97);
+            background: #525252;
         }
         
         button:disabled {
@@ -1016,6 +1003,8 @@
             z-index: 100;
         }
         
+
+
         .back-link:hover {
             color: #ffffff;
         }
@@ -1224,28 +1213,7 @@
             margin-bottom: 15px;
         }
         
-        @media (max-width: 1100px) {
-            .main-layout {
-                flex-direction: column;
-            }
 
-            .history-container {
-                width: 100%;
-                position: static;
-                max-height: none;
-                order: 2;
-            }
-
-            .content-area {
-                order: 1;
-            }
-        }
-
-        @media (max-width: 768px), (max-height: 700px) {
-            .container {
-                padding: 20px;
-                margin: 10px;
-            }
             
             .main-layout {
                 max-width: 100%;
@@ -1272,14 +1240,153 @@
                 padding-bottom: min(56.25%, 48vh);
             }
         }
+
+
+        html, body {
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #0f0f10 !important;
+            color: #f9fafb;
+        }
+
+        .main-layout {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            width: 100%;
+            height: calc(100vh - 56px);
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+            background: #0f0f10;
+        }
+
+        .content-area {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            background: #0f0f10;
+        }
+
+        /* YouTube-like header */
+        .mp-header {
+            flex-shrink: 0;
+            height: 56px;
+            background: #0f0f10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 90;
+            width: 100%;
+        }
+
+        .main-layout {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            width: 100%;
+            height: calc(100vh - 56px);
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu {
+            background: #18181b;
+            width: clamp(200px, 20vw, 240px);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            height: 100%;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .content-area {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .tab-content {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            height: 100%;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        #youtubeWrapper, #searchVideoWrapper, #musicWrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .video-container, .spotify-container {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            height: auto;
+            padding-bottom: 0;
+            border-radius: 12px;
+            background: #000;
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 15px;
+        }
+
     </style>
 </head>
 <body>
-    <a href="/" class="back-link">← Back to Hub</a>
-
     <div class="mp-header">
         <div class="mp-header-inner">
-            <div class="mp-logo"><span>Moose</span> Media</div>
+            <div class="mp-header-left">
+                <a href="/" class="back-link-icon" title="Back to Hub">
+                    ←
+                </a>
+                <div class="mp-logo"><span>Moose</span> Media</div>
+            </div>
             <div class="mp-search">
                 <input type="text" placeholder="Search media..." />
             </div>
@@ -1288,30 +1395,40 @@
     </div>
     
     <div class="main-layout">
-    <!-- Conversion History Sidebar -->
-    <div class="history-container" id="historyContainer">
-        <div class="history-header">
-            <h2>📜 History</h2>
-            <button class="clear-history-btn" onclick="clearHistory()">Clear</button>
-        </div>
-        <div id="historyList">
-            <div class="history-empty">
-                <div class="history-empty-icon">⚡</div>
-                <div class="history-empty-text">No conversions yet</div>
-                <div class="history-empty-hint">Convert a Spotify link to get started</div>
+        <!-- Sidebar Navigation -->
+        <div class="sidebar-menu">
+            <button class="tab active" onclick="switchTab(event, 'youtube')">
+                <span class="sidebar-icon">🏠</span> Home
+            </button>
+            <button class="tab" onclick="switchTab(event, 'youtube-search')">
+                <span class="sidebar-icon">🔍</span> Search Video
+            </button>
+            <button class="tab" onclick="switchTab(event, 'spotify')">
+                <span class="sidebar-icon">🎵</span> Music Converter
+            </button>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="history-label">
+                History
+            </div>
+
+            <!-- History section integrated into sidebar -->
+            <div id="historyContainer" style="margin-top: 8px;">
+                <div class="history-header history-header-integrated">
+                    <button class="clear-history-btn" onclick="clearHistory()" style="width: 100%; text-align: center;">Clear History</button>
+                </div>
+                <div id="historyList" class="history-list-integrated">
+                    <div class="history-empty">
+                        <div class="history-empty-text">No recent history</div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
     <div class="content-area">
     <div class="container">
-        <h1>🎬 Media Player</h1>
-        
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('youtube')">📺 YouTube</button>
-            <button class="tab" onclick="switchTab('youtube-search')">🔍 Search</button>
-            <button class="tab" onclick="switchTab('spotify')">🎵 Music</button>
-        </div>
+        <!-- Removed duplicate Media Player heading -->
         
         <!-- YouTube Tab -->
         <div id="youtube-tab" class="tab-content active">
@@ -1548,10 +1665,20 @@
         `;
         document.head.appendChild(styleSheet);
         
-        function switchTab(tab) {
+        function switchTab(e, tab) {
             // Update tab buttons
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            if (e && e.currentTarget) {
+                e.currentTarget.classList.add('active');
+            } else {
+                // Fallback for programmatically switching tabs
+                document.querySelectorAll('.tab').forEach(t => {
+                    const onclick = t.getAttribute('onclick') || '';
+                    if (onclick.includes(`'${tab}'`)) {
+                        t.classList.add('active');
+                    }
+                });
+            }
             
             // Update tab content
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -3332,10 +3459,7 @@
             const isPlaylist = url.includes('playlist=') || url.includes('list=') || url.includes('videoseries');
             
             // Switch to YouTube tab
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelector('.tab').classList.add('active'); // First tab is YouTube
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById('youtube-tab').classList.add('active');
+            switchTab(null, 'youtube');
             
             // Set the URL and play
             document.getElementById('youtubeLink').value = url;

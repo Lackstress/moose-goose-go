@@ -10,6 +10,7 @@
   <link rel="icon" type="image/png" href="/images/moose-goose-logo.png">
   <link rel="shortcut icon" type="image/png" href="/images/moose-goose-logo.png">
   <style>
+
     * {
       margin: 0;
       padding: 0;
@@ -23,9 +24,13 @@
         radial-gradient(circle at bottom right, #10203a 0%, transparent 55%),
         linear-gradient(180deg, #020617 0%, #020716 45%, #020617 100%);
       color: #f9fafb;
-      min-height: 100vh;
-      width: 100%;
-      overflow-x: hidden;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: clamp(8px, 2vh, 24px);
+      gap: clamp(8px, 2vh, 24px);
     }
 
     /* Cyber grid background */
@@ -40,769 +45,474 @@
       z-index: 0;
     }
 
-    /* Page wrapper — full width, fluid side padding */
-    .page {
-      width: 100%;
-      padding: 0 clamp(16px, 4vw, 64px) 48px;
+    /* Top Section (Hero + Stats) */
+    .top-section {
+      display: flex;
+      flex-direction: row;
+      gap: clamp(8px, 2vw, 24px);
+      flex-shrink: 0;
+      height: clamp(120px, 20vh, 180px);
+      z-index: 1;
     }
 
-    /* ── Hero ── */
-    .hero-section {
-      width: 100%;
+    .hero-box {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(0, 255, 255, 0.1);
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: clamp(8px, 1.5vh, 16px);
+      gap: 8px;
+    }
+
+    .hero-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hero-logo {
+      height: clamp(30px, 4vh, 50px);
+      width: auto;
+      border-radius: 12px;
+    }
+
+    .hero-title {
+      font-size: clamp(1.2rem, 3vh, 2rem);
+      font-weight: 900;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(0,255,255,0.3);
+    }
+
+    .hero-subtitle {
+      font-size: clamp(0.7rem, 1.5vh, 0.9rem);
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .hero-cta {
+      padding: clamp(6px, 1vh, 10px) clamp(16px, 2vw, 24px);
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: clamp(0.8rem, 1.5vh, 1rem);
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+      transition: all 0.2s;
+    }
+
+    .hero-cta:hover {
+      transform: translateY(-2px);
+    }
+
+    .stats-box {
+      flex: 0 0 clamp(200px, 25vw, 350px);
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-around;
+      padding: clamp(8px, 1.5vh, 16px);
+    }
+
+    .stat-item {
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      padding: clamp(24px, 4vw, 48px) clamp(16px, 3vw, 48px);
-      margin: clamp(16px, 2vw, 32px) 0 0;
-      border-radius: 20px;
-      background:
-        radial-gradient(circle at top left, rgba(148,163,253,0.12), transparent 55%),
-        radial-gradient(circle at bottom right, rgba(248,113,113,0.12), transparent 55%),
-        rgba(15,23,42,0.92);
-      border: 1px solid rgba(148,163,253,0.35);
     }
 
-    .hero-logo {
-      width: clamp(80px, 12vw, 160px);
-      border-radius: 14px;
-      margin-bottom: 14px;
-      box-shadow: 0 12px 32px rgba(59,130,246,0.4);
-    }
-
-    .hero-title {
-      font-size: clamp(1.5rem, 3.5vw, 2.8rem);
-      font-weight: 700;
-      color: #f9fafb;
-      margin-bottom: 8px;
-    }
-
-    .hero-subtitle {
-      font-size: clamp(0.85rem, 1.5vw, 1rem);
-      color: rgba(226,232,240,0.85);
-      margin-bottom: 20px;
-      max-width: 500px;
-      line-height: 1.5;
-    }
-
-    .hero-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0.75rem 2rem;
-      background: radial-gradient(circle at top left, #4f46e5, #0ea5e9);
-      color: white;
-      text-decoration: none;
-      border-radius: 999px;
-      font-weight: 600;
-      font-size: clamp(0.9rem, 1.5vw, 1rem);
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 8px 24px rgba(37,99,235,0.5);
-      transition: transform 0.18s ease, box-shadow 0.18s ease;
-    }
-
-    .hero-cta:hover {
-      transform: translateY(-3px) scale(1.03);
-      box-shadow: 0 12px 32px rgba(37,99,235,0.65);
-    }
-
-    /* ── Trust Bar ── */
-    .trust-bar {
-      display: flex;
-      justify-content: center;
-      gap: clamp(1rem, 4vw, 3rem);
-      flex-wrap: wrap;
-      padding: 0.8rem clamp(1rem, 3vw, 2rem);
-      background: rgba(15,23,42,0.9);
-      border-radius: 999px;
-      margin: 16px 0 28px;
-      border: 1px solid rgba(56,189,248,0.35);
-      width: 100%;
-    }
-
-    .trust-item { text-align: center; }
-
-    .trust-number {
-      font-size: clamp(1.3rem, 2.5vw, 1.9rem);
+    .stat-val {
+      font-size: clamp(1.2rem, 3vh, 1.8rem);
       font-weight: 900;
-      background: linear-gradient(135deg, #9370db, #4b0082);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #00ffff;
     }
 
-    .trust-label {
-      font-size: clamp(0.7rem, 1.2vw, 0.85rem);
-      opacity: 0.8;
-      position: relative;
+    .stat-lbl {
+      font-size: clamp(0.6rem, 1.2vh, 0.8rem);
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* Middle Section (Platforms) */
+    .platforms-section {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      gap: clamp(8px, 2vw, 24px);
+      min-height: 0;
       z-index: 1;
-    }
-
-    .header h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-      color: white;
-      font-weight: 700;
-    }
-
-    @keyframes shimmer {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    .header p {
-      font-size: 0.98rem;
-      opacity: 0.9;
-    }
-
-    .platforms-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1.5rem;
-      margin: 0 auto 1.8rem;
-      padding: 0 16px;
-      width: 100%;
-      animation: fadeIn 0.5s ease 0.1s both;
     }
 
     .platform-card {
-      background: #111827;
-      border-radius: 14px;
-      padding: 0.9rem 1rem;
-      box-shadow: none;
-      transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
-      text-align: left;
-      position: relative;
-      overflow: hidden;
-      border: 1px solid #1f2937;
-    }
-
-    .platform-card.compact .card-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      cursor: pointer;
-      padding: 0.5rem;
-    }
-
-    .platform-card.compact .card-header .platform-icon {
-      font-size: 2.5rem;
-      margin-bottom: 0;
-      animation: none;
-    }
-
-    .platform-card.compact .card-header .platform-title {
-      font-size: 1.4rem;
-      margin-bottom: 0;
       flex: 1;
-      text-align: left;
-    }
-
-    .platform-card.compact .expand-arrow {
-      font-size: 1rem;
-      color: rgba(255, 255, 255, 0.5);
-      transition: transform 0.3s ease;
-    }
-
-    .platform-card.compact.expanded .expand-arrow {
-      transform: rotate(180deg);
-    }
-
-    .platform-card.compact .card-details {
-      max-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 12px;
       overflow: hidden;
-      transition: max-height 0.3s ease, padding 0.3s ease;
-      padding: 0;
-    }
-
-    .platform-card.compact.expanded .card-details {
-      max-height: 400px;
-      padding: 1rem 0;
-    }
-
-    .platform-card.compact .platform-description {
-      font-size: 1rem;
-      margin: 1rem 0;
-      color: rgba(255, 255, 255, 0.7);
-      line-height: 1.5;
-    }
-
-    .platform-card.compact .feature-list {
-      margin-bottom: 1rem;
-    }
-
-    .platform-card.compact .feature-list li {
-      padding: 0.5rem 0;
-      font-size: 0.95rem;
-    }
-
-    .platform-card.compact .platform-btn {
-      padding: 1rem 2rem;
-      font-size: 1rem;
-      margin-top: 0.5rem;
-    }
-
-    .platform-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-      transition: left 0.6s;
-    }
-
-    .platform-card:hover::before {
-      left: 100%;
+      transition: all 0.2s;
     }
 
     .platform-card:hover {
+      background: rgba(30, 41, 59, 0.8);
+      border-color: rgba(0, 255, 255, 0.3);
       transform: translateY(-2px);
-      background: #111827;
-      border-color: #374151;
+    }
+
+    .card-top {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(12px, 2vh, 24px);
+      text-align: center;
+      gap: clamp(8px, 1.5vh, 16px);
+      min-height: 0;
     }
 
     .platform-icon {
-      font-size: 2rem;
-      margin-bottom: 0;
-      display: block;
+      font-size: clamp(2rem, 5vh, 4rem);
+      width: clamp(60px, 10vh, 80px);
+      height: clamp(60px, 10vh, 80px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
     .platform-title {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: #f9fafb;
-      margin-bottom: 0.1rem;
+      font-size: clamp(1.1rem, 2.5vh, 1.5rem);
+      font-weight: 700;
+      color: #fff;
     }
 
-    .platform-description {
-      font-size: 0.9rem;
-      color: #9ca3af;
-      margin-bottom: 0.6rem;
-      line-height: 1.4;
+    .platform-desc {
+      font-size: clamp(0.7rem, 1.4vh, 0.9rem);
+      color: #94a3b8;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
-    .feature-list {
-      list-style: none;
-      padding: 0;
-      margin: 0.4rem 0 0.6rem;
-      text-align: left;
+    .card-bottom {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 1.5vh, 12px);
+      padding: clamp(12px, 2vh, 16px);
+      background: rgba(0,0,0,0.2);
+      border-top: 1px solid rgba(255,255,255,0.05);
     }
 
-    .feature-list li {
-      padding: 0.15rem 0;
-      color: #9ca3af;
-      font-size: 0.82rem;
-    }
-
-    .feature-list li:before {
-      content: "• ";
-      color: #6b7280;
-      margin-right: 0.2rem;
-    }
-
-    .notice {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      padding: 1rem 1.5rem;
-      border-radius: 50px;
-      margin-bottom: 2rem;
-      text-align: center;
-      font-weight: 600;
-      font-size: 1rem;
-      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
-      display: inline-block;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-    }
-
-    .hub-controls {
-      margin: 1.5rem 0;
-      text-align: center;
-    }
-
-    .toggle-switch {
-      position: relative;
-      display: inline-flex;
+    .cloak-row {
+      display: flex;
       align-items: center;
-      cursor: pointer;
-      user-select: none;
+      justify-content: space-between;
     }
 
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
+    .cloak-label {
+      font-size: clamp(0.65rem, 1.2vh, 0.8rem);
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
     }
 
-    .slider {
+    /* Switch styling */
+    .switch {
       position: relative;
       display: inline-block;
-      width: 50px;
-      height: 24px;
-      background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 24px;
-      transition: 0.3s;
-      margin-right: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      width: clamp(28px, 4vh, 36px);
+      height: clamp(16px, 2.2vh, 20px);
     }
-
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .4s;
+      border-radius: 20px;
+    }
     .slider:before {
       position: absolute;
       content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
+      height: clamp(12px, 1.8vh, 16px);
+      width: clamp(12px, 1.8vh, 16px);
+      left: 2px;
       bottom: 2px;
       background-color: white;
+      transition: .4s;
       border-radius: 50%;
-      transition: 0.3s;
     }
-
-    input:checked + .slider {
-      background-color: #10b981;
-      border-color: #10b981;
-    }
-
+    input:checked + .slider { background-color: #10b981; }
     input:checked + .slider:before {
-      transform: translateX(26px);
+      transform: translateX(calc(clamp(28px, 4vh, 36px) - clamp(12px, 1.8vh, 16px) - 4px));
     }
 
-    .toggle-label {
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 0.9rem;
-      font-weight: 500;
+    .play-btn {
+      padding: clamp(8px, 1.5vh, 12px);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: clamp(0.8rem, 1.5vh, 1rem);
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.2s;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .play-btn:hover {
+      background: rgba(0,255,255,0.15);
+      border-color: rgba(0,255,255,0.4);
+      color: #00ffff;
     }
 
-    .platform-btn {
-      display: inline-flex;
+    /* Bottom Section (Tools + Footer) */
+    .bottom-section {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: row;
+      gap: clamp(8px, 2vw, 24px);
+      height: clamp(60px, 10vh, 80px);
+      z-index: 1;
+    }
+
+    .tools-box {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 12px;
+      display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      padding: 0.55rem 1.1rem;
-      background: #f97373;
-      color: #111827;
-      text-decoration: none;
-      border-radius: 999px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: background 0.18s ease, transform 0.18s ease;
-      border: none;
-      cursor: pointer;
+      padding: 0 clamp(16px, 2vw, 24px);
     }
 
-    .platform-btn.primary {
-      background: #f97373;
-    }
-
-    .platform-btn:hover {
-      background: #f05252;
-      transform: translateY(-1px);
-    }
-
-    .footer {
-      text-align: center;
-      color: #9ca3af;
-      opacity: 0.9;
-      margin-top: 2rem;
-      font-size: 0.8rem;
-    }
-
-    /* Tools Hub Section */
-    .tools-hub {
-      margin: 3rem 0;
-      padding: 2.5rem;
-      background: rgba(20, 20, 35, 0.9);
-      backdrop-filter: blur(20px);
-      border-radius: 24px;
-      border: 1px solid rgba(0, 255, 255, 0.2);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .tools-hub::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #00ffff, #ff00ff, #00ffff, transparent);
-    }
-
-    .tools-hub::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #ff00ff, #00ffff, #ff00ff, transparent);
-    }
-
-    .tools-hub-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .tools-hub-title {
-      font-size: 2rem;
-      font-weight: 900;
-      background: linear-gradient(135deg, #00ffff 0%, #ff00ff 50%, #00ffff 100%);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-size: 200% 200%;
-      animation: gradientShift 3s ease infinite;
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-    }
-
-    .tools-hub-subtitle {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 1rem;
-    }
-
-    .tools-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-      margin-top: 1.5rem;
-    }
-
-    .tool-card {
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(0, 255, 255, 0.3);
-      border-radius: 16px;
-      padding: 1.5rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-      text-decoration: none;
-      display: block;
-    }
-
-    .tool-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
-      transition: left 0.5s;
-    }
-
-    .tool-card:hover::before {
-      left: 100%;
-    }
-
-    .tool-card:hover {
-      transform: translateY(-8px) scale(1.02);
-      border-color: #00ffff;
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.3), 0 0 60px rgba(0, 255, 255, 0.1), inset 0 0 20px rgba(0, 255, 255, 0.05);
-    }
-
-    .tool-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      display: block;
-      filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
-    }
-
-    .tool-name {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .tool-desc {
-      font-size: 0.85rem;
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    .tool-card.media-player {
-      border-color: rgba(255, 0, 150, 0.4);
-    }
-
-    .tool-card.media-player:hover {
-      border-color: #ff0096;
-      box-shadow: 0 0 30px rgba(255, 0, 150, 0.3), 0 0 60px rgba(255, 0, 150, 0.1), inset 0 0 20px rgba(255, 0, 150, 0.05);
-    }
-
-    .tool-card.coming-soon {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .tool-card.coming-soon:hover {
-      transform: none;
-      box-shadow: none;
-    }
-
-    .coming-soon-badge {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: linear-gradient(135deg, #ff6b35, #ff0096);
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.65rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    /* Version Info */
-    .version-info {
+    .tool-btn {
       display: flex;
-      justify-content: center;
-      gap: 2rem;
-      margin-top: 2rem;
-      padding: 1rem;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 12px;
-      border: 1px solid rgba(0, 255, 255, 0.2);
-    }
-
-    .version-item {
-      text-align: center;
-    }
-
-    .version-label {
-      font-size: 0.7rem;
-      color: rgba(0, 255, 255, 0.7);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 0.3rem;
-    }
-
-    .version-value {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #fff;
-      font-family: 'Courier New', monospace;
-    }
-
-    /* Futuristic floating particles */
-    .cyber-grid {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-image: 
-        linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
-      background-size: 50px 50px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .url-info {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(15px);
-      color: white;
-      padding: 2rem;
-      border-radius: 16px;
-      margin-bottom: 2rem;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      position: relative;
-      z-index: 1;
-      animation: fadeInUp 0.8s ease 0.2s both;
-    }
-
-    .url-info p {
-      margin: 0.5rem 0;
-      font-size: 1rem;
-    }
-
-    .url-info code {
-      background: rgba(0, 0, 0, 0.3);
-      padding: 0.4rem 0.8rem;
+      align-items: center;
+      gap: 12px;
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      padding: clamp(6px, 1vh, 10px) clamp(16px, 2vw, 24px);
       border-radius: 8px;
-      font-family: 'Courier New', monospace;
-      display: inline-block;
-      margin: 0.3rem 0;
-      font-weight: 600;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      transition: all 0.3s ease;
+      color: #fff;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .tool-btn:hover {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: #8b5cf6;
+    }
+
+    .footer-box {
+      flex: 0 0 clamp(200px, 25vw, 350px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(16px, 2vw, 24px);
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      font-size: clamp(0.65rem, 1.2vh, 0.8rem);
+      color: #64748b;
+    }
+
+    .version {
+      padding: 2px 8px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    /* Notification */
+    #notification-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .notification {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      font-size: 14px;
+      font-weight: 500;
+      animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+      }
+      .top-section, .platforms-section, .bottom-section {
+        flex-direction: column;
+        height: auto;
+      }
     }
 
   </style>
 </head>
 <body>
-  <!-- Cyber Grid Background -->
+
   <div class="cyber-grid"></div>
 
-  <div class="page">
-  <!-- Hero Section -->
-  <section class="hero-section">
-    <img src="/images/moose-goose-logo.png" alt="Moose Goose Games" class="hero-logo">
-    <h1 class="hero-title">Moose Goose Games</h1>
-    <p class="hero-subtitle">Play exclusive and classic games instantly — no installs, no login, just pure gaming fun.</p>
-    <a href="javascript:void(0)" class="hero-cta" onclick="pickRandomHub()">🎲 Pick For Me!</a>
-  </section>
+  <!-- Top Section -->
+  <div class="top-section">
+    <div class="hero-box">
+      <div class="hero-logo-row">
+        <img src="/images/moose-goose-logo.png" alt="Logo" class="hero-logo">
+        <h1 class="hero-title">Moose Goose Games</h1>
+      </div>
+      <div class="hero-subtitle">Play instantly • No installs • No login</div>
+      <button class="hero-cta" onclick="pickRandomHub()">🎲 Pick For Me!</button>
+    </div>
 
-  <!-- Trust Bar -->
-  <div class="trust-bar">
-    <div class="trust-item">
-      <div class="trust-number">100+</div>
-      <div class="trust-label">Games Available</div>
-    </div>
-    <div class="trust-item">
-      <div class="trust-number">100%</div>
-      <div class="trust-label">Browser-Based</div>
-    </div>
-    <div class="trust-item">
-      <div class="trust-number">Free</div>
-      <div class="trust-label">No Downloads</div>
+    <div class="stats-box">
+      <div class="stat-item">
+        <div class="stat-val">450+</div>
+        <div class="stat-lbl">Games</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">100%</div>
+        <div class="stat-lbl">Browser</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">Free</div>
+        <div class="stat-lbl">No DLs</div>
+      </div>
     </div>
   </div>
 
-  <div class="section-header">
-    <h1>🎯 Choose Your Platform</h1>
-    <p>Four unique gaming experiences, one destination</p>
-  </div>
-
-    <div class="platforms-grid">
-      <!-- GameHub Card -->
-      <div class="platform-card compact">
-        <div class="card-header" onclick="toggleCardDetails(this)">
-          <span class="platform-icon">🎰</span>
-          <div class="platform-title">GameHub</div>
-          <span class="expand-arrow">▼</span>
-        </div>
-        <div class="platform-description">Our hand-crafted gaming collection with exclusive features and rewards</div>
-        <div class="card-details">
-          <ul class="feature-list">
-            <li>Casino Games (Blackjack, Roulette, Slots)</li>
-            <li>Classic Arcade (Snake, Pong, Breakout)</li>
-            <li>Multiplayer Games (Chess, Tic-Tac-Toe)</li>
-            <li>Coin Betting & Rewards System</li>
-            <li>User Accounts & Leaderboards</li>
-            <li>Real-time Multiplayer Lobbies</li>
-          </ul>
-          <div class="hub-controls">
-            <label class="toggle-switch">
-              <input type="checkbox" id="cloak-ghub" onchange="toggleCloak('ghub', this.checked)">
-              <span class="slider"></span>
-              <span class="toggle-label">Hide URL</span>
-            </label>
-          </div>
-        </div>
-        <a href="/ghub" class="platform-btn primary" id="btn-ghub">🎮 Play GameHub</a>
+  <!-- Middle Section -->
+  <div class="platforms-section">
+    <!-- GameHub -->
+    <div class="platform-card">
+      <div class="card-top">
+        <div class="platform-icon">🎰</div>
+        <div class="platform-title">GameHub</div>
+        <div class="platform-desc">Hand-crafted gaming collection with exclusive features, multiplayer lobbies, and coin rewards.</div>
       </div>
-
-      <!-- DuckMath Card -->
-      <div class="platform-card compact">
-        <div class="card-header" onclick="toggleCardDetails(this)">
-          <span class="platform-icon">🦆</span>
-          <div class="platform-title">DuckMath Hub</div>
-          <span class="expand-arrow">▼</span>
+      <div class="card-bottom">
+        <div class="cloak-row">
+          <span class="cloak-label">Hide URL</span>
+          <label class="switch">
+            <input type="checkbox" id="cloak-ghub" onchange="toggleCloak('ghub', this.checked)">
+            <span class="slider"></span>
+          </label>
         </div>
-        <div class="platform-description">Massive collection of unblocked games from around the web</div>
-        <div class="card-details">
-          <ul class="feature-list">
-            <li>100+ Flash & HTML5 Games</li>
-            <li>Action, Puzzle, Sports & More</li>
-            <li>Slope, Retro Bowl, Cookie Clicker</li>
-            <li>Tower Defense & Strategy Games</li>
-            <li>No Login Required</li>
-            <li>Always Updated</li>
-          </ul>
-          <div class="hub-controls">
-            <label class="toggle-switch">
-              <input type="checkbox" id="cloak-duckmath" onchange="toggleCloak('duckmath', this.checked)">
-              <span class="slider"></span>
-              <span class="toggle-label">Hide URL</span>
-            </label>
-          </div>
-        </div>
-        <a href="/duckmath" class="platform-btn" id="btn-duckmath">🦆 Play DuckMath</a>
-      </div>
-
-      <!-- Seraph Card -->
-      <div class="platform-card compact">
-        <div class="card-header" onclick="toggleCardDetails(this)">
-          <span class="platform-icon">👼</span>
-          <div class="platform-title">Seraph Games</div>
-          <span class="expand-arrow">▼</span>
-        </div>
-        <div class="platform-description">Massive offline-ready gaming collection with 350+ games and emulators</div>
-        <div class="card-details">
-          <ul class="feature-list">
-            <li>350+ Unity, Flash, & Retro Games</li>
-            <li>Offline Mode (110+ Downloadable)</li>
-            <li>9 Custom Themes</li>
-            <li>Tab Cloaking & Panic Key</li>
-            <li>Emulators (NES, SNES, GB, GBA, DS)</li>
-            <li>100% Static - No Backend Required</li>
-          </ul>
-          <div class="hub-controls">
-            <label class="toggle-switch">
-              <input type="checkbox" id="cloak-seraph" onchange="toggleCloak('seraph', this.checked)">
-              <span class="slider"></span>
-              <span class="toggle-label">Hide URL</span>
-            </label>
-          </div>
-        </div>
-        <a href="/seraph" class="platform-btn" id="btn-seraph">👼 Play Seraph</a>
+        <a href="/ghub" class="play-btn" id="btn-ghub">Play GameHub</a>
       </div>
     </div>
 
-    <!-- Tools Hub Section -->
-    <div class="tools-hub">
-      <div class="tools-hub-header">
-        <h2 class="tools-hub-title">⚡ Tools Hub ⚡</h2>
-        <p class="tools-hub-subtitle">Access powerful utilities and media tools</p>
+    <!-- DuckMath -->
+    <div class="platform-card">
+      <div class="card-top">
+        <div class="platform-icon">🦆</div>
+        <div class="platform-title">DuckMath</div>
+        <div class="platform-desc">Massive collection of 100+ unblocked Flash & HTML5 games from around the web.</div>
       </div>
-      <div class="tools-grid">
-        <a href="/media-player" class="tool-card media-player">
-          <span class="tool-icon">🎵</span>
-          <div class="tool-name">Media Player</div>
-          <div class="tool-desc">YouTube & Spotify streaming</div>
-        </a>
-      </div>
-      <div class="version-info">
-        <div class="version-item">
-          <div class="version-label">Version</div>
-          <div class="version-value">v2.52</div>
+      <div class="card-bottom">
+        <div class="cloak-row">
+          <span class="cloak-label">Hide URL</span>
+          <label class="switch">
+            <input type="checkbox" id="cloak-duckmath" onchange="toggleCloak('duckmath', this.checked)">
+            <span class="slider"></span>
+          </label>
         </div>
-        <div class="version-item">
-          <div class="version-label">Last Updated</div>
-          <div class="version-value">December 2025</div>
-        </div>
+        <a href="/duckmath" class="play-btn" id="btn-duckmath">Play DuckMath</a>
       </div>
     </div>
 
-    <div class="footer">
-      <p>🦌🦆 Moose Goose Games</p>
-      <p style="margin-top: 12px; opacity: 0.7;">🎮 GameHub • 🦆 DuckMath • 👼 Seraph</p>
-      <p style="margin-top: 8px; font-size: 0.75rem; opacity: 0.4;">© 2025 Moose Goose Games — Play Anytime, Anywhere</p>
+    <!-- Seraph -->
+    <div class="platform-card">
+      <div class="card-top">
+        <div class="platform-icon">👼</div>
+        <div class="platform-title">Seraph Games</div>
+        <div class="platform-desc">Massive offline-ready collection with 350+ games, custom themes, and retro emulators.</div>
+      </div>
+      <div class="card-bottom">
+        <div class="cloak-row">
+          <span class="cloak-label">Hide URL</span>
+          <label class="switch">
+            <input type="checkbox" id="cloak-seraph" onchange="toggleCloak('seraph', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <a href="/seraph" class="play-btn" id="btn-seraph">Play Seraph</a>
+      </div>
     </div>
   </div>
+
+  <!-- Bottom Section -->
+  <div class="bottom-section">
+    <div class="tools-box">
+      <a href="/media-player" class="tool-btn">
+        <span style="font-size: clamp(1.2rem, 2vh, 1.5rem);">🎵</span>
+        <div style="text-align: left;">
+          <div style="font-weight: 700; font-size: clamp(0.9rem, 1.5vh, 1.1rem);">Media Player</div>
+          <div style="font-size: clamp(0.7rem, 1.2vh, 0.8rem); opacity: 0.8;">YouTube & Spotify</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="footer-box">
+      <span>Moose Goose Games</span>
+      <span class="version">v2.52</span>
+    </div>
+  </div>
+
+  <div id="notification-container"></div>
 
   <script>
     // Pick random hub function
     function pickRandomHub() {
-      const hubs = ['/ghub', '/duckmath', '/seraph'];
+      const hubs = [
+        { id: 'ghub', url: '/ghub' },
+        { id: 'duckmath', url: '/duckmath' },
+        { id: 'seraph', url: '/seraph' }
+      ];
       const randomHub = hubs[Math.floor(Math.random() * hubs.length)];
-      window.location.href = randomHub;
+
+      const isCloaked = localStorage.getItem(`${randomHub.id}-cloak`) === 'true';
+      if (isCloaked) {
+        openCloakedTab(randomHub.id, randomHub.url);
+      } else {
+        window.location.href = randomHub.url;
+      }
     }
 
     // Toggle card details dropdown
@@ -826,7 +536,7 @@
       if (enabled) {
         // Store current state
         cloakedTabs[hub] = true;
-        
+
         // Update button to open in new window with cloaking
         const btn = document.getElementById(`btn-${hub}`);
         const href = btn.getAttribute('href');
@@ -839,7 +549,7 @@
       } else {
         // Disable cloaking
         delete cloakedTabs[hub];
-        
+
         // Restore normal link
         const btn = document.getElementById(`btn-${hub}`);
         const originalHref = btn.getAttribute('data-original-href') || hubUrls[hub];
@@ -901,7 +611,7 @@
         }
       `;
       document.head.appendChild(style);
-      
+
       document.body.appendChild(notification);
       
       // Remove after 3 seconds
