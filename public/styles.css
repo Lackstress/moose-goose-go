@@ -71,9 +71,9 @@ body.dark-theme::before {
 }
 
 .header-dark .header-container {
-  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 2vw;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -91,9 +91,9 @@ body.dark-theme::before {
 }
 
 .container-dark {
-  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2vw;
 }
 
 /* Hero Section */
