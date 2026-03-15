@@ -544,7 +544,7 @@
         flex-direction: column;
         gap: 8px;
       }
-      body {
+      body, html {
         overflow-y: auto; /* Allow scroll on very small screens */
         height: auto;
       }
@@ -706,9 +706,14 @@
   <script>
     // Pick random hub function
     function pickRandomHub() {
-      const hubs = ['/ghub', '/duckmath', '/seraph'];
+      const hubs = ['ghub', 'duckmath', 'seraph'];
       const randomHub = hubs[Math.floor(Math.random() * hubs.length)];
-      window.location.href = randomHub;
+
+      if (cloakedTabs[randomHub]) {
+        openCloakedTab(randomHub, hubUrls[randomHub]);
+      } else {
+        window.location.href = hubUrls[randomHub];
+      }
     }
 
     // Tab cloaking functionality

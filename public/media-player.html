@@ -120,7 +120,7 @@
             margin: 0 auto;
         }
 
-        .mp-search input {
+        .mp-header .mp-search input {
             width: 100%;
             background: #121212;
             border: 1px solid #303030;
@@ -131,17 +131,49 @@
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
         }
 
-        .mp-search input::placeholder {
+        .mp-header .mp-search input::placeholder {
             color: #6b7280;
         }
 
-        .mp-search input:focus {
+        .mp-header .mp-search input:focus {
             outline: none;
             border-color: #f97373;
         }
 
         .mp-header-spacer {
             width: 40px;
+        }
+
+        .mp-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-link-icon {
+            color: #e5e5e5;
+            text-decoration: none;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-icon {
+            font-size: 1.2rem;
+        }
+
+        .history-label {
+            padding: 10px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #aaa;
+        }
+
+        .history-header-integrated {
+            padding: 0 12px;
+            margin-bottom: 12px;
+        }
+
+        .history-list-integrated {
+            padding: 0 8px;
         }
 
         .history-container::before {
@@ -1294,8 +1326,8 @@
 <body>
     <div class="mp-header">
         <div class="mp-header-inner">
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <a href="/" class="back-link-icon" title="Back to Hub" style="color: #e5e5e5; text-decoration: none; font-size: 1.2rem;">
+            <div class="mp-header-left">
+                <a href="/" class="back-link-icon" title="Back to Hub">
                     ←
                 </a>
                 <div class="mp-logo"><span>Moose</span> Media</div>
@@ -1310,28 +1342,28 @@
     <div class="main-layout">
         <!-- Sidebar Navigation -->
         <div class="sidebar-menu">
-            <button class="tab active" onclick="switchTab('youtube')">
-                <span style="font-size: 1.2rem;">🏠</span> Home
+            <button class="tab active" onclick="switchTab(event, 'youtube')">
+                <span class="sidebar-icon">🏠</span> Home
             </button>
-            <button class="tab" onclick="switchTab('youtube-search')">
-                <span style="font-size: 1.2rem;">🔍</span> Search Video
+            <button class="tab" onclick="switchTab(event, 'youtube-search')">
+                <span class="sidebar-icon">🔍</span> Search Video
             </button>
-            <button class="tab" onclick="switchTab('spotify')">
-                <span style="font-size: 1.2rem;">🎵</span> Music Converter
+            <button class="tab" onclick="switchTab(event, 'spotify')">
+                <span class="sidebar-icon">🎵</span> Music Converter
             </button>
 
             <div class="sidebar-divider"></div>
 
-            <div style="padding: 10px 12px; font-size: 14px; font-weight: 600; color: #aaa;">
+            <div class="history-label">
                 History
             </div>
 
             <!-- History section integrated into sidebar -->
             <div id="historyContainer" style="margin-top: 8px;">
-                <div class="history-header" style="padding: 0 12px; margin-bottom: 12px;">
+                <div class="history-header history-header-integrated">
                     <button class="clear-history-btn" onclick="clearHistory()" style="width: 100%; text-align: center;">Clear History</button>
                 </div>
-                <div id="historyList" style="padding: 0 8px;">
+                <div id="historyList" class="history-list-integrated">
                     <div class="history-empty">
                         <div class="history-empty-text">No recent history</div>
                     </div>
@@ -1578,10 +1610,20 @@
         `;
         document.head.appendChild(styleSheet);
         
-        function switchTab(tab) {
+        function switchTab(e, tab) {
             // Update tab buttons
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            if (e && e.currentTarget) {
+                e.currentTarget.classList.add('active');
+            } else {
+                // Fallback for programmatically switching tabs
+                document.querySelectorAll('.tab').forEach(t => {
+                    const onclick = t.getAttribute('onclick') || '';
+                    if (onclick.includes(`'${tab}'`)) {
+                        t.classList.add('active');
+                    }
+                });
+            }
             
             // Update tab content
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -3362,10 +3404,7 @@
             const isPlaylist = url.includes('playlist=') || url.includes('list=') || url.includes('videoseries');
             
             // Switch to YouTube tab
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelector('.tab').classList.add('active'); // First tab is YouTube
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById('youtube-tab').classList.add('active');
+            switchTab(null, 'youtube');
             
             // Set the URL and play
             document.getElementById('youtubeLink').value = url;
