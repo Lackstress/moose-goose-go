@@ -30,16 +30,6 @@
             display: none;
         }
         
-        .container {
-            background: transparent;
-            border-radius: 0;
-            box-shadow: none;
-            padding: 0;
-            width: 100%;
-            border: none;
-            position: relative;
-            z-index: 1;
-        }
         
         @keyframes fadeInUp {
             from {
@@ -55,36 +45,36 @@
         /* Main Layout - Sidebar + Content */
         .main-layout {
             display: flex;
-            flex-direction: row-reverse;
-            gap: 18px;
+            flex-direction: row; /* Sidebar on left, content on right */
+            gap: 24px;
             width: 100%;
-            padding: 0 16px;
+            padding: 0 24px;
             position: relative;
             z-index: 1;
             align-items: flex-start;
-            margin: 16px 0 0;
+            margin: 0;
             flex: 1;
+            height: calc(100vh - 56px); /* Fill remaining height */
+            overflow: hidden; /* Prevent body scrolling */
         }
         
         .content-area {
             flex: 1;
             min-width: 0;
+            height: 100%;
+            overflow-y: auto; /* Scrollable content area */
+            padding-right: 8px; /* Room for scrollbar */
         }
 
-        /* History Section Styles - Futuristic Sidebar */
-        .history-container {
-            width: 320px;
+        /* Left Sidebar Menu Styles */
+        .sidebar-menu {
+            width: 240px;
             flex-shrink: 0;
-            background: rgba(5, 5, 15, 0.95);
-            margin-top: 0;
-            border-radius: 12px;
-            box-shadow: none;
-            padding: 16px 12px;
-            border: 1px solid #262626;
-            position: sticky;
-            top: 20px;
-            height: fit-content;
-            max-height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px 0;
+            height: 100%;
             overflow-y: auto;
         }
 
@@ -111,8 +101,8 @@
         }
 
         .mp-logo {
-            font-weight: 600;
-            font-size: 1.1rem;
+            font-weight: 700;
+            font-size: 1.3rem;
             color: #f9fafb;
             white-space: nowrap;
         }
@@ -125,16 +115,20 @@
             flex: 1;
             display: flex;
             align-items: center;
+            justify-content: center;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .mp-search input {
             width: 100%;
-            background: #181818;
+            background: #121212;
             border: 1px solid #303030;
             border-radius: 999px;
-            padding: 6px 12px;
+            padding: 10px 20px;
             color: #e5e5e5;
-            font-size: 0.85rem;
+            font-size: 1rem;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .mp-search input::placeholder {
@@ -160,18 +154,49 @@
             background: linear-gradient(90deg, transparent, #00ffff, transparent);
         }
 
-        .history-container::-webkit-scrollbar {
-            width: 6px;
+        /* Navigation / Sidebar Menu Buttons */
+        .sidebar-menu .tab {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 10px 16px;
+            background: transparent;
+            color: #f1f1f1;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-align: left;
+            width: 100%;
         }
 
-        .history-container::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 3px;
+        .sidebar-menu .tab:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        .history-container::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #00ffff, #ff00ff);
-            border-radius: 3px;
+        .sidebar-menu .tab.active {
+            background: rgba(255, 255, 255, 0.15);
+            font-weight: 600;
+        }
+
+        /* Container adjustments to remove border radius */
+        .container {
+            background: transparent;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 24px 0 0 0;
+            width: 100%;
+            border: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 12px 0;
         }
         
         .history-header {
@@ -778,42 +803,14 @@
         h1 {
             text-align: left;
             color: #f9fafb;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-        
-        .tabs {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-        
-        .tab {
-            padding: 6px 12px;
-            background: #272727;
-            color: #e5e5e5;
-            border: none;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.15s ease, color 0.15s ease;
-        }
-        
-        .tab:hover {
-            background: #3f3f3f;
-        }
-        
-        .tab.active {
-            background: #f97373;
-            color: #111827;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 700;
         }
         
         .tab-content {
             display: none;
+            padding-bottom: 40px;
         }
         
         .tab-content.active {
@@ -1016,6 +1013,10 @@
             z-index: 100;
         }
         
+        .back-link {
+            display: none;
+        }
+
         .back-link:hover {
             color: #ffffff;
         }
@@ -1227,17 +1228,33 @@
         @media (max-width: 1100px) {
             .main-layout {
                 flex-direction: column;
+                height: auto;
+                overflow: visible;
             }
 
-            .history-container {
+            .sidebar-menu {
                 width: 100%;
-                position: static;
-                max-height: none;
-                order: 2;
+                flex-direction: row;
+                height: auto;
+                overflow-x: auto;
+                padding: 10px 0;
+            }
+
+            .sidebar-menu .tab {
+                width: auto;
+                white-space: nowrap;
+            }
+
+            .sidebar-divider {
+                width: 1px;
+                height: 24px;
+                margin: 0 8px;
             }
 
             .content-area {
-                order: 1;
+                height: auto;
+                overflow-y: visible;
+                padding-right: 0;
             }
         }
 
@@ -1275,11 +1292,14 @@
     </style>
 </head>
 <body>
-    <a href="/" class="back-link">← Back to Hub</a>
-
     <div class="mp-header">
         <div class="mp-header-inner">
-            <div class="mp-logo"><span>Moose</span> Media</div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <a href="/" class="back-link-icon" title="Back to Hub" style="color: #e5e5e5; text-decoration: none; font-size: 1.2rem;">
+                    ←
+                </a>
+                <div class="mp-logo"><span>Moose</span> Media</div>
+            </div>
             <div class="mp-search">
                 <input type="text" placeholder="Search media..." />
             </div>
@@ -1288,30 +1308,40 @@
     </div>
     
     <div class="main-layout">
-    <!-- Conversion History Sidebar -->
-    <div class="history-container" id="historyContainer">
-        <div class="history-header">
-            <h2>📜 History</h2>
-            <button class="clear-history-btn" onclick="clearHistory()">Clear</button>
-        </div>
-        <div id="historyList">
-            <div class="history-empty">
-                <div class="history-empty-icon">⚡</div>
-                <div class="history-empty-text">No conversions yet</div>
-                <div class="history-empty-hint">Convert a Spotify link to get started</div>
+        <!-- Sidebar Navigation -->
+        <div class="sidebar-menu">
+            <button class="tab active" onclick="switchTab('youtube')">
+                <span style="font-size: 1.2rem;">🏠</span> Home
+            </button>
+            <button class="tab" onclick="switchTab('youtube-search')">
+                <span style="font-size: 1.2rem;">🔍</span> Search Video
+            </button>
+            <button class="tab" onclick="switchTab('spotify')">
+                <span style="font-size: 1.2rem;">🎵</span> Music Converter
+            </button>
+
+            <div class="sidebar-divider"></div>
+
+            <div style="padding: 10px 12px; font-size: 14px; font-weight: 600; color: #aaa;">
+                History
+            </div>
+
+            <!-- History section integrated into sidebar -->
+            <div id="historyContainer" style="margin-top: 8px;">
+                <div class="history-header" style="padding: 0 12px; margin-bottom: 12px;">
+                    <button class="clear-history-btn" onclick="clearHistory()" style="width: 100%; text-align: center;">Clear History</button>
+                </div>
+                <div id="historyList" style="padding: 0 8px;">
+                    <div class="history-empty">
+                        <div class="history-empty-text">No recent history</div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
     <div class="content-area">
     <div class="container">
-        <h1>🎬 Media Player</h1>
-        
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('youtube')">📺 YouTube</button>
-            <button class="tab" onclick="switchTab('youtube-search')">🔍 Search</button>
-            <button class="tab" onclick="switchTab('spotify')">🎵 Music</button>
-        </div>
+        <!-- Removed duplicate Media Player heading -->
         
         <!-- YouTube Tab -->
         <div id="youtube-tab" class="tab-content active">
@@ -1551,7 +1581,7 @@
         function switchTab(tab) {
             // Update tab buttons
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            event.currentTarget.classList.add('active');
             
             // Update tab content
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
