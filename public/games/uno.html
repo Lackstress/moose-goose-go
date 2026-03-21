@@ -333,8 +333,10 @@
         attachRoom(room, 'Game started.');
         if (isOnlineHost()) {
           startHostedOnlineGame();
-        } else if (gameState) {
-          applyOnlineSnapshot(gameState);
+        } else {
+          state.remote = null;
+          state.onlineGame = null;
+          render();
         }
       });
 
@@ -400,6 +402,7 @@
       state.online = false;
       state.roomId = null;
       state.remote = null;
+      state.onlineGame = null;
       state.local = {
         deck,
         playerHand,
@@ -443,6 +446,9 @@
       if (!ensureOnlineReady()) return;
       state.mode = 'online';
       state.online = true;
+      state.roomId = null;
+      state.remote = null;
+      state.onlineGame = null;
       socket.emit('find-match', {
         gameType: 'uno',
         playerData: {
@@ -460,6 +466,9 @@
       if (!ensureOnlineReady()) return;
       state.mode = 'online';
       state.online = true;
+      state.roomId = null;
+      state.remote = null;
+      state.onlineGame = null;
       socket.emit('create-room', {
         gameType: 'uno',
         playerData: {
@@ -484,6 +493,9 @@
       }
       state.mode = 'online';
       state.online = true;
+      state.roomId = roomId;
+      state.remote = null;
+      state.onlineGame = null;
       socket.emit('join-room', {
         roomId,
         playerData: {
@@ -504,6 +516,9 @@
         setText('opponentName', opponent?.username || 'Waiting for player');
         setText('opponentStatus', opponent ? 'Ready to play.' : 'Waiting in lobby.');
         state.localSeat = room.host?.userId === state.myPlayerId ? 'host' : 'guest';
+        state.onlineGame = state.onlineGame || {};
+        state.onlineGame.hostId = room.host?.userId || state.onlineGame.hostId || null;
+        state.onlineGame.guestId = opponent?.userId || state.onlineGame.guestId || null;
       }
       if (message) addFeed('UNO Room', message);
       render();
@@ -514,6 +529,8 @@
     }
 
     function startHostedOnlineGame() {
+      state.mode = 'online';
+      state.online = true;
       const deck = createDeck();
       const hostHand = [];
       const guestHand = [];
@@ -530,7 +547,7 @@
 
       state.onlineGame = {
         hostId: state.myPlayerId,
-        guestId: null,
+        guestId: state.onlineGame?.guestId || null,
         hostHand,
         guestHand,
         deck,
@@ -590,6 +607,8 @@
 
     function applyOnlineSnapshot(snapshot) {
       if (!snapshot) return;
+      state.mode = 'online';
+      state.online = true;
       state.onlineGame = {
         hostId: snapshot.hostId,
         guestId: snapshot.guestId || null,
@@ -608,6 +627,7 @@
         setText('statusText', state.onlineGame.winner === state.localSeat ? 'You win the match.' : 'Opponent wins the match.');
         setText('statusSubtext', 'Start another room or return to local mode.');
         addFeed('Round over', state.onlineGame.winner === state.localSeat ? 'You won the room match.' : 'You lost the room match.');
+        showOverlay(state.onlineGame.winner === state.localSeat ? 'You win' : 'Opponent wins', 'The room round is over.');
       }
     }
 
@@ -656,8 +676,12 @@
 
     function drawCard() {
       if (state.mode === 'online') {
-        if (!state.roomId || !state.remote) return;
-        socket.emit('game-action', { action: 'draw-card' });
+        if (!state.onlineGame || !state.onlineGame.active || state.onlineGame.currentSeat !== state.localSeat) return;
+        if (isOnlineHost()) {
+          onlineDraw(state.localSeat);
+        } else {
+          sendOnlineRequest({ type: 'draw' });
+        }
         return;
       }
       if (!state.local?.active || state.local.currentTurn !== 'player') return;
@@ -670,16 +694,16 @@
 
     function playCard(index) {
       if (state.mode === 'online') {
-        if (!state.remote || state.remote.currentPlayer !== state.myPlayerId) return;
-        const card = state.remote.yourHand[index];
+        if (!state.onlineGame || !state.onlineGame.active || state.onlineGame.currentSeat !== state.localSeat) return;
+        const card = state.localSeat === 'host' ? state.onlineGame.hostHand[index] : state.onlineGame.guestHand[index];
         if (!card) return;
         const chosenColor = card.color === 'wild' ? chooseColor() : null;
         if (card.color === 'wild' && !chosenColor) return;
-        socket.emit('game-action', {
-          action: 'play-card',
-          cardIndex: index,
-          chosenColor
-        });
+        if (isOnlineHost()) {
+          onlinePlay(state.localSeat, index, chosenColor);
+        } else {
+          sendOnlineRequest({ type: 'play', index, color: chosenColor });
+        }
         return;
       }
 
@@ -781,6 +805,7 @@
         setText('statusSubtext', 'Start another room or return to local mode.');
         addFeed('Round over', seat === state.localSeat ? 'You won the room match.' : 'You lost the room match.');
         render();
+        showOverlay(seat === state.localSeat ? 'You win' : 'Opponent wins', 'The room round is over.');
         return;
       }
 
@@ -979,6 +1004,8 @@
       if (state.mode === 'online' && socket && state.roomId) {
         socket.emit('leave-room', { roomId: state.roomId });
       }
+      state.remote = null;
+      state.onlineGame = null;
       startLocalGame(true);
       setText('footerText', 'Returned to local UNO mode.');
     }

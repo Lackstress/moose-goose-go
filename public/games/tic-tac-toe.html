@@ -372,6 +372,10 @@
       if (!room) return;
       state.room = room;
       state.mode = 'online';
+      state.board = Array(9).fill('');
+      state.turn = 'X';
+      state.active = true;
+      state.game = null;
       state.mySymbol = room.host?.userId === currentUser?.id ? 'X' : 'O';
       setText('modeLabel', 'Online');
       setText('roomLabel', room.id.slice(0, 8));
@@ -417,6 +421,8 @@
 
     function handleGameEnd(payload) {
       const winner = payload?.winner;
+      state.active = false;
+      const mySymbol = state.game?.players?.find(p => p.userId === currentUser?.id)?.symbol || state.mySymbol;
       if (winner === 'draw') {
         state.score.draws += 1;
         setText('statusText', 'Draw');
@@ -433,6 +439,10 @@
       }
       updateScores();
       updateTurnUI();
+      if (winner !== 'draw' && typeof updateCoins === 'function' && currentUser && !isGuest) {
+        const won = winner === mySymbol;
+        if (won) updateCoins(35, 'tic-tac-toe', 'win');
+      }
     }
 
     function handleCellClick(index) {
@@ -487,6 +497,10 @@
     }
 
     function resetBoard() {
+      if (state.mode === 'online') {
+        showNotification('Online matches reset from the room host.', 'info');
+        return;
+      }
       state.board = Array(9).fill('');
       state.turn = 'X';
       state.active = true;
@@ -588,9 +602,6 @@
       if (showNotice) showNotification('Returned to local play.', 'info');
       startLocalGame(true);
     }
-
-    function setTextOrLabel() {}
-
     window.addEventListener('beforeunload', () => {
       if (socket && state.room?.id) socket.emit('leave-room', { roomId: state.room.id });
     });
