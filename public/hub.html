@@ -3,505 +3,562 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Unblocked Games Hub</title>
+  <title>GameHub - Curated Game Browser</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    .hub-container {
-      max-width: 1200px;
+    :root {
+      --hub-bg: #07111f;
+      --hub-bg-2: #0d1726;
+      --hub-surface: rgba(10, 18, 32, 0.78);
+      --hub-surface-strong: rgba(17, 28, 46, 0.94);
+      --hub-border: rgba(148, 163, 184, 0.16);
+      --hub-text: #f8fafc;
+      --hub-muted: #94a3b8;
+      --hub-accent: #38bdf8;
+      --hub-accent-2: #f59e0b;
+      --hub-good: #22c55e;
+    }
+
+    body {
+      margin: 0;
+      color: var(--hub-text);
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.14), transparent 30%),
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.14), transparent 28%),
+        linear-gradient(135deg, var(--hub-bg) 0%, var(--hub-bg-2) 100%);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    .hub-shell {
+      position: relative;
+      z-index: 1;
+      width: min(1320px, calc(100% - 2rem));
       margin: 0 auto;
-      padding: 2rem;
-      width: 100%;
-      box-sizing: border-box;
+      padding: 1.5rem 0 3rem;
     }
 
     .hub-header {
-      text-align: center;
-      margin-bottom: 3rem;
-      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 0 1.5rem;
     }
 
-    .hub-title {
-      font-size: 3rem;
-      font-weight: bold;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .brand-block h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.6rem);
+      line-height: 1;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, #f8fafc 0%, #93c5fd 45%, #fde68a 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 1rem;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
 
-    .hub-subtitle {
-      font-size: 1.3rem;
-      color: #cbd5e1;
-      margin-bottom: 0.5rem;
-    }
-
-    .hub-description {
-      font-size: 1.1rem;
-      color: #94a3b8;
-      margin-bottom: 2rem;
-    }
-
-    .games-sources {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      margin: 3rem 0;
-    }
-
-    .source-card {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 16px;
-      padding: 2rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 2px solid transparent;
-    }
-
-    .source-card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 16px 48px rgba(102, 126, 234, 0.25);
-      border-color: #667eea;
-    }
-
-    .source-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-    }
-
-    .source-title {
-      font-size: 1.8rem;
-      font-weight: bold;
-      color: #667eea;
-      margin-bottom: 0.5rem;
-    }
-
-    .source-description {
-      color: #666;
-      font-size: 0.95rem;
-      line-height: 1.6;
-      margin-bottom: 1.5rem;
-    }
-
-    .game-count {
-      background: #f3f4f6;
-      padding: 1rem;
-      border-radius: 8px;
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-weight: bold;
-      color: #667eea;
-    }
-
-    .access-btn {
-      display: block;
-      width: 100%;
-      padding: 1rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
+    .brand-block p {
+      margin: 0.75rem 0 0;
+      max-width: 62ch;
+      color: var(--hub-muted);
       font-size: 1rem;
-      font-weight: bold;
+      line-height: 1.6;
+    }
+
+    .auth-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--hub-border);
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(18px);
+      white-space: nowrap;
+    }
+
+    .auth-pill .user-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--hub-text);
+      font-weight: 700;
+    }
+
+    .auth-pill .coin-chip {
+      color: #fde68a;
+      font-weight: 700;
+    }
+
+    .hero-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .glass-card {
+      background: var(--hub-surface);
+      border: 1px solid var(--hub-border);
+      border-radius: 24px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero-card {
+      padding: 1.3rem;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .stat-tile {
+      padding: 1rem;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid var(--hub-border);
+    }
+
+    .stat-tile .value {
+      display: block;
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-bottom: 0.35rem;
+    }
+
+    .stat-tile .label {
+      color: var(--hub-muted);
+      font-size: 0.9rem;
+    }
+
+    .side-panel {
+      padding: 1.3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .side-panel h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .side-panel p {
+      margin: 0;
+      color: var(--hub-muted);
+      line-height: 1.6;
+      font-size: 0.96rem;
+    }
+
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .quick-links a,
+    .quick-links button {
+      appearance: none;
+      border: 1px solid var(--hub-border);
+      border-radius: 999px;
+      padding: 0.8rem 1rem;
+      background: rgba(15, 23, 42, 0.8);
+      color: var(--hub-text);
+      text-decoration: none;
       cursor: pointer;
-      transition: all 0.3s;
+      font-weight: 700;
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .quick-links a:hover,
+    .quick-links button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(56, 189, 248, 0.5);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .controls {
+      margin-top: 1rem;
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.75rem;
+    }
+
+    .search-row input {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--hub-border);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--hub-text);
+      padding: 0.95rem 1rem;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .search-row input:focus {
+      border-color: rgba(56, 189, 248, 0.65);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+    }
+
+    .search-row .count-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.95rem 1rem;
+      border-radius: 16px;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      background: rgba(245, 158, 11, 0.1);
+      color: #fde68a;
+      font-weight: 700;
+      min-width: 120px;
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    .filter-chip {
+      border: 1px solid var(--hub-border);
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.72);
+      color: var(--hub-text);
+      padding: 0.7rem 0.95rem;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+
+    .filter-chip.active {
+      border-color: rgba(56, 189, 248, 0.55);
+      background: rgba(56, 189, 248, 0.15);
+      color: #dff6ff;
+    }
+
+    .section {
+      margin-top: 1.25rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 1.5rem 0 0.9rem;
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-size: 1.45rem;
+    }
+
+    .section-header p {
+      margin: 0;
+      color: var(--hub-muted);
+    }
+
+    .featured-rail {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.85rem;
+    }
+
+    .mini-card,
+    .game-card {
+      border-radius: 22px;
+      border: 1px solid var(--hub-border);
+      background: var(--hub-surface-strong);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .mini-card {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      min-height: 220px;
+    }
+
+    .mini-card.featured,
+    .game-card.featured {
+      border-color: rgba(245, 158, 11, 0.35);
+      box-shadow: 0 18px 45px rgba(245, 158, 11, 0.08);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: rgba(56, 189, 248, 0.14);
+      color: #bae6fd;
+      width: fit-content;
+    }
+
+    .badge.multiplayer {
+      background: rgba(34, 197, 94, 0.13);
+      color: #bbf7d0;
+    }
+
+    .badge.offline {
+      background: rgba(245, 158, 11, 0.13);
+      color: #fde68a;
+    }
+
+    .game-emoji {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .game-title {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .game-desc {
+      margin: 0;
+      color: var(--hub-muted);
+      line-height: 1.55;
+      font-size: 0.95rem;
+      min-height: 4.4em;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .tag {
+      padding: 0.35rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.12);
+      color: #cbd5e1;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: capitalize;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: auto;
+    }
+
+    .card-actions a,
+    .card-actions button {
+      flex: 1;
+      border: 0;
+      border-radius: 14px;
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+      font-weight: 800;
       text-decoration: none;
       text-align: center;
+      transition: transform 0.2s ease, opacity 0.2s ease;
     }
 
-    .access-btn:hover {
-      transform: scale(1.02);
-      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .setup-guide {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 16px;
-      padding: 2rem;
-      margin: 2rem 0;
-      border-left: 4px solid #fbbf24;
-    }
-
-    .setup-title {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #667eea;
-      margin-bottom: 1rem;
-    }
-
-    .setup-steps {
-      list-style: none;
-      padding: 0;
-    }
-
-    .setup-steps li {
-      padding: 1rem;
-      margin: 0.5rem 0;
-      background: #f3f4f6;
-      border-radius: 8px;
-      border-left: 3px solid #667eea;
-    }
-
-    .setup-steps code {
-      background: #2d5016;
-      color: #22c55e;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
-      margin: 1.5rem 0;
-    }
-
-    .feature-item {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .card-actions .play {
+      background: linear-gradient(135deg, #38bdf8, #2563eb);
       color: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      text-align: center;
     }
 
-    .feature-icon {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+    .card-actions .download {
+      background: rgba(15, 23, 42, 0.95);
+      color: #f8fafc;
+      border: 1px solid var(--hub-border);
     }
 
-    .feature-name {
-      font-weight: bold;
-      font-size: 0.95rem;
+    .card-actions a:hover,
+    .card-actions button:hover {
+      transform: translateY(-1px);
     }
 
-    .auth-check {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.9rem;
+    }
+
+    .game-card {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      min-height: 300px;
+    }
+
+    .empty-state {
+      display: none;
       padding: 2rem;
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      border-radius: 22px;
       text-align: center;
-      z-index: 999;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px dashed rgba(148, 163, 184, 0.28);
+      color: var(--hub-muted);
+    }
+
+    .footer-note {
+      margin-top: 1.5rem;
+      color: var(--hub-muted);
+      font-size: 0.94rem;
+      line-height: 1.6;
+    }
+
+    .modal {
       display: none;
     }
 
-    .auth-check.show {
-      display: block;
-    }
-
-    .auth-warning {
-      color: #ef4444;
-      font-weight: bold;
-      margin: 1rem 0;
-    }
-
-    /* Responsive Design Improvements */
-    
-    /* Tablet and smaller laptops (max-width: 1024px) */
-    @media (max-width: 1024px) {
-      .hub-container {
-        padding: 1.5rem;
-      }
-
-      .hub-title {
-        font-size: 2.5rem;
-      }
-
-      .hub-subtitle {
-        font-size: 1.2rem;
-      }
-
-      .hub-description {
-        font-size: 1rem;
-      }
-
-      .games-sources {
-        gap: 1.5rem;
-        margin: 2rem 0;
-      }
-
-      .source-card {
-        padding: 1.5rem;
-      }
-
-      .source-title {
-        font-size: 1.6rem;
-      }
-
-      .source-icon {
-        font-size: 2.5rem;
+    @media (max-width: 1100px) {
+      .hero-panel,
+      .featured-rail,
+      .catalog-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
-    /* Tablets (max-width: 768px) */
-    @media (max-width: 768px) {
-      .hub-container {
-        padding: 1.25rem;
+    @media (max-width: 820px) {
+      .hub-shell {
+        width: min(100% - 1rem, 1320px);
+        padding-top: 1rem;
       }
 
-      .hub-header {
-        margin-bottom: 2rem;
-      }
-
-      .hub-title {
-        font-size: 2rem;
-      }
-
-      .hub-subtitle {
-        font-size: 1.1rem;
-      }
-
-      .hub-description {
-        font-size: 0.95rem;
-      }
-
-      .games-sources {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.25rem;
-        margin: 1.5rem 0;
-      }
-
-      .source-card {
-        padding: 1.25rem;
-      }
-
-      .source-title {
-        font-size: 1.5rem;
-      }
-
-      .source-icon {
-        font-size: 2.25rem;
-      }
-
-      .source-description {
-        font-size: 0.9rem;
-      }
-
-      .auth-check {
-        padding: 1.5rem;
-        max-width: 90%;
-        width: auto;
-      }
-    }
-
-    /* Mobile devices (max-width: 480px) */
-    @media (max-width: 480px) {
-      .hub-container {
-        padding: 1rem;
-      }
-
-      .hub-header {
-        margin-bottom: 1.5rem;
-      }
-
-      .hub-title {
-        font-size: 1.75rem;
-        line-height: 1.2;
-      }
-
-      .hub-subtitle {
-        font-size: 1rem;
-      }
-
-      .hub-description {
-        font-size: 0.9rem;
-        margin-bottom: 1rem;
-      }
-
-      .games-sources {
+      .hub-header,
+      .hero-panel,
+      .section-header,
+      .search-row {
         grid-template-columns: 1fr;
-        gap: 1rem;
-        margin: 1rem 0;
+        display: grid;
       }
 
-      .source-card {
-        padding: 1rem;
+      .hero-stats,
+      .featured-rail,
+      .catalog-grid {
+        grid-template-columns: 1fr;
       }
 
-      .source-card:hover {
-        transform: translateY(-4px);
-      }
-
-      .source-icon {
-        font-size: 2rem;
-        margin-bottom: 0.75rem;
-      }
-
-      .source-title {
-        font-size: 1.35rem;
-      }
-
-      .source-description {
-        font-size: 0.85rem;
-        line-height: 1.5;
-        margin-bottom: 1rem;
-      }
-
-      .game-count {
-        padding: 0.75rem;
-        font-size: 0.9rem;
-        margin-bottom: 1rem;
-      }
-
-      .features-grid {
-        gap: 0.5rem;
-      }
-
-      .features-grid > div {
-        padding: 0.4rem !important;
-        font-size: 0.8rem !important;
-      }
-
-      .access-btn {
-        padding: 0.875rem;
-        font-size: 0.95rem;
-      }
-
-      .auth-check {
-        padding: 1.25rem;
-        max-width: 85%;
-      }
-
-      .auth-check h2 {
-        font-size: 1.25rem;
-      }
-
-      .auth-check p {
-        font-size: 0.9rem;
-      }
-    }
-
-    /* Extra small devices (max-width: 375px) */
-    @media (max-width: 375px) {
-      .hub-container {
-        padding: 0.75rem;
-      }
-
-      .hub-title {
-        font-size: 1.5rem;
-      }
-
-      .hub-subtitle {
-        font-size: 0.95rem;
-      }
-
-      .hub-description {
-        font-size: 0.85rem;
-      }
-
-      .source-card {
-        padding: 0.875rem;
-      }
-
-      .source-title {
-        font-size: 1.25rem;
-      }
-
-      .source-icon {
-        font-size: 1.75rem;
-      }
-
-      .source-description {
-        font-size: 0.8rem;
-      }
-
-      .features-grid > div {
-        font-size: 0.75rem !important;
+      .hub-header {
+        gap: 0.9rem;
       }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-container">
-      <div class="logo"><h1>🎮 GAMES HUB</h1></div>
-      <div id="authSection" class="auth-buttons"></div>
-    </div>
-  </header>
+  <div class="hub-shell">
+    <header class="hub-header">
+      <div class="brand-block">
+        <h1>GameHub</h1>
+        <p>
+          Curated browser games with fast discovery, multiplayer tags, and standalone HTML downloads for the titles that make sense offline.
+        </p>
+      </div>
+      <div id="authSection" class="auth-pill"></div>
+    </header>
 
-  <main class="container">
-    <div class="hub-container">
-      <div class="hub-header">
-        <h1 class="hub-title">🎯 Unblocked Games Universe</h1>
-        <p class="hub-subtitle">Access 100+ Games from Multiple Sources</p>
-        <p class="hub-description">You're authenticated! Choose where you want to play:</p>
+    <section class="hero-panel">
+      <div class="glass-card hero-card">
+        <div class="hero-stats">
+          <div class="stat-tile">
+            <span class="value" id="gameCount">16</span>
+            <span class="label">games curated</span>
+          </div>
+          <div class="stat-tile">
+            <span class="value" id="featuredCount">0</span>
+            <span class="label">featured picks</span>
+          </div>
+          <div class="stat-tile">
+            <span class="value" id="multiplayerCount">0</span>
+            <span class="label">multiplayer-ready</span>
+          </div>
+          <div class="stat-tile">
+            <span class="value" id="offlineCount">0</span>
+            <span class="label">offline HTML</span>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="search-row">
+            <input id="gameSearch" type="search" placeholder="Search by game, genre, or tag" aria-label="Search games">
+            <div class="count-chip" id="visibleCount">0 shown</div>
+          </div>
+          <div class="filter-row" id="filterRow">
+            <button class="filter-chip active" data-filter="all">All</button>
+            <button class="filter-chip" data-filter="featured">Featured</button>
+            <button class="filter-chip" data-filter="multiplayer">Multiplayer</button>
+            <button class="filter-chip" data-filter="offline">Offline</button>
+            <button class="filter-chip" data-filter="arcade">Arcade</button>
+            <button class="filter-chip" data-filter="card">Card</button>
+            <button class="filter-chip" data-filter="puzzle">Puzzle</button>
+          </div>
+        </div>
       </div>
 
-      <!-- Games Sources -->
-      <div class="games-sources">
-        <!-- Our Games -->
-        <div class="source-card">
-          <div class="source-icon">🎰</div>
-          <div class="source-title">Our Games</div>
-          <div class="source-description">
-            Hand-crafted games built specifically for our platform. Enjoy exclusive casino games, classics, and multiplayer experiences with full betting systems and real-time rewards.
-          </div>
-          <div class="game-count">13 Games Available</div>
-          <div class="features-grid" style="margin-bottom: 1.5rem;">
-            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
-              ✓ Betting System
-            </div>
-            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
-              ✓ Coin Rewards
-            </div>
-            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
-              ✓ Multiplayer
-            </div>
-          </div>
-          <a href="/ghub" class="access-btn">Play Our Games →</a>
+      <aside class="glass-card side-panel">
+        <h2>Built for quick play</h2>
+        <p>
+          Use <strong>Play</strong> to jump into the hosted game, or <strong>Download HTML</strong> to save a standalone copy for local Chromebook use.
+        </p>
+        <div class="quick-links">
+          <a href="/ghub" aria-label="Refresh game hub">Refresh hub</a>
+          <a href="/" aria-label="Back to landing page">Back home</a>
+          <button type="button" id="clearFiltersBtn">Clear filters</button>
         </div>
+        <p>
+          Multiplayer-capable picks are tagged directly on the card so the good social games are easy to spot.
+        </p>
+      </aside>
+    </section>
 
-        <!-- DuckMath Games -->
-        <div class="source-card">
-          <div class="source-icon">🦆</div>
-          <div class="source-title">Unblocked Hub</div>
-          <div class="source-description">
-            Access the massive DuckMath games collection with 100+ unblocked games. Browse, search, and play instantly!
-          </div>
-          <div class="game-count" id="duckGameCount">100+ Games Available</div>
-          <div class="features-grid" style="margin-bottom: 1.5rem;">
-            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
-              ✓ Huge Library
-            </div>
-            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
-              ✓ Various Genres
-            </div>
-            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
-              ✓ Always Updated
-            </div>
-          </div>
-          <button onclick="accessDuckMath()" class="access-btn">Access DuckMath →</button>
-        </div>
-
-        <!-- Radon Games -->
-        <div class="source-card">
-          <div class="source-icon">⚡</div>
-          <div class="source-title">Radon Portal</div>
-          <div class="source-description">
-            Modern gaming platform with built-in web proxy, tab cloaking, and a rapidly growing selection of premium unblocked games!
-          </div>
-          <div class="game-count">50+ Games & Tools</div>
-          <div class="features-grid" style="margin-bottom: 1.5rem;">
-            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
-              ✓ Web Proxy
-            </div>
-            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
-              ✓ Tab Cloak
-            </div>
-            <div style="background: #f3f4f6; color: #667eea; padding: 0.5rem; border-radius: 8px; font-size: 0.9rem;">
-              ✓ Modern UI
-            </div>
-          </div>
-          <button onclick="accessRadonGames()" class="access-btn">Access Radon →</button>
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2>Featured picks</h2>
+          <p>The strongest first stop for most players.</p>
         </div>
       </div>
-    </div>
-  </main>
+      <div class="featured-rail" id="featuredRail"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2>Browse the catalog</h2>
+          <p>Search, filter, and launch what you want in a couple of clicks.</p>
+        </div>
+      </div>
+      <div class="catalog-grid" id="catalogGrid"></div>
+      <div class="empty-state" id="emptyState">
+        No games match the current search and filter. Clear the filter or try a different search term.
+      </div>
+      <p class="footer-note">
+        Offline downloads are generated from the existing HTML game pages and include a lightweight compatibility shim for common shared UI calls.
+      </p>
+    </section>
+  </div>
 
   <div id="authModal" class="modal">
     <div class="modal-content">
@@ -512,61 +569,195 @@
 
   <div id="notificationContainer" class="notification-container"></div>
 
-  <div id="authCheck" class="auth-check show">
-    <div style="font-size: 2rem; margin-bottom: 1rem;">🔐</div>
-    <h2>Authentication Required</h2>
-    <p class="auth-warning">You must be logged in to access games.</p>
-    <div style="display: flex; gap: 1rem; flex-direction: column; margin-top: 1.5rem;">
-      <button onclick="showLoginModal()" class="btn" style="width: 100%;">Login</button>
-      <button onclick="showRegisterModal()" class="btn" style="width: 100%; background: #667eea;">Register</button>
-      <button onclick="loginAsGuest()" class="btn secondary" style="width: 100%;">Continue as Guest</button>
-    </div>
-  </div>
-
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="/js/main.js"></script>
   <script>
-    function updateAuthUI() {
+    const state = {
+      games: [],
+      filter: 'all',
+      query: ''
+    };
+
+    const filterAliases = {
+      arcade: ['arcade', 'action'],
+      card: ['card', 'casino'],
+      puzzle: ['puzzle', 'strategy', 'board']
+    };
+
+    function normalize(value) {
+      return String(value || '').toLowerCase();
+    }
+
+    function syncAuthUI() {
       const authSection = document.getElementById('authSection');
-      if (currentUser) {
-        authSection.innerHTML = `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`;
-      } else {
-        authSection.innerHTML = '<button onclick="showLoginModal()" class="btn">Login</button>';
-      }
-    }
+      if (!authSection) return;
 
-    function accessDuckMath() {
-      if (!currentUser) {
-        document.getElementById('authCheck').classList.add('show');
+      if (typeof currentUser !== 'undefined' && currentUser) {
+        authSection.innerHTML = `
+          <span class="user-chip">👤 ${currentUser.username}</span>
+          <span class="coin-chip">💰 ${typeof userCoins !== 'undefined' ? userCoins : 0}</span>
+        `;
         return;
       }
 
-      // DuckMath is now served from same port on /duckmath path
-      window.location.href = '/duckmath';
-      showNotification(`Opening DuckMath! 🦆`, 'success');
+      authSection.innerHTML = `
+        <button class="filter-chip active" type="button" onclick="showLoginModal()">Login</button>
+      `;
     }
 
-    function accessRadonGames() {
-      if (!currentUser) {
-        document.getElementById('authCheck').classList.add('show');
-        return;
-      }
+    function openGame(gameId) {
+      window.location.href = `/games/${gameId}`;
+    }
 
-      // Radon Games served from /radon-g3mes (obfuscated path)
-      window.location.href = '/radon-g3mes';
-      showNotification(`Opening Radon Games! ⚡`, 'success');
+    function downloadGame(gameId) {
+      window.location.href = `/ghub/download/${gameId}`;
+    }
+
+    function matchesFilter(game) {
+      if (state.filter === 'all') return true;
+      if (state.filter === 'featured') return game.featured;
+      if (state.filter === 'multiplayer') return game.tags.includes('multiplayer');
+      if (state.filter === 'offline') return game.tags.includes('offline');
+
+      const aliases = filterAliases[state.filter] || [state.filter];
+      return aliases.some((alias) => game.tags.includes(alias));
+    }
+
+    function matchesQuery(game) {
+      if (!state.query) return true;
+      const haystack = [
+        game.name,
+        game.description,
+        ...(game.tags || [])
+      ].map(normalize).join(' ');
+
+      return haystack.includes(state.query);
+    }
+
+    function renderBadge(game) {
+      if (game.tags.includes('multiplayer')) {
+        return '<span class="badge multiplayer">Multiplayer</span>';
+      }
+      if (game.tags.includes('offline')) {
+        return '<span class="badge offline">Offline ready</span>';
+      }
+      return '<span class="badge">Featured</span>';
+    }
+
+    function createMiniCard(game) {
+      return `
+        <article class="mini-card ${game.featured ? 'featured' : ''}">
+          ${renderBadge(game)}
+          <div class="game-emoji">${game.emoji}</div>
+          <h3 class="game-title">${game.name}</h3>
+          <p class="game-desc">${game.description}</p>
+          <div class="tag-row">
+            ${game.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}
+          </div>
+          <div class="card-actions">
+            <a class="play" href="/games/${game.id}">Play</a>
+            <a class="download" href="/ghub/download/${game.id}">HTML</a>
+          </div>
+        </article>
+      `;
+    }
+
+    function createGameCard(game) {
+      return `
+        <article class="game-card ${game.featured ? 'featured' : ''}">
+          ${renderBadge(game)}
+          <div class="game-emoji">${game.emoji}</div>
+          <h3 class="game-title">${game.name}</h3>
+          <p class="game-desc">${game.description}</p>
+          <div class="tag-row">
+            ${game.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}
+          </div>
+          <div class="card-actions">
+            <a class="play" href="/games/${game.id}">Play now</a>
+            <a class="download" href="/ghub/download/${game.id}">Download HTML</a>
+          </div>
+        </article>
+      `;
+    }
+
+    function updateCounts(filteredGames) {
+      document.getElementById('gameCount').textContent = state.games.length;
+      document.getElementById('featuredCount').textContent = state.games.filter((game) => game.featured).length;
+      document.getElementById('multiplayerCount').textContent = state.games.filter((game) => game.tags.includes('multiplayer')).length;
+      document.getElementById('offlineCount').textContent = state.games.filter((game) => game.tags.includes('offline')).length;
+      document.getElementById('visibleCount').textContent = `${filteredGames.length} shown`;
+    }
+
+    function renderGames() {
+      const filteredGames = state.games
+        .filter(matchesFilter)
+        .filter(matchesQuery)
+        .sort((a, b) => {
+          if (a.featured !== b.featured) return a.featured ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
+
+      const featuredGames = state.games
+        .filter((game) => game.featured)
+        .slice(0, 4);
+
+      document.getElementById('featuredRail').innerHTML = featuredGames.map(createMiniCard).join('');
+      document.getElementById('catalogGrid').innerHTML = filteredGames.map(createGameCard).join('');
+      document.getElementById('emptyState').style.display = filteredGames.length ? 'none' : 'block';
+      updateCounts(filteredGames);
+    }
+
+    function setFilter(filter) {
+      state.filter = filter;
+      document.querySelectorAll('[data-filter]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.filter === filter);
+      });
+      renderGames();
+    }
+
+    async function loadCatalog() {
+      try {
+        const response = await fetch('/ghub-games.json', { cache: 'no-store' });
+        const games = await response.json();
+        state.games = games;
+        renderGames();
+      } catch (error) {
+        console.error('Failed to load hub catalog:', error);
+        document.getElementById('catalogGrid').innerHTML = `
+          <div class="empty-state" style="display:block;">
+            The catalog could not be loaded. Refresh the page or check the server.
+          </div>
+        `;
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      updateAuthUI();
-      
-      // Check if user is authenticated
-      if (!currentUser) {
-        // Show auth check modal
-        setTimeout(() => {
-          document.getElementById('authCheck').classList.add('show');
-        }, 500);
-      }
+      syncAuthUI();
+      loadCatalog();
+
+      document.getElementById('gameSearch').addEventListener('input', (event) => {
+        state.query = normalize(event.target.value);
+        renderGames();
+      });
+
+      document.getElementById('filterRow').addEventListener('click', (event) => {
+        const button = event.target.closest('[data-filter]');
+        if (!button) return;
+        setFilter(button.dataset.filter);
+      });
+
+      document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+        state.query = '';
+        state.filter = 'all';
+        document.getElementById('gameSearch').value = '';
+        document.querySelectorAll('[data-filter]').forEach((button) => {
+          button.classList.toggle('active', button.dataset.filter === 'all');
+        });
+        renderGames();
+      });
+
+      setTimeout(syncAuthUI, 500);
+      setTimeout(syncAuthUI, 1500);
     });
   </script>
 </body>

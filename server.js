@@ -74,6 +74,19 @@ function httpsGet(url, options = {}, redirectCount = 0) {
   });
 }
 
+// ===== SECURITY GUARDRAILS =====
+// Block explicit access to sensitive system files from being served over HTTP
+app.use((req, res, next) => {
+  const forbidden = ['.env', '.git', 'package.json', 'package-lock.json', 'server.js', 'install.js', 'botts.py', 'routes/'];
+  const requestedPath = req.path.toLowerCase();
+  
+  if (forbidden.some(file => requestedPath.includes(file.toLowerCase()))) {
+    console.warn(`⛔ [SECURITY] Blocked attempt to access sensitive file: ${req.path} from ${req.ip}`);
+    return res.status(403).send('<h1>403 Forbidden</h1><p>Access to sensitive system configurations is restricted.</p>');
+  }
+  next();
+});
+
 // Middleware
 app.use(compression());
 app.use(cors());
@@ -183,9 +196,108 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'landing.html'));
 });
 
-// GameHub - THE ACTUAL 13 GAMES HUB
+const ghubGamesManifestPath = path.join(__dirname, 'public', 'ghub-games.json');
+let ghubGamesCache = null;
+
+function loadGhubGames() {
+  if (ghubGamesCache) {
+    return ghubGamesCache;
+  }
+
+  try {
+    ghubGamesCache = JSON.parse(fs.readFileSync(ghubGamesManifestPath, 'utf8'));
+  } catch (error) {
+    console.error('Failed to load GameHub manifest:', error.message);
+    ghubGamesCache = [];
+  }
+
+  return ghubGamesCache;
+}
+
+function getGhubGame(gameId) {
+  return loadGhubGames().find((game) => game.id === gameId);
+}
+
+function buildStandaloneGameHtml(gameId) {
+  const game = getGhubGame(gameId);
+  if (!game) {
+    return null;
+  }
+
+  const sourcePath = path.join(__dirname, 'public', 'games', `${gameId}.html`);
+  if (!fs.existsSync(sourcePath)) {
+    return null;
+  }
+
+  const sourceHtml = fs.readFileSync(sourcePath, 'utf8');
+  const styles = fs.readFileSync(path.join(__dirname, 'public', 'styles.css'), 'utf8');
+
+  const offlineBootstrap = `
+    <script>
+      (function () {
+        const noop = function () {};
+        const socketStub = {
+          connected: false,
+          emit: noop,
+          on: noop,
+          off: noop,
+          disconnect: noop,
+          connect: noop
+        };
+
+        window.socket = window.socket || socketStub;
+        window.io = window.io || function () { return window.socket; };
+        window.currentUser = window.currentUser || null;
+        window.userCoins = window.userCoins !== undefined ? window.userCoins : 1000;
+        window.isGuest = window.isGuest !== undefined ? window.isGuest : true;
+        window.showNotification = window.showNotification || function (message) {
+          console.log('[GameHub offline]', message);
+        };
+        window.updateCoins = window.updateCoins || noop;
+        window.updateUI = window.updateUI || noop;
+        window.closeGameContainer = window.closeGameContainer || noop;
+        if (!window.parent.closeGameContainer) window.parent.closeGameContainer = window.closeGameContainer;
+        if (!window.parent.showNotification) window.parent.showNotification = window.showNotification;
+        if (!window.parent.updateCoins) window.parent.updateCoins = window.updateCoins;
+      })();
+    </script>
+  `;
+
+  const offlineBanner = `
+    <div style="position:sticky;top:0;z-index:9999;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;">
+      <strong>${game.name}</strong>
+      <span style="opacity:.85;margin-left:8px;">Offline standalone build</span>
+      <a href="/ghub" style="color:#93c5fd;margin-left:12px;text-decoration:none;">Back to GameHub</a>
+    </div>
+  `;
+
+  return sourceHtml
+    .replace(/<link\s+rel=["']stylesheet["']\s+href=["']\/?styles\.css["']\s*\/?>/gi, `<style>${styles}</style>\n${offlineBootstrap}`)
+    .replace(/<script\s+src=["']https:\/\/cdn\.socket\.io[^"']*["']><\/script>\s*/gi, '')
+    .replace(/<script\s+src=["']\/js\/main\.js["']><\/script>\s*/gi, '')
+    .replace(/<body([^>]*)>/i, `<body$1>${offlineBanner}`);
+}
+
+// GameHub - curated games hub
 app.get('/ghub', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'hub.html'));
+});
+
+app.get('/ghub/download/:gameId', (req, res) => {
+  const { gameId } = req.params;
+  const game = getGhubGame(gameId);
+
+  if (!game) {
+    return res.status(404).send('Game not found.');
+  }
+
+  const standaloneHtml = buildStandaloneGameHtml(gameId);
+  if (!standaloneHtml) {
+    return res.status(404).send('Standalone export unavailable for this game.');
+  }
+
+  res.setHeader('Content-Disposition', `attachment; filename="${gameId}-standalone.html"`);
+  res.type('html').send(standaloneHtml);
 });
 
 // /games route - intentionally shows "lost" message

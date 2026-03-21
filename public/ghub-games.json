@@ -1,0 +1,130 @@
+[
+  {
+    "id": "2048",
+    "name": "2048",
+    "emoji": "🔢",
+    "description": "A crisp puzzle loop with fast restarts and a clean solo challenge.",
+    "tags": ["featured", "offline", "puzzle", "arcade"],
+    "featured": true
+  },
+  {
+    "id": "snake",
+    "name": "Snake",
+    "emoji": "🐍",
+    "description": "Arcade classic with instant pickup-and-play controls for keyboard devices.",
+    "tags": ["featured", "offline", "arcade"],
+    "featured": true
+  },
+  {
+    "id": "tic-tac-toe",
+    "name": "Tic Tac Toe",
+    "emoji": "❌",
+    "description": "The cleanest quick-match game in the set, and the easiest multiplayer starter.",
+    "tags": ["featured", "multiplayer", "offline", "board"],
+    "featured": true
+  },
+  {
+    "id": "uno",
+    "name": "UNO",
+    "emoji": "🎴",
+    "description": "A lively card game with strong local play and room for multiplayer matches.",
+    "tags": ["featured", "multiplayer", "card", "offline"],
+    "featured": true
+  },
+  {
+    "id": "poker",
+    "name": "Poker",
+    "emoji": "♠️",
+    "description": "A richer card table with betting systems and room-based competition support.",
+    "tags": ["featured", "multiplayer", "card"],
+    "featured": true
+  },
+  {
+    "id": "memory",
+    "name": "Memory",
+    "emoji": "🧠",
+    "description": "Fast, polished pattern matching that works well on classroom Chromebooks.",
+    "tags": ["offline", "puzzle", "casual"],
+    "featured": false
+  },
+  {
+    "id": "mines",
+    "name": "Mines",
+    "emoji": "💣",
+    "description": "Tactical grid play that rewards careful clicks and quick resets.",
+    "tags": ["offline", "puzzle", "strategy"],
+    "featured": false
+  },
+  {
+    "id": "blackjack",
+    "name": "Blackjack",
+    "emoji": "🂡",
+    "description": "Simple table play with a clean loop that feels good in short sessions.",
+    "tags": ["offline", "card", "casino"],
+    "featured": false
+  },
+  {
+    "id": "crossy-road",
+    "name": "Crossy Road",
+    "emoji": "🛣️",
+    "description": "Endless dodging and timing with a strong one-more-try loop.",
+    "tags": ["featured", "arcade"],
+    "featured": false
+  },
+  {
+    "id": "flappy-bird",
+    "name": "Flappy Bird",
+    "emoji": "🐦",
+    "description": "Tiny, intense arcade challenge that starts immediately in any browser.",
+    "tags": ["offline", "arcade"],
+    "featured": false
+  },
+  {
+    "id": "go-fish",
+    "name": "Go Fish",
+    "emoji": "🎣",
+    "description": "A friendly card game that works well for short shared sessions.",
+    "tags": ["card", "casual"],
+    "featured": false
+  },
+  {
+    "id": "coinflip",
+    "name": "Coinflip",
+    "emoji": "🪙",
+    "description": "Minimal, fast, and perfect for quick bets or warm-up rounds.",
+    "tags": ["casual", "casino"],
+    "featured": false
+  },
+  {
+    "id": "slots",
+    "name": "Slots",
+    "emoji": "🎰",
+    "description": "Bright, simple, and built for short browser sessions.",
+    "tags": ["casual", "casino"],
+    "featured": false
+  },
+  {
+    "id": "roulette",
+    "name": "Roulette",
+    "emoji": "🎡",
+    "description": "A table-style spin with obvious outcomes and easy entry for newcomers.",
+    "tags": ["casual", "casino"],
+    "featured": false
+  },
+  {
+    "id": "plinko",
+    "name": "Plinko",
+    "emoji": "🟡",
+    "description": "Drop-and-watch randomness with a high replay value loop.",
+    "tags": ["arcade", "casino"],
+    "featured": false
+  },
+  {
+    "id": "rocket",
+    "name": "Rocket",
+    "emoji": "🚀",
+    "description": "An arcade flight loop that fits well on desktop and Chromebook keyboards.",
+    "tags": ["arcade", "action"],
+    "featured": false
+  }
+]
