@@ -323,11 +323,7 @@ class MultiplayerManager {
     room.status = 'playing';
     room.gameState = this.initializeGameState(room.gameType, room.players);
 
-    // Notify all players
-    this.io.to(roomId).emit('game-started', { 
-      room: this.sanitizeRoomForClient(room),
-      gameState: room.gameState 
-    });
+    this.emitRoomState(roomId, 'game-started');
 
     this.broadcastRoomsUpdate();
   }
@@ -348,14 +344,7 @@ class MultiplayerManager {
         };
       
       case 'uno':
-        return {
-          deck: this.createUnoDeck(),
-          discardPile: [],
-          hands: {},
-          currentPlayer: players[0].userId,
-          direction: 1,
-          status: 'playing'
-        };
+        return this.createInitialUnoState(players);
       
       case 'poker':
         return {
@@ -371,6 +360,69 @@ class MultiplayerManager {
       default:
         return { status: 'playing' };
     }
+  }
+
+  createInitialUnoState(players) {
+    const deck = this.createUnoDeck();
+    const hands = {};
+
+    players.forEach((player) => {
+      hands[player.userId] = [];
+      for (let i = 0; i < 7; i++) {
+        hands[player.userId].push(deck.pop());
+      }
+    });
+
+    let topCard = deck.pop();
+    while (topCard && topCard.color === 'wild') {
+      deck.unshift(topCard);
+      topCard = deck.pop();
+    }
+
+    return {
+      deck,
+      discardPile: [topCard],
+      currentColor: topCard.color,
+      hands,
+      currentPlayer: players[0].userId,
+      direction: 1,
+      status: 'playing',
+      pendingDraw: 0,
+      winnerId: null
+    };
+  }
+
+  emitRoomState(roomId, eventName = 'game-state', extra = {}) {
+    const room = this.rooms.get(roomId);
+    if (!room) return;
+
+    room.players.forEach((player) => {
+      const target = this.io.sockets.sockets.get(player.socketId);
+      if (!target) return;
+
+      target.emit(eventName, {
+        room: this.sanitizeRoomForClient(room),
+        gameState: this.sanitizeGameStateForPlayer(room.gameType, room.gameState, player.userId),
+        ...extra
+      });
+    });
+  }
+
+  sanitizeGameStateForPlayer(gameType, gameState, playerId) {
+    if (!gameState) return gameState;
+
+    if (gameType === 'uno') {
+      const opponentId = Object.keys(gameState.hands).find((id) => id !== playerId);
+      return {
+        ...gameState,
+        yourHand: [...(gameState.hands[playerId] || [])],
+        opponentCardCount: opponentId ? (gameState.hands[opponentId] || []).length : 0,
+        discardPile: [...gameState.discardPile],
+        hands: undefined
+      };
+    }
+
+    return gameState;
   }
 
   handleGameAction(socket, data) {
@@ -393,11 +445,9 @@ class MultiplayerManager {
       if (processedAction.success) {
         room.gameState = processedAction.gameState;
         
-        // Broadcast to all players in room
-        this.io.to(player.roomId).emit('game-action', {
+        this.emitRoomState(player.roomId, 'game-action', {
           action: data.action,
           playerId: player.userId,
-          gameState: room.gameState,
           ...processedAction.data
         });
 
@@ -442,7 +492,7 @@ class MultiplayerManager {
     gameState.board[index] = player.symbol;
 
     // Check for winner
-    const winner = this.checkTicTacToeWinner(gameState.board);
+    const winner = this.checkTicTacToeWinner(gameState.board, gameState.players);
     
     if (winner) {
       return {
@@ -471,7 +521,120 @@ class MultiplayerManager {
     return { success: true, gameState };
   }
 
-  checkTicTacToeWinner(board) {
+  processUnoAction(gameState, action, playerId) {
+    if (gameState.currentPlayer !== playerId) {
+      return { success: false, error: 'Not your turn' };
+    }
+
+    if (action.action === 'draw-card') {
+      const drawCount = gameState.pendingDraw || 1;
+      this.drawUnoCards(gameState, playerId, drawCount);
+      gameState.pendingDraw = 0;
+      gameState.currentPlayer = this.getNextUnoPlayerId(gameState, playerId);
+      return { success: true, gameState, data: { drewCards: drawCount } };
+    }
+
+    if (action.action !== 'play-card') {
+      return { success: false, error: 'Unknown UNO action' };
+    }
+
+    const hand = gameState.hands[playerId] || [];
+    const card = hand[action.cardIndex];
+    if (!card) {
+      return { success: false, error: 'Card not found' };
+    }
+
+    const topCard = gameState.discardPile[gameState.discardPile.length - 1];
+    if (!this.isValidUnoPlay(card, topCard, gameState.currentColor)) {
+      return { success: false, error: 'That card cannot be played now' };
+    }
+
+    if (card.color === 'wild' && !action.chosenColor) {
+      return { success: false, error: 'Choose a color first' };
+    }
+
+    hand.splice(action.cardIndex, 1);
+    gameState.discardPile.push(card);
+    gameState.currentColor = card.color === 'wild' ? action.chosenColor : card.color;
+
+    const effect = this.applyUnoCardEffect(gameState, card, playerId);
+
+    if (hand.length === 0) {
+      gameState.winnerId = playerId;
+      return {
+        success: true,
+        gameState,
+        gameEnd: true,
+        winner: playerId,
+        scores: { [playerId]: 1 },
+        data: { chosenColor: gameState.currentColor, effect }
+      };
+    }
+
+    return {
+      success: true,
+      gameState,
+      data: { chosenColor: gameState.currentColor, effect }
+    };
+  }
+
+  isValidUnoPlay(card, topCard, currentColor) {
+    return (
+      card.color === 'wild' ||
+      card.color === currentColor ||
+      card.value === topCard.value
+    );
+  }
+
+  applyUnoCardEffect(gameState, card, playerId) {
+    const nextPlayerId = this.getNextUnoPlayerId(gameState, playerId);
+    let skipped = false;
+
+    if (card.value === 'reverse' || card.value === 'skip') {
+      skipped = true;
+      gameState.currentPlayer = this.getNextUnoPlayerId(gameState, nextPlayerId);
+    } else if (card.value === 'draw2') {
+      this.drawUnoCards(gameState, nextPlayerId, 2);
+      skipped = true;
+      gameState.currentPlayer = this.getNextUnoPlayerId(gameState, nextPlayerId);
+    } else if (card.value === 'wild4') {
+      this.drawUnoCards(gameState, nextPlayerId, 4);
+      skipped = true;
+      gameState.currentPlayer = this.getNextUnoPlayerId(gameState, nextPlayerId);
+    } else {
+      gameState.currentPlayer = nextPlayerId;
+    }
+
+    return { type: card.value, skipped };
+  }
+
+  getNextUnoPlayerId(gameState, currentPlayerId) {
+    const playerIds = Object.keys(gameState.hands);
+    if (playerIds.length < 2) return currentPlayerId;
+    const currentIndex = playerIds.indexOf(currentPlayerId);
+    return playerIds[(currentIndex + 1) % playerIds.length];
+  }
+
+  drawUnoCards(gameState, playerId, count) {
+    for (let i = 0; i < count; i++) {
+      if (gameState.deck.length === 0) {
+        this.recycleUnoDiscardPile(gameState);
+      }
+      const card = gameState.deck.pop();
+      if (card) {
+        gameState.hands[playerId].push(card);
+      }
+    }
+  }
+
+  recycleUnoDiscardPile(gameState) {
+    if (gameState.discardPile.length <= 1) return;
+    const topCard = gameState.discardPile.pop();
+    gameState.deck = this.shuffleDeck(gameState.discardPile);
+    gameState.discardPile = [topCard];
+  }
+
+  checkTicTacToeWinner(board, players = []) {
     const winPatterns = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
       [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
@@ -481,7 +644,8 @@ class MultiplayerManager {
     for (const pattern of winPatterns) {
       const [a, b, c] = pattern;
       if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-        return { symbol: board[a], pattern };
+        const player = players.find((candidate) => candidate.symbol === board[a]);
+        return { symbol: board[a], pattern, userId: player?.userId };
       }
     }
 

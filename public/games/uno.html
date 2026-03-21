@@ -3,301 +3,915 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UNO - GameHub</title>
+  <title>UNO Showdown - GameHub</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    body { background: #000; padding: 0; margin: 0; }
-    .game-viewport { margin: 0; width: 100vw; height: 100vh; border-radius: 0; border: none; }
-
-    .uno-table {
-      flex: 1;
+    :root {
+      --bg: #09120f;
+      --panel: rgba(10, 26, 20, 0.86);
+      --panel-2: rgba(15, 35, 28, 0.96);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #eefcf4;
+      --muted: #9bc8b1;
+      --accent: #facc15;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(239, 68, 68, 0.2), transparent 24%),
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.2), transparent 24%),
+        radial-gradient(circle at bottom center, rgba(34, 197, 94, 0.18), transparent 28%),
+        linear-gradient(180deg, #06110d 0%, #0d1f17 100%);
+    }
+    .page { max-width: 1380px; margin: 0 auto; padding: 1rem; }
+    .hero, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+      backdrop-filter: blur(18px);
+    }
+    .hero { padding: 1.15rem 1.2rem; margin-bottom: 1rem; }
+    .hero-top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.4rem); letter-spacing: -0.04em; }
+    .subtitle { margin: 0.45rem 0 0; color: var(--muted); max-width: 72ch; line-height: 1.6; }
+    .pills, .actions, .row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .pill {
+      padding: 0.6rem 0.85rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+      font-weight: 700;
+    }
+    .layout { display: grid; grid-template-columns: 320px minmax(320px, 1fr) 320px; gap: 1rem; }
+    .panel-head {
+      padding: 1rem 1rem 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-body { padding: 1rem; }
+    .btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 0.95rem 1rem;
+      cursor: pointer;
+      font-weight: 800;
+      color: #fff;
+      background: rgba(255,255,255,0.08);
+      transition: transform 0.18s ease, opacity 0.18s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn.primary { background: linear-gradient(135deg, #fde047, #f97316); color: #261104; }
+    .btn.secondary { border: 1px solid var(--line); }
+    input {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      outline: none;
+    }
+    .stack { display: grid; gap: 0.75rem; }
+    .card-box, .meta, .feed-item {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      padding: 0.9rem;
+    }
+    .card-box strong, .meta strong { display: block; margin-bottom: 0.2rem; }
+    .card-box span, .meta span, .feed-item small { color: var(--muted); line-height: 1.5; }
+    .table {
+      padding: 1rem;
+      background: linear-gradient(160deg, rgba(7, 32, 21, 0.9), rgba(7, 18, 14, 0.96));
+      border-radius: 24px;
+      border: 1px solid var(--line);
+    }
+    .arena {
+      min-height: 540px;
+      border-radius: 20px;
+      padding: 1rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      background:
+        radial-gradient(circle at center, rgba(34,197,94,0.2), transparent 44%),
+        linear-gradient(180deg, rgba(10,27,18,0.9), rgba(8,18,14,0.95));
       display: flex;
       flex-direction: column;
-      justify-content: space-around;
-      align-items: center;
-      background: radial-gradient(circle, #1a4d1a 0%, #051a05 100%);
-      padding: 1rem;
-      position: relative;
+      justify-content: space-between;
+      gap: 1rem;
     }
-
-    .hand {
+    .opponent-row, .player-row {
       display: flex;
-      gap: 5px;
       justify-content: center;
       flex-wrap: wrap;
-      max-width: 90%;
+      gap: 0.5rem;
+      min-height: 108px;
     }
-
+    .center-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
     .uno-card {
-      width: 60px;
-      height: 90px;
-      border-radius: 6px;
-      border: 2px solid white;
+      width: 78px;
+      height: 112px;
+      border-radius: 18px;
+      border: 2px solid rgba(255,255,255,0.28);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 800;
-      font-size: 1.2rem;
-      cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      transition: transform 0.2s;
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+      position: relative;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+      user-select: none;
     }
-
-    .uno-card:hover { transform: translateY(-15px); }
-    .uno-card.red { background: #ef4444; color: white; }
-    .uno-card.blue { background: #3b82f6; color: white; }
-    .uno-card.green { background: #22c55e; color: white; }
-    .uno-card.yellow { background: #eab308; color: black; }
-    .uno-card.wild { background: #000; color: white; border-color: #f59e0b; }
-
-    .play-area {
-      display: flex;
-      gap: 30px;
-      align-items: center;
-    }
-
-    .deck-pile {
-      width: 60px;
-      height: 90px;
-      background: #1e1b4b;
-      border: 2px solid #fff;
-      border-radius: 6px;
+    .uno-card.playable { cursor: pointer; }
+    .uno-card.playable:hover { transform: translateY(-6px); box-shadow: 0 14px 30px rgba(0,0,0,0.35); }
+    .uno-card.red { background: linear-gradient(135deg, #ef4444, #991b1b); }
+    .uno-card.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .uno-card.green { background: linear-gradient(135deg, #22c55e, #15803d); }
+    .uno-card.yellow { background: linear-gradient(135deg, #fde047, #eab308); color: #302105; }
+    .uno-card.wild { background: linear-gradient(135deg, #111827, #374151); }
+    .uno-card.back { background: linear-gradient(135deg, #0f172a, #1e293b); }
+    .uno-card.dim { opacity: 0.52; }
+    .pile, .deck {
+      width: 92px;
+      height: 128px;
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.18);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.32);
     }
-
-    .discard-pile {
-      width: 60px;
-      height: 90px;
-    }
-
-    .opponent-hand {
-      opacity: 0.6;
-      transform: scale(0.8);
-    }
-
-    .color-picker-mini {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.9);
+    .deck { background: linear-gradient(135deg, #0f172a, #1e3a8a); cursor: pointer; }
+    .pile { background: rgba(255,255,255,0.05); }
+    .status-card {
+      text-align: center;
       padding: 1rem;
-      border-radius: 12px;
-      display: none;
-      gap: 10px;
-      z-index: 100;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
     }
+    .status-card h3 { margin: 0 0 0.35rem; font-size: 1.5rem; }
+    .status-card p { margin: 0; color: var(--muted); }
+    .footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; color: var(--muted); }
+    @media (max-width: 1120px) { .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { .footer { flex-direction: column; align-items: stretch; } }
   </style>
 </head>
 <body>
-  <div class="game-viewport">
-    <div class="game-header">
-      <h2>🎴 UNO</h2>
-      <div class="game-stats-grid">
-        <div class="game-stat-item">
-          <span class="game-stat-label">Your Cards</span>
-          <span class="game-stat-value" id="pCount">0</span>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>UNO Showdown</h1>
+          <p class="subtitle">Play locally against the built-in bot or use real quick matches and private rooms over the GameHub socket server.</p>
         </div>
-        <div class="game-stat-item">
-          <span class="game-stat-label">Opponent</span>
-          <span class="game-stat-value" id="oCount">0</span>
+        <div class="pills">
+          <div class="pill">Mode: <span id="modeLabel">Local</span></div>
+          <div class="pill">Turn: <span id="turnLabel">You</span></div>
+          <div class="pill">Color: <span id="colorLabel">None</span></div>
+          <div class="pill">Room: <span id="roomLabel">None</span></div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <div class="uno-table">
-      <div class="hand opponent-hand" id="oHand"></div>
+    <main class="layout">
+      <section class="panel">
+        <div class="panel-head"><h2>Modes</h2><span class="pill" id="socketBadge">Offline</span></div>
+        <div class="panel-body">
+          <div class="stack">
+            <div class="card-box"><strong>Local Bot Match</strong><span>Playable offline with a simple bot. Great for downloaded HTML builds.</span></div>
+            <div class="card-box"><strong>Quick Match</strong><span>Uses the room manager to find another player automatically.</span></div>
+            <div class="card-box"><strong>Private Room</strong><span>Create a room, share the code, and start when both players are inside.</span></div>
+          </div>
 
-      <div class="play-area">
-        <div class="deck-pile" onclick="draw()">🎴</div>
-        <div class="discard-pile" id="discard"></div>
+          <div class="stack" style="margin-top: 1rem;">
+            <div class="row">
+              <button class="btn primary" onclick="startLocalGame()">Local Bot</button>
+              <button class="btn secondary" onclick="startQuickMatch()">Quick Match</button>
+            </div>
+            <div class="row">
+              <button class="btn secondary" onclick="createRoom()">Create Room</button>
+              <button class="btn secondary" onclick="joinRoom()">Join Room</button>
+            </div>
+            <div class="row">
+              <input id="roomCodeInput" type="text" placeholder="Room code" autocomplete="off">
+              <button class="btn secondary" onclick="copyRoomCode()">Copy Code</button>
+            </div>
+            <div class="row">
+              <button class="btn secondary" onclick="drawCard()">Draw Card</button>
+              <button class="btn secondary" onclick="leaveRoom()">Leave Room</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Table</h2><span class="pill" id="tableState">Ready</span></div>
+        <div class="panel-body">
+          <div class="table">
+            <div class="arena">
+              <div>
+                <div class="status-card" style="margin-bottom: 1rem;">
+                  <h3 id="opponentName">Bot Opponent</h3>
+                  <p id="opponentStatus">Waiting for the first move.</p>
+                </div>
+                <div class="opponent-row" id="opponentHand"></div>
+              </div>
+
+              <div class="center-row">
+                <div class="deck" onclick="drawCard()"><strong>DRAW</strong></div>
+                <div class="pile" id="discardPile"></div>
+              </div>
+
+              <div>
+                <div class="status-card" style="margin-bottom: 1rem;">
+                  <h3 id="statusText">Start a local match or go online</h3>
+                  <p id="statusSubtext">Wild cards will ask you to choose a color.</p>
+                </div>
+                <div class="player-row" id="playerHand"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel-head"><h2>Round Info</h2><span class="pill" id="roundBadge">Idle</span></div>
+        <div class="panel-body">
+          <div class="stack">
+            <div class="meta"><strong>Your Cards</strong><span id="yourCount">0</span></div>
+            <div class="meta"><strong>Opponent Cards</strong><span id="opponentCount">0</span></div>
+            <div class="meta"><strong>Connection</strong><span id="connectionText">Disconnected</span></div>
+            <div class="meta"><strong>Recent Action</strong><span id="actionText">No moves yet.</span></div>
+          </div>
+          <div class="stack" id="feed" style="margin-top: 1rem;">
+            <div class="feed-item">Local mode works with no network.<small>Quick match and rooms need a logged-in player and a live socket connection.</small></div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <span id="footerText">UNO local mode ready.</span>
+      <div class="actions">
+        <button class="btn secondary" onclick="downloadGame()">Download HTML</button>
+        <button class="btn secondary" onclick="exitGame()">Exit</button>
       </div>
-
-      <div class="hand" id="pHand"></div>
-
-      <div class="color-picker-mini" id="picker">
-        <div class="uno-card red" onclick="chooseColor('red')"></div>
-        <div class="uno-card blue" onclick="chooseColor('blue')"></div>
-        <div class="uno-card green" onclick="chooseColor('green')"></div>
-        <div class="uno-card yellow" onclick="chooseColor('yellow')"></div>
-      </div>
-
-      <div id="overlay" class="game-overlay-screen">
-        <h2 class="game-overlay-title" id="overlayTitle">Game Over</h2>
-        <p id="overlayText" style="margin-bottom: 2rem;"></p>
-        <button class="btn btn-primary" onclick="initGame()">New Game</button>
-      </div>
-    </div>
-
-    <div class="game-footer">
-      <button class="btn btn-primary" id="unoBtn" style="display:none; background:#ef4444;" onclick="sayUno()">Say UNO!</button>
-      <button class="btn" onclick="window.parent.closeGameContainer()" style="margin-left: auto;">Exit</button>
-    </div>
+    </footer>
   </div>
 
+  <div id="authModal" class="modal"><div class="modal-content"><span class="close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="/js/main.js"></script>
   <script>
     const COLORS = ['red', 'blue', 'green', 'yellow'];
-    const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'S', 'R', '+2'];
-    let deck = [], pHand = [], oHand = [], discardHistory = [], discard = null, turn = 'p', currentColor = '';
+    const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'skip', 'reverse', 'draw2'];
+    const state = {
+      mode: 'local',
+      roomId: null,
+      online: false,
+      myPlayerId: null,
+      localSeat: 'player',
+      local: null,
+      onlineGame: null,
+      remote: null
+    };
 
-    function createDeck() {
-      const d = [];
-      COLORS.forEach(c => {
-        VALUES.forEach(v => {
-          d.push({c, v});
-          if(v !== '0') d.push({c, v});
-        });
+    document.addEventListener('DOMContentLoaded', () => {
+      initSocketHandlers();
+      startLocalGame(true);
+    });
+
+    function initSocketHandlers() {
+      if (!socket && typeof io === 'function') socket = io();
+      if (!socket) return;
+
+      socket.on('connect', () => {
+        setText('socketBadge', 'Online');
+        setText('connectionText', 'Connected');
       });
-      for(let i=0; i<4; i++) { d.push({c:'wild', v:'W'}); d.push({c:'wild', v:'+4'}); }
-      return d.sort(() => Math.random() - 0.5);
+
+      socket.on('disconnect', () => {
+        setText('socketBadge', 'Offline');
+        setText('connectionText', 'Disconnected');
+      });
+
+      socket.on('room-created', ({ room }) => {
+        attachRoom(room, 'Room created. Waiting for another player.');
+      });
+
+      socket.on('room-joined', ({ room }) => {
+        attachRoom(room, 'Room joined. Start happens automatically when full.');
+      });
+
+      socket.on('room-updated', (room) => {
+        if (room) attachRoom(room, 'Room updated.');
+      });
+
+      socket.on('match-found', ({ room, opponent }) => {
+        attachRoom(room, `${opponent?.username || 'Opponent'} found.`);
+      });
+
+      socket.on('game-started', ({ room, gameState }) => {
+        attachRoom(room, 'Game started.');
+        if (isOnlineHost()) {
+          startHostedOnlineGame();
+        } else if (gameState) {
+          applyOnlineSnapshot(gameState);
+        }
+      });
+
+      socket.on('game-chat', (payload) => handleRoomChat(payload?.text));
+
+      socket.on('game-ended', ({ winner }) => {
+        const youWon = winner === state.myPlayerId || winner === state.localSeat;
+        setText('statusText', youWon ? 'You win the match.' : winner === 'draw' ? 'Round draw.' : 'Opponent wins the match.');
+        setText('statusSubtext', 'Start another local game or queue for a new room.');
+        addFeed(youWon ? 'Victory' : 'Round over', `Winner: ${winner === state.myPlayerId ? 'You' : winner}`);
+      });
+
+      socket.on('player-disconnected', ({ player }) => {
+        addFeed('Player disconnected', player?.username || 'The other player left.');
+      });
+
+      socket.on('error', ({ message }) => {
+        if (typeof showNotification === 'function') showNotification(message, 'error');
+        setText('footerText', message || 'A multiplayer error occurred.');
+      });
     }
 
-    function initGame() {
-      deck = createDeck();
-      pHand = []; oHand = [];
-      discardHistory = [];
-      for(let i=0; i<7; i++) { pHand.push(drawFromDeck()); oHand.push(drawFromDeck()); }
-      do { discard = drawFromDeck(); } while(discard.c === 'wild');
-      currentColor = discard.c;
-      turn = 'p';
-      document.getElementById('overlay').classList.remove('active');
+    function createDeck() {
+      const deck = [];
+      COLORS.forEach((color) => {
+        VALUES.forEach((value) => {
+          deck.push({ color, value });
+          if (value !== '0') deck.push({ color, value });
+        });
+      });
+      for (let i = 0; i < 4; i++) {
+        deck.push({ color: 'wild', value: 'wild' });
+        deck.push({ color: 'wild', value: 'wild4' });
+      }
+      return shuffle(deck);
+    }
+
+    function shuffle(items) {
+      const deck = [...items];
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      return deck;
+    }
+
+    function startLocalGame(silent = false) {
+      const deck = createDeck();
+      const playerHand = [];
+      const botHand = [];
+      for (let i = 0; i < 7; i++) {
+        playerHand.push(deck.pop());
+        botHand.push(deck.pop());
+      }
+
+      let top = deck.pop();
+      while (top.color === 'wild') {
+        deck.unshift(top);
+        top = deck.pop();
+      }
+
+      state.mode = 'local';
+      state.online = false;
+      state.roomId = null;
+      state.remote = null;
+      state.local = {
+        deck,
+        playerHand,
+        botHand,
+        discardPile: [top],
+        currentColor: top.color,
+        currentTurn: 'player',
+        active: true
+      };
+
+      if (!silent && typeof showNotification === 'function') {
+        showNotification('Local UNO match ready.', 'success');
+      }
+
+      setText('modeLabel', 'Local');
+      setText('roomLabel', 'None');
+      setText('opponentName', 'Bot Opponent');
+      setText('opponentStatus', 'Bot is ready.');
+      setText('tableState', 'Live');
+      setText('roundBadge', 'Local');
+      addFeed('Local match', 'Bot duel initialized.');
       render();
     }
 
-    function drawFromDeck() {
-      if(deck.length === 0) {
-        if(discardHistory.length <= 1) return {c:'wild', v:'W'}; // Fallback
-        const top = discardHistory.pop();
-        deck = discardHistory.sort(() => Math.random() - 0.5);
-        discardHistory = [top];
+    function ensureOnlineReady() {
+      if (!currentUser) {
+        if (typeof showNotification === 'function') showNotification('Login required for multiplayer.', 'error');
+        if (typeof showLoginModal === 'function') showLoginModal();
+        return false;
       }
-      return deck.pop();
+      if (!socket || !socket.connected) {
+        if (typeof showNotification === 'function') showNotification('Socket connection is not ready.', 'error');
+        return false;
+      }
+      state.myPlayerId = currentUser.id;
+      state.localSeat = state.roomId && state.onlineGame?.hostId === currentUser.id ? 'host' : state.localSeat;
+      return true;
+    }
+
+    function startQuickMatch() {
+      if (!ensureOnlineReady()) return;
+      state.mode = 'online';
+      state.online = true;
+      socket.emit('find-match', {
+        gameType: 'uno',
+        playerData: {
+          userId: currentUser.id,
+          username: currentUser.username,
+          coins: userCoins
+        }
+      });
+      addFeed('Matchmaking', 'Searching for another UNO player.');
+      setText('modeLabel', 'Queue');
+      setText('footerText', 'Searching for a multiplayer UNO match...');
+    }
+
+    function createRoom() {
+      if (!ensureOnlineReady()) return;
+      state.mode = 'online';
+      state.online = true;
+      socket.emit('create-room', {
+        gameType: 'uno',
+        playerData: {
+          userId: currentUser.id,
+          username: currentUser.username,
+          coins: userCoins
+        },
+        settings: {
+          name: `${currentUser.username}'s UNO Room`,
+          maxPlayers: 2,
+          isPrivate: true
+        }
+      });
+    }
+
+    function joinRoom() {
+      if (!ensureOnlineReady()) return;
+      const roomId = document.getElementById('roomCodeInput').value.trim();
+      if (!roomId) {
+        if (typeof showNotification === 'function') showNotification('Enter a room code first.', 'error');
+        return;
+      }
+      state.mode = 'online';
+      state.online = true;
+      socket.emit('join-room', {
+        roomId,
+        playerData: {
+          userId: currentUser.id,
+          username: currentUser.username,
+          coins: userCoins
+        }
+      });
+    }
+
+    function attachRoom(room, message) {
+      state.roomId = room?.id || state.roomId;
+      if (room) {
+        document.getElementById('roomCodeInput').value = room.id;
+        setText('roomLabel', room.id);
+        setText('roundBadge', room.status || 'Room');
+        const opponent = room.players?.find((player) => player.userId !== state.myPlayerId);
+        setText('opponentName', opponent?.username || 'Waiting for player');
+        setText('opponentStatus', opponent ? 'Ready to play.' : 'Waiting in lobby.');
+        state.localSeat = room.host?.userId === state.myPlayerId ? 'host' : 'guest';
+      }
+      if (message) addFeed('UNO Room', message);
+      render();
+    }
+
+    function isOnlineHost() {
+      return Boolean(state.roomId && state.onlineGame?.hostId === state.myPlayerId);
+    }
+
+    function startHostedOnlineGame() {
+      const deck = createDeck();
+      const hostHand = [];
+      const guestHand = [];
+      for (let i = 0; i < 7; i++) {
+        hostHand.push(deck.pop());
+        guestHand.push(deck.pop());
+      }
+
+      let top = deck.pop();
+      while (top.color === 'wild') {
+        deck.unshift(top);
+        top = deck.pop();
+      }
+
+      state.onlineGame = {
+        hostId: state.myPlayerId,
+        guestId: null,
+        hostHand,
+        guestHand,
+        deck,
+        discardPile: [top],
+        currentColor: top.color,
+        currentSeat: 'host',
+        active: true,
+        winner: null
+      };
+      broadcastOnlineSnapshot('start');
+      applyOnlineSnapshot(state.onlineGame);
+      setText('footerText', 'Room match started.');
+    }
+
+    function broadcastOnlineSnapshot(reason) {
+      if (!socket || !state.roomId || !state.onlineGame) return;
+      socket.emit('game-chat', {
+        roomId: state.roomId,
+        message: {
+          type: 'uno-sync',
+          roomId: state.roomId,
+          reason,
+          snapshot: serializeOnlineState()
+        }
+      });
+    }
+
+    function sendOnlineRequest(request) {
+      if (!socket || !state.roomId) return;
+      socket.emit('game-chat', {
+        roomId: state.roomId,
+        message: {
+          type: 'uno-request',
+          roomId: state.roomId,
+          senderId: state.myPlayerId,
+          request
+        }
+      });
+    }
+
+    function serializeOnlineState() {
+      const game = state.onlineGame;
+      if (!game) return null;
+      return {
+        hostId: game.hostId,
+        guestId: game.guestId,
+        hostHand: game.hostHand.map(cloneCard),
+        guestHand: game.guestHand.map(cloneCard),
+        deck: game.deck.map(cloneCard),
+        discardPile: game.discardPile.map(cloneCard),
+        currentColor: game.currentColor,
+        currentSeat: game.currentSeat,
+        active: game.active,
+        winner: game.winner
+      };
+    }
+
+    function applyOnlineSnapshot(snapshot) {
+      if (!snapshot) return;
+      state.onlineGame = {
+        hostId: snapshot.hostId,
+        guestId: snapshot.guestId || null,
+        hostHand: (snapshot.hostHand || []).map(cloneCard),
+        guestHand: (snapshot.guestHand || []).map(cloneCard),
+        deck: (snapshot.deck || []).map(cloneCard),
+        discardPile: (snapshot.discardPile || []).map(cloneCard),
+        currentColor: snapshot.currentColor || 'red',
+        currentSeat: snapshot.currentSeat || 'host',
+        active: snapshot.active !== false,
+        winner: snapshot.winner || null
+      };
+      state.remote = mapOnlineSnapshotToView(state.onlineGame);
+      render();
+    }
+
+    function handleRoomChat(message) {
+      if (!message || message.roomId !== state.roomId) return;
+      if (message.type === 'uno-sync') {
+        applyOnlineSnapshot(message.snapshot);
+        return;
+      }
+      if (message.type === 'uno-request' && isOnlineHost() && message.senderId !== state.myPlayerId) {
+        processOnlineRequest(message.request);
+      }
+    }
+
+    function processOnlineRequest(request) {
+      if (!state.onlineGame?.active || !request) return;
+      if (request.type === 'draw') {
+        if (state.onlineGame.currentSeat !== 'guest') return;
+        onlineDraw('guest');
+      } else if (request.type === 'play') {
+        if (state.onlineGame.currentSeat !== 'guest') return;
+        onlinePlay('guest', request.index, request.color);
+      }
+    }
+
+    function mapOnlineSnapshotToView(game) {
+      if (!game) return null;
+      const localRole = state.localSeat || 'guest';
+      const yourHand = localRole === 'host' ? game.hostHand : game.guestHand;
+      const opponentHand = localRole === 'host' ? game.guestHand : game.hostHand;
+      const yourSeat = localRole === 'host' ? 'host' : 'guest';
+      const currentPlayerId = game.currentSeat === yourSeat ? state.myPlayerId : 'opponent';
+      return {
+        currentPlayer: currentPlayerId,
+        currentColor: game.currentColor,
+        discardPile: game.discardPile,
+        yourHand,
+        opponentCardCount: opponentHand.length,
+        active: game.active,
+        winner: game.winner,
+        yourSeat,
+        hostName: state.room?.host?.username || 'Host',
+        guestName: state.room?.players?.find((p) => p.userId !== state.myPlayerId)?.username || 'Guest'
+      };
+    }
+
+    function drawCard() {
+      if (state.mode === 'online') {
+        if (!state.roomId || !state.remote) return;
+        socket.emit('game-action', { action: 'draw-card' });
+        return;
+      }
+      if (!state.local?.active || state.local.currentTurn !== 'player') return;
+      drawIntoLocal(state.local.playerHand);
+      state.local.currentTurn = 'bot';
+      setText('actionText', 'You drew a card.');
+      render();
+      setTimeout(botTurn, 650);
+    }
+
+    function playCard(index) {
+      if (state.mode === 'online') {
+        if (!state.remote || state.remote.currentPlayer !== state.myPlayerId) return;
+        const card = state.remote.yourHand[index];
+        if (!card) return;
+        const chosenColor = card.color === 'wild' ? chooseColor() : null;
+        if (card.color === 'wild' && !chosenColor) return;
+        socket.emit('game-action', {
+          action: 'play-card',
+          cardIndex: index,
+          chosenColor
+        });
+        return;
+      }
+
+      const local = state.local;
+      if (!local?.active || local.currentTurn !== 'player') return;
+      const card = local.playerHand[index];
+      const top = local.discardPile[local.discardPile.length - 1];
+      if (!isPlayable(card, top, local.currentColor)) return;
+      const chosenColor = card.color === 'wild' ? chooseColor() : null;
+      if (card.color === 'wild' && !chosenColor) return;
+
+      local.playerHand.splice(index, 1);
+      local.discardPile.push(card);
+      local.currentColor = card.color === 'wild' ? chosenColor : card.color;
+      applyLocalEffect(local, card, 'player');
+      if (local.playerHand.length === 0) return finishLocalRound(true);
+      render();
+      if (local.currentTurn === 'bot') setTimeout(botTurn, 650);
+    }
+
+    function botTurn() {
+      const local = state.local;
+      if (!local?.active || local.currentTurn !== 'bot') return;
+      const top = local.discardPile[local.discardPile.length - 1];
+      const index = local.botHand.findIndex((card) => isPlayable(card, top, local.currentColor));
+
+      if (index === -1) {
+        drawIntoLocal(local.botHand);
+        setText('actionText', 'Bot drew a card.');
+        local.currentTurn = 'player';
+        render();
+        return;
+      }
+
+      const card = local.botHand.splice(index, 1)[0];
+      local.discardPile.push(card);
+      local.currentColor = card.color === 'wild' ? COLORS[Math.floor(Math.random() * COLORS.length)] : card.color;
+      applyLocalEffect(local, card, 'bot');
+      if (local.botHand.length === 0) return finishLocalRound(false);
+      render();
+    }
+
+    function drawIntoLocal(hand) {
+      const local = state.local;
+      if (!local) return;
+      if (!local.deck.length) recycleLocalDeck();
+      const card = local.deck.pop();
+      if (card) hand.push(card);
+    }
+
+    function recycleLocalDeck() {
+      const local = state.local;
+      if (!local || local.discardPile.length <= 1) return;
+      const top = local.discardPile.pop();
+      local.deck = shuffle(local.discardPile);
+      local.discardPile = [top];
+    }
+
+    function applyLocalEffect(local, card, actor) {
+      const targetHand = actor === 'player' ? local.botHand : local.playerHand;
+      let nextTurn = actor === 'player' ? 'bot' : 'player';
+
+      if (card.value === 'skip' || card.value === 'reverse') {
+        nextTurn = actor;
+      }
+      if (card.value === 'draw2') {
+        drawIntoLocal(targetHand);
+        drawIntoLocal(targetHand);
+        nextTurn = actor;
+      }
+      if (card.value === 'wild4') {
+        for (let i = 0; i < 4; i++) drawIntoLocal(targetHand);
+        nextTurn = actor;
+      }
+
+      local.currentTurn = nextTurn;
+      setText('actionText', `${actor === 'player' ? 'You' : 'Bot'} played ${formatCard(card)}.`);
+    }
+
+    function finishLocalRound(playerWon) {
+      state.local.active = false;
+      setText('statusText', playerWon ? 'You win the round.' : 'Bot wins the round.');
+      setText('statusSubtext', 'Start another local game or head online for a room match.');
+      setText('tableState', 'Finished');
+      if (playerWon && typeof updateCoins === 'function') {
+        updateCoins(120, 'uno', 'win');
+      }
+      render();
     }
 
     function render() {
-      const pArea = document.getElementById('pHand');
-      pArea.innerHTML = '';
-      pHand.forEach((card, i) => {
-        const el = document.createElement('div');
-        el.className = `uno-card ${card.c}`;
-        el.textContent = card.v;
-        el.onclick = () => play(i);
-        pArea.appendChild(el);
+      if (state.mode === 'online' && state.remote) {
+        renderOnline();
+        return;
+      }
+      renderLocal();
+    }
+
+    function renderLocal() {
+      const local = state.local;
+      const top = local.discardPile[local.discardPile.length - 1];
+      setText('turnLabel', local.currentTurn === 'player' ? 'You' : 'Bot');
+      setText('colorLabel', local.currentColor || 'None');
+      setText('statusText', local.currentTurn === 'player' ? 'Your move' : 'Bot thinking...');
+      setText('statusSubtext', `Top card: ${formatCard(top)}. Match color or value.`);
+      setText('yourCount', String(local.playerHand.length));
+      setText('opponentCount', String(local.botHand.length));
+      setText('tableState', local.active ? 'Live' : 'Finished');
+      setText('footerText', 'Local UNO bot match is active.');
+      renderDiscard(top);
+      renderOpponentBacks(local.botHand.length);
+      renderPlayerCards(local.playerHand, local.currentTurn === 'player', top, local.currentColor);
+    }
+
+    function renderOnline() {
+      const remote = state.remote;
+      const top = remote.discardPile?.[remote.discardPile.length - 1];
+      const myTurn = remote.currentPlayer === state.myPlayerId;
+      setText('modeLabel', 'Online');
+      setText('turnLabel', myTurn ? 'You' : 'Opponent');
+      setText('colorLabel', remote.currentColor || 'None');
+      setText('statusText', myTurn ? 'Your move' : 'Waiting for opponent');
+      setText('statusSubtext', `Room match live. Top card: ${formatCard(top)}.`);
+      setText('yourCount', String(remote.yourHand?.length || 0));
+      setText('opponentCount', String(remote.opponentCardCount || 0));
+      setText('tableState', 'Online');
+      setText('footerText', state.roomId ? `UNO room ${state.roomId} active.` : 'UNO online mode active.');
+      renderDiscard(top);
+      renderOpponentBacks(remote.opponentCardCount || 0);
+      renderPlayerCards(remote.yourHand || [], myTurn, top, remote.currentColor);
+    }
+
+    function renderDiscard(card) {
+      const pile = document.getElementById('discardPile');
+      pile.innerHTML = '';
+      if (!card) return;
+      pile.appendChild(createCardEl(card, false, false));
+    }
+
+    function renderOpponentBacks(count) {
+      const row = document.getElementById('opponentHand');
+      row.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const back = document.createElement('div');
+        back.className = 'uno-card back';
+        back.textContent = 'UNO';
+        row.appendChild(back);
+      }
+    }
+
+    function renderPlayerCards(cards, interactive, topCard, currentColor) {
+      const row = document.getElementById('playerHand');
+      row.innerHTML = '';
+      cards.forEach((card, index) => {
+        const playable = interactive && isPlayable(card, topCard, currentColor);
+        const cardEl = createCardEl(card, playable, !playable && interactive);
+        if (playable) cardEl.onclick = () => playCard(index);
+        row.appendChild(cardEl);
       });
-
-      const oArea = document.getElementById('oHand');
-      oArea.innerHTML = '';
-      oHand.forEach(() => {
-        const el = document.createElement('div');
-        el.className = 'uno-card wild';
-        el.textContent = 'U';
-        oArea.appendChild(el);
-      });
-
-      const dArea = document.getElementById('discard');
-      dArea.innerHTML = `<div class="uno-card ${currentColor}">${discard.v}</div>`;
-
-      document.getElementById('pCount').textContent = pHand.length;
-      document.getElementById('oCount').textContent = oHand.length;
-      document.getElementById('unoBtn').style.display = pHand.length === 2 ? 'block' : 'none';
     }
 
-    function play(idx) {
-      if(turn !== 'p') return;
-      const card = pHand[idx];
-      if(card.c !== 'wild' && card.c !== currentColor && card.v !== discard.v) return;
+    function createCardEl(card, playable, dimmed) {
+      const el = document.createElement('div');
+      el.className = `uno-card ${card.color} ${playable ? 'playable' : ''} ${dimmed ? 'dim' : ''}`;
+      el.textContent = readableValue(card.value);
+      return el;
+    }
 
-      pHand.splice(idx, 1);
-      discardHistory.push(discard);
-      discard = card;
-      if(card.c !== 'wild') currentColor = card.c;
-      
-      if(card.c === 'wild') {
-        document.getElementById('picker').style.display = 'flex';
+    function readableValue(value) {
+      const mapping = { skip: 'SKIP', reverse: 'REV', draw2: '+2', wild: 'WILD', wild4: '+4' };
+      return mapping[value] || value;
+    }
+
+    function isPlayable(card, topCard, currentColor) {
+      if (!card || !topCard) return false;
+      return card.color === 'wild' || card.color === currentColor || card.value === topCard.value;
+    }
+
+    function chooseColor() {
+      const choice = window.prompt('Choose a color: red, blue, green, or yellow', 'red');
+      const normalized = (choice || '').toLowerCase().trim();
+      return COLORS.includes(normalized) ? normalized : null;
+    }
+
+    function copyRoomCode() {
+      const code = document.getElementById('roomCodeInput').value.trim();
+      if (!code) return;
+      navigator.clipboard?.writeText(code);
+      if (typeof showNotification === 'function') showNotification('Room code copied.', 'success');
+    }
+
+    function leaveRoom() {
+      if (state.mode === 'online' && socket && state.roomId) {
+        socket.emit('leave-room', { roomId: state.roomId });
+      }
+      startLocalGame(true);
+      setText('footerText', 'Returned to local UNO mode.');
+    }
+
+    function downloadGame() {
+      const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'uno-showdown.html';
+      link.click();
+      URL.revokeObjectURL(url);
+      setText('footerText', 'Standalone UNO HTML downloaded.');
+    }
+
+    function exitGame() {
+      if (window.parent && typeof window.parent.closeGameContainer === 'function') {
+        window.parent.closeGameContainer();
       } else {
-        const skipNext = handleEffect(card);
-        endTurn(skipNext);
-      }
-      render();
-    }
-
-    function chooseColor(c) {
-      currentColor = c;
-      document.getElementById('picker').style.display = 'none';
-      const skipNext = handleEffect(discard);
-      endTurn(skipNext);
-      render();
-    }
-
-    function handleEffect(card) {
-      const next = turn === 'p' ? oHand : pHand;
-      if(card.v === '+2') for(let i=0; i<2; i++) next.push(drawFromDeck());
-      if(card.v === '+4') for(let i=0; i<4; i++) next.push(drawFromDeck());
-      if(card.v === 'S' || card.v === 'R') return true; // In 2-player, Reverse acts like Skip
-      return false;
-    }
-
-    function draw() {
-      if(turn !== 'p') return;
-      pHand.push(drawFromDeck());
-      endTurn();
-      render();
-    }
-
-    function endTurn(skipNext = false) {
-      if(pHand.length === 0) return gameOver('YOU WIN!');
-      if(oHand.length === 0) return gameOver('OPPONENT WINS');
-
-      if (!skipNext) {
-        turn = turn === 'p' ? 'o' : 'p';
-      } else {
-        const msg = turn === 'p' ? "You played a special card! Your turn again." : "Opponent played a special card and skipped your turn!";
-        if(window.parent && typeof window.parent.showNotification === 'function') {
-          window.parent.showNotification(msg, 'info');
-        }
-      }
-
-      if(turn === 'o') setTimeout(oTurn, 1000);
-    }
-
-    function oTurn() {
-      const idx = oHand.findIndex(c => c.c === 'wild' || c.c === currentColor || c.v === discard.v);
-      if(idx > -1) {
-        const card = oHand.splice(idx, 1)[0];
-        discardHistory.push(discard);
-        discard = card;
-        if(card.c === 'wild') currentColor = COLORS[Math.floor(Math.random()*4)];
-        else currentColor = card.c;
-        const skipNext = handleEffect(card);
-        endTurn(skipNext);
-      } else {
-        oHand.push(drawFromDeck());
-        endTurn();
-      }
-      render();
-    }
-
-    function sayUno() {
-      if(window.parent && typeof window.parent.showNotification === 'function') {
-        window.parent.showNotification('UNO!', 'success');
-      }
-      document.getElementById('unoBtn').style.display = 'none';
-    }
-
-    function gameOver(msg) {
-      const overlay = document.getElementById('overlay');
-      document.getElementById('overlayTitle').textContent = msg;
-      overlay.classList.add('active');
-      if(msg === 'YOU WIN!' && window.parent && typeof window.parent.updateCoins === 'function') {
-        window.parent.updateCoins(100, 'uno', 'win');
+        window.close();
       }
     }
 
-    initGame();
+    function formatCard(card) {
+      if (!card) return 'None';
+      return `${card.color.toUpperCase()} ${readableValue(card.value)}`;
+    }
+
+    function addFeed(title, detail) {
+      const feed = document.getElementById('feed');
+      const item = document.createElement('div');
+      item.className = 'feed-item';
+      item.innerHTML = `${title}<small>${detail}</small>`;
+      feed.prepend(item);
+      while (feed.children.length > 6) feed.removeChild(feed.lastChild);
+    }
+
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
   </script>
 </body>
 </html>

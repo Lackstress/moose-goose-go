@@ -6,145 +6,594 @@
   <title>Tic Tac Toe - GameHub</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    body { background: #000; padding: 0; margin: 0; }
-    .game-viewport { margin: 0; width: 100vw; height: 100vh; border-radius: 0; border: none; }
-
-    .ttt-board {
-      display: grid;
-      grid-template-columns: repeat(3, 100px);
-      gap: 10px;
-      background: var(--border);
-      padding: 10px;
-      border-radius: 12px;
+    :root {
+      --bg0: #060b16;
+      --bg1: rgba(15, 23, 42, 0.9);
+      --line: rgba(255,255,255,0.12);
+      --muted: #9fb0c9;
+      --x: #f97316;
+      --o: #22c55e;
+      --accent: #38bdf8;
     }
-
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #eff6ff;
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,0.18), transparent 26%),
+        radial-gradient(circle at top right, rgba(34,197,94,0.16), transparent 24%),
+        linear-gradient(180deg, #030712, var(--bg0));
+    }
+    .page { max-width: 1360px; margin: 0 auto; padding: 1rem; box-sizing: border-box; }
+    .hero, .panel {
+      background: var(--bg1);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.34);
+      backdrop-filter: blur(18px);
+    }
+    .hero { padding: 1.2rem; margin-bottom: 1rem; }
+    .hero-top { display: flex; gap: 1rem; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.4rem); letter-spacing: -0.04em; }
+    .subtitle { margin: 0.4rem 0 0; color: var(--muted); line-height: 1.6; max-width: 70ch; }
+    .pills { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .pill { padding: 0.55rem 0.85rem; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid var(--line); }
+    .grid { display: grid; grid-template-columns: 320px minmax(320px, 1fr) 300px; gap: 1rem; }
+    .panel-head { padding: 1rem 1rem 0.85rem; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
+    .panel-body { padding: 1rem; }
+    .mode-stack, .feed { display: grid; gap: 0.75rem; }
+    .mode-card, .meta, .feed-item {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      padding: 0.9rem;
+    }
+    .mode-card strong, .meta strong { display: block; margin-bottom: 0.25rem; }
+    .mode-card span, .feed-item small { color: var(--muted); line-height: 1.5; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin: 1rem 0; }
+    .stat { text-align: center; padding: 0.85rem; border-radius: 16px; border: 1px solid var(--line); background: rgba(255,255,255,0.05); }
+    .stat .label { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .stat .value { font-size: 1.45rem; font-weight: 800; margin-top: 0.3rem; }
+    .controls { display: grid; gap: 0.75rem; }
+    .row { display: grid; gap: 0.75rem; grid-template-columns: 1fr 1fr; }
+    input {
+      width: 100%; box-sizing: border-box; padding: 0.9rem 1rem; border-radius: 14px;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.06); color: #fff; outline: none;
+    }
+    .btn {
+      border: 0; border-radius: 14px; padding: 0.95rem 1rem; font-weight: 700; cursor: pointer;
+      transition: transform 0.18s ease, opacity 0.18s ease; color: #fff; background: rgba(255,255,255,0.08);
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn.primary { background: linear-gradient(135deg, #7dd3fc, #38bdf8); color: #02111f; }
+    .btn.secondary { border: 1px solid var(--line); }
+    .board-wrap { padding: 1rem; }
+    .board-shell { border: 1px solid var(--line); border-radius: 24px; padding: 1rem; background: rgba(255,255,255,0.04); }
+    .board {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; max-width: min(78vw, 560px);
+      margin: 0 auto; aspect-ratio: 1;
+    }
     .cell {
-      width: 100px;
-      height: 100px;
-      background: var(--bg-card);
-      border-radius: 8px;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3rem;
-      font-weight: 800;
-      cursor: pointer;
-      transition: var(--transition);
-      padding: 0;
-      color: var(--text-main);
+      border: 1px solid rgba(255,255,255,0.14); border-radius: 20px; background: rgba(6,10,18,0.92);
+      color: #fff; font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 900; cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
     }
-
-    .cell:hover:not(.taken) { background: var(--bg-card-hover); }
-    .cell.x { color: var(--accent-primary); }
-    .cell.o { color: var(--accent-secondary); }
-    .cell.winner { background: var(--success); color: #000; }
+    .cell:hover:not(:disabled) { transform: translateY(-2px); border-color: rgba(125,211,252,0.8); }
+    .cell.x { color: var(--x); }
+    .cell.o { color: var(--o); }
+    .cell.win { background: linear-gradient(135deg, rgba(34,197,94,0.24), rgba(56,189,248,0.24)); border-color: rgba(125,211,252,0.8); }
+    .board-status { text-align: center; margin-top: 1rem; }
+    .board-status h3 { margin: 0; font-size: 1.45rem; }
+    .board-status p { margin: 0.35rem 0 0; color: var(--muted); line-height: 1.5; }
+    .feed-item { line-height: 1.55; }
+    .footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0 0 1rem; color: var(--muted); }
+    .hide { display: none !important; }
+    @media (max-width: 1080px) { .grid { grid-template-columns: 1fr; } .board { max-width: min(90vw, 560px); } }
+    @media (max-width: 640px) { .row, .stats { grid-template-columns: 1fr; } .footer { flex-direction: column; align-items: stretch; } }
   </style>
 </head>
 <body>
-  <div class="game-viewport">
-    <div class="game-header">
-      <div class="game-title-area">
-        <h2>❌ Tic Tac Toe ⭕</h2>
-      </div>
-      <div class="game-stats-grid">
-        <div class="game-stat-item">
-          <span class="game-stat-label">Turn</span>
-          <span class="game-stat-value" id="turnDisplay">X</span>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>Tic Tac Toe</h1>
+          <p class="subtitle">Local hot-seat play plus real room and matchmaking support over the repo's existing socket flow.</p>
+        </div>
+        <div class="pills">
+          <div class="pill">Mode: <strong id="modeLabel">Local</strong></div>
+          <div class="pill">Turn: <strong id="turnLabel">X</strong></div>
+          <div class="pill">Room: <strong id="roomLabel">None</strong></div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <div class="game-canvas-area">
-      <div class="ttt-board" id="board">
-        <button class="cell" onclick="play(0)" aria-label="Cell 1"></button>
-        <button class="cell" onclick="play(1)" aria-label="Cell 2"></button>
-        <button class="cell" onclick="play(2)" aria-label="Cell 3"></button>
-        <button class="cell" onclick="play(3)" aria-label="Cell 4"></button>
-        <button class="cell" onclick="play(4)" aria-label="Cell 5"></button>
-        <button class="cell" onclick="play(5)" aria-label="Cell 6"></button>
-        <button class="cell" onclick="play(6)" aria-label="Cell 7"></button>
-        <button class="cell" onclick="play(7)" aria-label="Cell 8"></button>
-        <button class="cell" onclick="play(8)" aria-label="Cell 9"></button>
-      </div>
+    <main class="grid">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Play Modes</h2>
+          <span class="pill" id="connectionLabel">Offline</span>
+        </div>
+        <div class="panel-body">
+          <div class="mode-stack">
+            <div class="mode-card"><strong>Local Match</strong><span>Two-player hot seat on one device. No login required.</span></div>
+            <div class="mode-card"><strong>Quick Match</strong><span>Uses server matchmaking and auto-starts when paired.</span></div>
+            <div class="mode-card"><strong>Room Play</strong><span>Create or join a private room with a room code.</span></div>
+          </div>
 
-      <div id="overlay" class="game-overlay-screen">
-        <h2 class="game-overlay-title" id="overlayTitle">X Wins!</h2>
-        <p id="overlayText" style="margin-bottom: 2rem;"></p>
-        <button class="btn btn-primary" onclick="initGame()">Play Again</button>
-      </div>
-    </div>
+          <div class="stats">
+            <div class="stat"><div class="label">X Wins</div><div class="value" id="xWins">0</div></div>
+            <div class="stat"><div class="label">O Wins</div><div class="value" id="oWins">0</div></div>
+            <div class="stat"><div class="label">Draws</div><div class="value" id="draws">0</div></div>
+          </div>
 
-    <div class="game-footer">
-      <div id="status" style="color: var(--text-muted);">Local Multiplayer</div>
-      <button class="btn" onclick="window.parent.closeGameContainer()" style="margin-left: auto;">Exit</button>
-    </div>
+          <div class="controls">
+            <div class="row">
+              <button class="btn primary" onclick="startLocalGame()">Local Game</button>
+              <button class="btn secondary" onclick="startQuickMatch()">Quick Match</button>
+            </div>
+            <div class="row">
+              <button class="btn secondary" onclick="createRoom()">Create Room</button>
+              <button class="btn secondary" onclick="joinRoomFromInput()">Join Room</button>
+            </div>
+            <div class="row">
+              <input id="roomCodeInput" type="text" placeholder="Room code" autocomplete="off">
+              <button class="btn secondary" onclick="copyRoomCode()">Copy Code</button>
+            </div>
+            <div class="row">
+              <button class="btn secondary" onclick="resetBoard()">Reset Board</button>
+              <button class="btn secondary" onclick="leaveOnlineRoom()">Leave Room</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel board-wrap">
+        <div class="panel-head">
+          <h2>Board</h2>
+          <span class="pill" id="boardStateLabel">Ready</span>
+        </div>
+        <div class="panel-body">
+          <div class="board-shell">
+            <div class="board" id="board">
+              <button class="cell" data-index="0" onclick="handleCellClick(0)"></button>
+              <button class="cell" data-index="1" onclick="handleCellClick(1)"></button>
+              <button class="cell" data-index="2" onclick="handleCellClick(2)"></button>
+              <button class="cell" data-index="3" onclick="handleCellClick(3)"></button>
+              <button class="cell" data-index="4" onclick="handleCellClick(4)"></button>
+              <button class="cell" data-index="5" onclick="handleCellClick(5)"></button>
+              <button class="cell" data-index="6" onclick="handleCellClick(6)"></button>
+              <button class="cell" data-index="7" onclick="handleCellClick(7)"></button>
+              <button class="cell" data-index="8" onclick="handleCellClick(8)"></button>
+            </div>
+          </div>
+          <div class="board-status">
+            <h3 id="statusText">Choose a mode to start</h3>
+            <p id="statusSubtext">Local play works without auth. Multiplayer requires a login.</p>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel-head">
+          <h2>Room</h2>
+          <span class="pill" id="roomStateBadge">Idle</span>
+        </div>
+        <div class="panel-body">
+          <div class="mode-stack" style="margin-bottom: 1rem;">
+            <div class="meta"><strong>Room</strong><span id="roomIdDisplay">None</span></div>
+            <div class="meta"><strong>Opponent</strong><span id="opponentDisplay">Waiting</span></div>
+            <div class="meta"><strong>Your Symbol</strong><span id="symbolDisplay">X</span></div>
+            <div class="meta"><strong>Connection</strong><span id="socketDisplay">Disconnected</span></div>
+          </div>
+          <div class="feed" id="activityFeed">
+            <div class="feed-item">Start a local game or join an online room to see activity here.<small>Rooms and matchmaking use the existing socket layer.</small></div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <span id="footerMessage">Local game loaded.</span>
+      <button class="btn secondary" onclick="exitGame()">Exit</button>
+    </footer>
   </div>
 
+  <div id="authModal" class="modal"><div class="modal-content"><span class="close" onclick="closeModal()">&times;</span><div id="modalContent"></div></div></div>
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="/js/main.js"></script>
   <script>
-    let board = Array(9).fill('');
-    let turn = 'X';
-    let active = true;
+    const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    const state = {
+      mode: 'local',
+      board: Array(9).fill(''),
+      turn: 'X',
+      active: true,
+      room: null,
+      game: null,
+      mySymbol: 'X',
+      score: { X: 0, O: 0, draws: 0 }
+    };
+    let cells = [];
 
-    function initGame() {
-      board = Array(9).fill('');
-      turn = 'X';
-      active = true;
-      document.getElementById('overlay').classList.remove('active');
-      document.getElementById('turnDisplay').textContent = 'X';
-      const cells = document.querySelectorAll('.cell');
-      cells.forEach(c => {
-        c.textContent = '';
-        c.className = 'cell';
+    document.addEventListener('DOMContentLoaded', () => {
+      cells = Array.from(document.querySelectorAll('.cell'));
+      updateAuthUI();
+      initSocketHandlers();
+      startLocalGame(true);
+    });
+
+    function initSocketHandlers() {
+      if (!socket && typeof io === 'function') socket = io();
+      if (!socket) return;
+
+      socket.on('connect', () => {
+        setText('connectionLabel', 'Online');
+        setText('socketDisplay', 'Connected');
+        addActivity('Connected to server', 'Socket is ready for rooms and matchmaking.');
+      });
+      socket.on('disconnect', () => {
+        setText('connectionLabel', 'Offline');
+        setText('socketDisplay', 'Disconnected');
+      });
+      socket.on('room-created', ({ room }) => enterRoom(room, 'created'));
+      socket.on('room-joined', ({ room }) => enterRoom(room, 'joined'));
+      socket.on('room-updated', (room) => syncRoom(room));
+      socket.on('match-found', ({ room, opponent }) => {
+        enterRoom(room, 'match found');
+        if (opponent?.username) setText('opponentDisplay', opponent.username);
+      });
+      socket.on('game-started', ({ room, gameState }) => {
+        enterRoom(room, 'game started');
+        applyRemoteGameState(gameState);
+      });
+      socket.on('game-action', ({ gameState }) => {
+        if (gameState) applyRemoteGameState(gameState);
+      });
+      socket.on('game-ended', handleGameEnd);
+      socket.on('player-disconnected', ({ player }) => {
+        addActivity('Opponent disconnected', player ? `${player.username} left the room.` : 'The other player left.');
+        showNotification('The other player disconnected.', 'warning');
+      });
+      socket.on('room-closed', () => {
+        addActivity('Room closed', 'The host closed the room.');
+        leaveOnlineRoom(false);
+      });
+      socket.on('error', (data) => showNotification(data?.message || 'Something went wrong', 'error'));
+    }
+
+    function updateAuthUI() {
+      const authSection = document.getElementById('authSection');
+      if (!authSection) return;
+      authSection.innerHTML = currentUser
+        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
+        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+    }
+
+    function startLocalGame(silent = false) {
+      state.mode = 'local';
+      state.room = null;
+      state.game = null;
+      state.mySymbol = 'X';
+      state.board = Array(9).fill('');
+      state.turn = 'X';
+      state.active = true;
+      setText('modeLabel', 'Local');
+      setText('roomLabel', 'None');
+      setText('roomStateBadge', 'Idle');
+      setText('roomIdDisplay', 'None');
+      setText('opponentDisplay', 'Waiting');
+      setText('symbolDisplay', 'X');
+      setText('statusText', 'Local hot-seat ready');
+      setText('statusSubtext', 'X always starts in local play.');
+      setText('boardStateLabel', 'Local');
+      setText('footerMessage', 'Local game loaded.');
+      renderBoard();
+      updateTurnUI();
+      if (!silent) addActivity('Local game started', 'Two players can share the same device.');
+    }
+
+    function startQuickMatch() {
+      if (!ensureLoggedIn()) return;
+      ensureSocketConnection();
+      socket.emit('find-match', {
+        gameType: 'tic-tac-toe',
+        playerData: { userId: currentUser.id, username: currentUser.username, coins: userCoins }
+      });
+      state.mode = 'online';
+      setText('modeLabel', 'Matchmaking');
+      setText('statusText', 'Searching for a quick match');
+      setText('statusSubtext', 'Waiting for another player to be paired.');
+      addActivity('Matchmaking started', 'Looking for another tic-tac-toe player.');
+    }
+
+    function createRoom() {
+      if (!ensureLoggedIn()) return;
+      ensureSocketConnection();
+      socket.emit('create-room', {
+        gameType: 'tic-tac-toe',
+        playerData: { userId: currentUser.id, username: currentUser.username, coins: userCoins },
+        settings: { name: `${currentUser.username}'s Tic Tac Toe Room`, maxPlayers: 2, isPrivate: true }
+      });
+      state.mode = 'online';
+      setText('modeLabel', 'Room');
+      setText('statusText', 'Creating private room');
+      setText('statusSubtext', 'Share the room code after it appears.');
+      addActivity('Creating room', 'A private two-player room is being set up.');
+    }
+
+    function joinRoomFromInput() {
+      if (!ensureLoggedIn()) return;
+      const roomId = document.getElementById('roomCodeInput').value.trim();
+      if (!roomId) return showNotification('Enter a room code first.', 'error');
+      ensureSocketConnection();
+      socket.emit('join-room', {
+        roomId,
+        playerData: { userId: currentUser.id, username: currentUser.username, coins: userCoins }
+      });
+      state.mode = 'online';
+      setText('modeLabel', 'Room');
+      setText('statusText', 'Joining room');
+      addActivity('Joining room', `Requested room ${roomId}.`);
+    }
+
+    function leaveOnlineRoom(showNotice = true) {
+      if (socket && state.room?.id) socket.emit('leave-room', { roomId: state.room.id });
+      state.room = null;
+      state.game = null;
+      if (showNotice) showNotification('Returned to local play.', 'info');
+      startLocalGame(true);
+    }
+
+    function copyRoomCode() {
+      if (!state.room?.id) return showNotification('No active room to copy.', 'error');
+      navigator.clipboard?.writeText(state.room.id)
+        .then(() => showNotification('Room code copied.', 'success'))
+        .catch(() => showNotification(`Room code: ${state.room.id}`, 'info'));
+    }
+
+    function ensureLoggedIn() {
+      if (currentUser) return true;
+      showNotification('Login is required for rooms and matchmaking.', 'error');
+      showLoginModal();
+      return false;
+    }
+
+    function ensureSocketConnection() {
+      if (!socket && typeof io === 'function') socket = io();
+      if (!socket) return false;
+      if (!socket.connected && typeof socket.connect === 'function') socket.connect();
+      return true;
+    }
+
+    function enterRoom(room, reason) {
+      if (!room) return;
+      state.room = room;
+      state.mode = 'online';
+      state.mySymbol = room.host?.userId === currentUser?.id ? 'X' : 'O';
+      setText('modeLabel', 'Online');
+      setText('roomLabel', room.id.slice(0, 8));
+      setText('roomStateBadge', room.status === 'playing' ? 'Playing' : 'Waiting');
+      setText('roomIdDisplay', room.id);
+      setText('opponentDisplay', room.players?.find(p => p.userId !== currentUser?.id)?.username || 'Waiting');
+      setText('symbolDisplay', state.mySymbol);
+      setText('statusText', room.status === 'playing' ? 'Room active' : 'Room waiting for a second player');
+      setText('statusSubtext', room.host?.userId === currentUser?.id ? 'You are hosting this room.' : 'You joined as the challenger.');
+      setText('boardStateLabel', 'Online');
+      setText('footerMessage', `${reason} room ${room.id}`);
+      addActivity(`Room ${reason}`, `Room ${room.id} is now ${room.status}.`);
+      renderBoard();
+      updateTurnUI();
+    }
+
+    function syncRoom(room) {
+      if (!room) return;
+      state.room = room;
+      setText('roomStateBadge', room.status === 'playing' ? 'Playing' : 'Waiting');
+      setText('roomIdDisplay', room.id);
+      setText('opponentDisplay', room.players?.find(p => p.userId !== currentUser?.id)?.username || 'Waiting');
+      setText('footerMessage', `Room ${room.id} updated.`);
+    }
+
+    function applyRemoteGameState(gameState) {
+      if (!gameState) return;
+      state.game = gameState;
+      state.mode = 'online';
+      state.board = Array.isArray(gameState.board) ? [...gameState.board] : Array(9).fill('');
+      state.active = gameState.status === 'playing';
+      const player = gameState.players?.find(p => p.userId === currentUser?.id);
+      if (player?.symbol) state.mySymbol = player.symbol;
+      setText('symbolDisplay', state.mySymbol);
+      setText('roomStateBadge', state.active ? 'Playing' : 'Finished');
+      const currentPlayer = gameState.players?.find(p => p.userId === gameState.currentPlayer);
+      setText('statusText', state.active ? 'Room game in progress' : 'Room game finished');
+      setText('statusSubtext', currentPlayer ? `${currentPlayer.username} is on turn.` : 'Waiting for the next move.');
+      setText('boardStateLabel', state.active ? 'Online' : 'Ended');
+      renderBoard();
+      updateTurnUI();
+    }
+
+    function handleGameEnd(payload) {
+      const winner = payload?.winner;
+      if (winner === 'draw') {
+        state.score.draws += 1;
+        setText('statusText', 'Draw');
+        setText('statusSubtext', 'The room ended in a tie.');
+        showOverlay('Draw', 'Nobody wins this round.');
+      } else {
+        const symbol = winner || 'X';
+        if (symbol === 'X') state.score.X += 1;
+        if (symbol === 'O') state.score.O += 1;
+        const winnerName = state.game?.players?.find(p => p.symbol === symbol)?.username || symbol;
+        setText('statusText', `${symbol} wins`);
+        setText('statusSubtext', `${winnerName} wins the round.`);
+        showOverlay(`${symbol} Wins`, `${winnerName} took the line.`);
+      }
+      updateScores();
+      updateTurnUI();
+    }
+
+    function handleCellClick(index) {
+      if (!state.active || state.board[index]) return;
+      if (state.mode === 'online') {
+        if (!ensureOnlineTurn()) return;
+        socket.emit('game-action', { action: 'place', index });
+        return;
+      }
+      applyLocalMove(index);
+    }
+
+    function ensureOnlineTurn() {
+      if (!currentUser) return false;
+      if (!state.game) return showNotification('Waiting for the online game to start.', 'warning'), false;
+      if (state.game.currentPlayer !== currentUser.id) return showNotification('It is not your turn.', 'warning'), false;
+      if (!socket || !socket.connected) return showNotification('Socket disconnected. Reconnecting...', 'warning'), false;
+      return true;
+    }
+
+    function applyLocalMove(index) {
+      state.board[index] = state.turn;
+      const line = findWinningLine(state.board);
+      if (line) {
+        state.active = false;
+        state.score[state.turn] += 1;
+        renderBoard(line);
+        updateScores();
+        setText('statusText', `${state.turn} wins`);
+        setText('statusSubtext', 'Reset the board to play again.');
+        showOverlay(`${state.turn} Wins`, `${state.turn} took the line.`);
+        if (currentUser && !isGuest && typeof updateCoins === 'function') updateCoins(35, 'tic-tac-toe', 'win');
+        updateTurnUI();
+        return;
+      }
+      if (state.board.every(Boolean)) {
+        state.active = false;
+        state.score.draws += 1;
+        renderBoard();
+        updateScores();
+        setText('statusText', 'Draw');
+        setText('statusSubtext', 'No winning line this round.');
+        showOverlay('Draw', 'The board filled without a winner.');
+        updateTurnUI();
+        return;
+      }
+      state.turn = state.turn === 'X' ? 'O' : 'X';
+      setText('statusText', `${state.turn} to move`);
+      setText('statusSubtext', 'Keep the pressure on.');
+      renderBoard();
+      updateTurnUI();
+    }
+
+    function resetBoard() {
+      state.board = Array(9).fill('');
+      state.turn = 'X';
+      state.active = true;
+      state.game = state.mode === 'online' ? state.game : null;
+      setText('boardStateLabel', state.mode === 'online' ? 'Online' : 'Local');
+      setText('statusText', state.mode === 'online' ? 'Online board reset' : 'Local round ready');
+      setText('statusSubtext', state.mode === 'online' ? 'Wait for the server to settle the next room state.' : 'X always starts in local play.');
+      renderBoard();
+      updateTurnUI();
+    }
+
+    function findWinningLine(board) {
+      for (const line of WIN_LINES) {
+        const [a, b, c] = line;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) return line;
+      }
+      return null;
+    }
+
+    function renderBoard(winLine = null) {
+      cells.forEach((cell, index) => {
+        const value = state.board[index];
+        cell.textContent = value;
+        cell.className = 'cell';
+        if (value === 'X') cell.classList.add('x');
+        if (value === 'O') cell.classList.add('o');
+        if (winLine?.includes(index)) cell.classList.add('win');
+        cell.disabled = !state.active || Boolean(value) || (state.mode === 'online' && !ensureCanClickOnline());
       });
     }
 
-    function play(i) {
-      if(!active || board[i]) return;
-      board[i] = turn;
-      render();
-      checkWin();
-      if(active) {
-        turn = turn === 'X' ? 'O' : 'X';
-        document.getElementById('turnDisplay').textContent = turn;
-      }
+    function ensureCanClickOnline() {
+      return Boolean(state.game && currentUser && state.game.currentPlayer === currentUser.id);
     }
 
-    function render() {
-      const cells = document.querySelectorAll('.cell');
-      board.forEach((v, i) => {
-        if(v) {
-          cells[i].textContent = v;
-          cells[i].classList.add('taken', v.toLowerCase());
-        }
-      });
+    function updateTurnUI() {
+      if (state.mode === 'online' && state.game) {
+        const current = state.game.players?.find(p => p.userId === state.game.currentPlayer);
+        setText('turnLabel', current?.symbol || state.mySymbol);
+      } else {
+        setText('turnLabel', state.turn);
+      }
+      setText('xWins', state.score.X);
+      setText('oWins', state.score.O);
+      setText('draws', state.score.draws);
     }
 
-    function checkWin() {
-      const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-      for(let w of wins) {
-        if(board[w[0]] && board[w[0]] === board[w[1]] && board[w[0]] === board[w[2]]) {
-          active = false;
-          w.forEach(idx => document.querySelectorAll('.cell')[idx].classList.add('winner'));
-          showResult(board[w[0]] + " Wins!");
-          return;
-        }
+    function showOverlay(title, body) {
+      let overlay = document.getElementById('overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'overlay';
+        overlay.className = 'modal';
+        overlay.innerHTML = `<div class="modal-content" style="max-width: 520px; text-align: center;"><div id="overlayBody"></div></div>`;
+        document.body.appendChild(overlay);
       }
-      if(!board.includes('')) {
-        active = false;
-        showResult("It's a Draw!");
-      }
+      document.getElementById('overlayBody').innerHTML = `
+        <h2 style="margin-top:0;">${title}</h2>
+        <p style="color:#cbd5e1; line-height:1.6;">${body}</p>
+        <div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap; margin-top:1.5rem;">
+          <button class="btn primary" onclick="closeOverlay()">Continue</button>
+          <button class="btn secondary" onclick="resetBoard()">Play Again</button>
+        </div>
+      `;
+      overlay.style.display = 'block';
     }
 
-    function showResult(msg) {
+    function closeOverlay() {
       const overlay = document.getElementById('overlay');
-      document.getElementById('overlayTitle').textContent = msg;
-      overlay.classList.add('active');
-      // No coins for local multiplayer
+      if (overlay) overlay.style.display = 'none';
     }
 
-    initGame();
+    function addActivity(title, details) {
+      const feed = document.getElementById('activityFeed');
+      const item = document.createElement('div');
+      item.className = 'feed-item';
+      item.innerHTML = `${title}<small>${details}</small>`;
+      feed.prepend(item);
+      while (feed.children.length > 5) feed.removeChild(feed.lastElementChild);
+    }
+
+    function setText(id, value) {
+      const node = document.getElementById(id);
+      if (node) node.textContent = value;
+    }
+
+    function exitGame() {
+      if (window.parent && typeof window.parent.closeGameContainer === 'function') {
+        window.parent.closeGameContainer();
+      } else {
+        window.location.href = '/ghub';
+      }
+    }
+
+    function leaveOnlineRoom(showNotice = true) {
+      if (socket && state.room?.id) socket.emit('leave-room', { roomId: state.room.id });
+      state.room = null;
+      state.game = null;
+      if (showNotice) showNotification('Returned to local play.', 'info');
+      startLocalGame(true);
+    }
+
+    function setTextOrLabel() {}
+
+    window.addEventListener('beforeunload', () => {
+      if (socket && state.room?.id) socket.emit('leave-room', { roomId: state.room.id });
+    });
   </script>
 </body>
 </html>
