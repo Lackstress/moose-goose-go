@@ -35,14 +35,15 @@
         /* Left Sidebar Menu Styles */
         .sidebar-menu {
             background: #18181b;
-            width: 240px;
+            width: clamp(200px, 20vw, 240px);
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
             gap: 8px;
-            padding: 12px 0;
+            padding: 12px;
             height: 100%;
             overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.1);
         }
 
         /* YouTube-like header */
@@ -894,11 +895,11 @@
             box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
         }
         
+        /* Fluid video containers using modern aspect-ratio */
         .video-container, .spotify-container {
             position: relative;
             width: 100%;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
-            height: 0;
+            aspect-ratio: 16 / 9;
             overflow: hidden;
             border-radius: 12px;
             background: #000;
@@ -906,8 +907,8 @@
         }
         
         .spotify-container {
-            padding-bottom: 380px; /* Spotify embed height */
-            height: auto;
+            aspect-ratio: auto;
+            min-height: 380px;
         }
         
         iframe {
@@ -920,20 +921,47 @@
             border-radius: 15px;
         }
         
+        /* Legacy .error blocks hidden — replaced by global toast */
         .error {
-            color: #ff6b6b;
-            text-align: center;
-            padding: 15px;
-            background: rgba(255, 107, 107, 0.1);
-            border: 1px solid rgba(255, 107, 107, 0.3);
-            border-radius: 12px;
-            margin-top: 20px;
-            display: none;
-            backdrop-filter: blur(10px);
+            display: none !important;
         }
-        
-        .error.show {
-            display: block;
+
+        /* Global Toast Notification */
+        #global-toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            min-width: 260px;
+            max-width: 400px;
+            padding: 16px 24px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            z-index: 99999;
+            pointer-events: none;
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.08) inset;
+            transform: translateY(120%) scale(0.95);
+            opacity: 0;
+            transition: transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.35s ease;
+        }
+        #global-toast.toast-visible {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        #global-toast.toast-success {
+            background: linear-gradient(135deg, rgba(16,185,129,0.85), rgba(5,150,105,0.85));
+        }
+        #global-toast.toast-error {
+            background: linear-gradient(135deg, rgba(239,68,68,0.85), rgba(185,28,28,0.85));
+        }
+        #global-toast.toast-info {
+            background: linear-gradient(135deg, rgba(99,102,241,0.85), rgba(79,70,229,0.85));
+        }
+        #global-toast.toast-warning {
+            background: linear-gradient(135deg, rgba(245,158,11,0.85), rgba(217,119,6,0.85));
         }
         
         .instructions {
@@ -1213,45 +1241,70 @@
             margin-bottom: 15px;
         }
         
+        /* Changed overflow to allow vertical scrolling ONLY if the screen is too small */
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #0f0f10 !important;
+            color: #f9fafb;
+        }
 
-            
+        /* Responsive sidebar: morphs into horizontal nav tabs on mobile */
+        @media (max-width: 768px) {
             .main-layout {
+                flex-direction: column !important;
+                height: auto !important;
                 max-width: 100%;
+            }
+
+            .sidebar-menu {
+                width: 100% !important;
+                height: auto !important;
+                flex-direction: row !important;
+                overflow-x: auto;
+                overflow-y: hidden;
+                gap: 4px;
+                padding: 8px 12px;
+                border-right: none !important;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+
+            .sidebar-menu .tab {
+                white-space: nowrap;
+                font-size: 13px;
+                padding: 8px 14px;
+                min-height: 36px;
+                gap: 8px;
+            }
+
+            /* Hide history section in mobile sidebar to save space */
+            .sidebar-divider,
+            .history-label,
+            #historyContainer {
+                display: none;
             }
 
             h1 {
                 font-size: 22px;
             }
-            
-            .tabs {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
+
             .input-group {
                 flex-direction: column;
             }
-            
+
             button {
                 width: 100%;
             }
 
-            .video-container, .spotify-container {
-                padding-bottom: min(56.25%, 48vh);
+            .content-area {
+                padding: 16px !important;
+                height: auto !important;
             }
-        }
-
-
-        html, body {
-            height: 100vh;
-            width: 100vw;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            background: #0f0f10 !important;
-            color: #f9fafb;
         }
 
         .main-layout {
@@ -1259,8 +1312,8 @@
             flex-direction: row;
             flex: 1;
             width: 100%;
-            height: calc(100vh - 56px);
-            overflow: hidden;
+            min-height: calc(100vh - 56px);
+            overflow-x: hidden;
             padding: 0;
             margin: 0;
             background: #0f0f10;
@@ -1289,40 +1342,7 @@
             width: 100%;
         }
 
-        .main-layout {
-            display: flex;
-            flex-direction: row;
-            flex: 1;
-            width: 100%;
-            height: calc(100vh - 56px);
-            overflow: hidden;
-            padding: 0;
-            margin: 0;
-        }
-
-        .sidebar-menu {
-            background: #18181b;
-            width: clamp(200px, 20vw, 240px);
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding: 12px;
-            height: 100%;
-            overflow-y: auto;
-            border-right: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .content-area {
-            flex: 1;
-            min-width: 0;
-            height: 100%;
-            overflow-y: auto;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-        }
-
+        /* Unique layout components */
         .container {
             flex: 1;
             display: flex;
@@ -1338,7 +1358,7 @@
             display: none;
             flex-direction: column;
             gap: 14px;
-            height: 100%;
+            min-height: 0;
         }
 
         .tab-content.active {
@@ -1352,33 +1372,12 @@
             min-height: 0;
         }
 
-        .video-container, .spotify-container {
-            position: relative;
-            width: 100%;
-            flex: 1;
-            min-height: 0;
-            height: auto;
-            padding-bottom: 0;
-            border-radius: 12px;
-            background: #000;
-            margin-top: 8px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 15px;
-        }
-
     </style>
 </head>
 <body>
+    <!-- Global Toast Notification -->
+    <div id="global-toast"></div>
+
     <div class="mp-header">
         <div class="mp-header-inner">
             <div class="mp-header-left">
@@ -1388,7 +1387,7 @@
                 <div class="mp-logo"><span>Moose</span> Media</div>
             </div>
             <div class="mp-search">
-                <input type="text" placeholder="Search media..." />
+                <input type="text" id="headerSearch" placeholder="Search YouTube or enter Spotify/Cloud link..." />
             </div>
             <div class="mp-header-spacer"></div>
         </div>
@@ -1605,6 +1604,28 @@
     </div><!-- end main-layout -->
 
     <script>
+        // ========== GLOBAL TOAST SYSTEM ==========
+        let _toastTimer = null;
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('global-toast');
+            if (!toast) return;
+            // Clear previous timer
+            if (_toastTimer) clearTimeout(_toastTimer);
+            // Reset classes
+            toast.className = '';
+            toast.textContent = message;
+            toast.classList.add('toast-' + type);
+            // Trigger reflow then show
+            void toast.offsetWidth;
+            toast.classList.add('toast-visible');
+            _toastTimer = setTimeout(() => {
+                toast.classList.remove('toast-visible');
+            }, 3500);
+        }
+
+        // Backwards-compat alias so existing calls keep working
+        function showSuccessToast(msg) { showToast(msg, 'success'); }
+
         // Helper functions for micro-interactions
         function setButtonLoading(btn, loading) {
             if (loading) {
@@ -1627,44 +1648,6 @@
             }, duration);
         }
         
-        function showSuccessToast(message) {
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 30px;
-                right: 30px;
-                background: linear-gradient(135deg, #10b981, #059669);
-                color: white;
-                padding: 14px 24px;
-                border-radius: 12px;
-                font-weight: 600;
-                font-size: 14px;
-                z-index: 9999;
-                animation: slideInUp 0.3s ease;
-                box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
-            `;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.animation = 'slideOutDown 0.3s ease forwards';
-                setTimeout(() => toast.remove(), 300);
-            }, 2500);
-        }
-        
-        // Add animation keyframes
-        const styleSheet = document.createElement('style');
-        styleSheet.textContent = `
-            @keyframes slideInUp {
-                from { transform: translateY(20px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-            @keyframes slideOutDown {
-                from { transform: translateY(0); opacity: 1; }
-                to { transform: translateY(20px); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(styleSheet);
-        
         function switchTab(e, tab) {
             // Update tab buttons
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1685,20 +1668,14 @@
             document.getElementById(tab + '-tab').classList.add('active');
         }
         
-        // YouTube Search Functions
+        // YouTube Search Functions (with backend guardrails)
         async function searchYouTube() {
             const query = document.getElementById('youtubeSearchQuery').value.trim();
-            const errorMsg = document.getElementById('youtubeSearchError');
             const resultsContainer = document.getElementById('searchResults');
             const btn = document.getElementById('ytSearchBtn');
             
-            // Clear previous error and results
-            errorMsg.classList.remove('show');
-            errorMsg.textContent = '';
-            
             if (!query) {
-                errorMsg.textContent = '❌ Please enter a search query';
-                errorMsg.classList.add('show');
+                showToast('❌ Please enter a search query', 'error');
                 return;
             }
             
@@ -1716,6 +1693,7 @@
             try {
                 // Call server endpoint for YouTube search
                 const response = await fetch(`/media-player/youtube-search-results?query=${encodeURIComponent(query)}&maxResults=12`);
+                if (!response.ok) throw new Error(`Server returned ${response.status}`);
                 const data = await response.json();
                 
                 setButtonLoading(btn, false);
@@ -1736,8 +1714,7 @@
                 console.error('YouTube search error:', error);
                 setButtonLoading(btn, false);
                 resultsContainer.innerHTML = '';
-                errorMsg.textContent = '❌ Failed to search YouTube. Please try again.';
-                errorMsg.classList.add('show');
+                showToast('❌ YouTube search unavailable. Server may be offline.', 'error');
             }
         }
         
@@ -1767,19 +1744,17 @@
             const videoWrapper = document.getElementById('searchVideoWrapper');
             
             videoWrapper.innerHTML = `
-                <div style="margin-top: 20px;">
-                    <div style="padding: 12px; background: rgba(139, 92, 246, 0.15); border-radius: 8px 8px 0 0; border: 1px solid rgba(139, 92, 246, 0.3); border-bottom: none;">
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">NOW PLAYING</div>
-                        <div style="font-size: 14px; font-weight: 600; color: #fff;">${title}</div>
-                    </div>
-                    <div class="video-container" style="border-radius: 0 0 12px 12px; overflow: hidden;">
-                        <iframe 
-                            src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen
-                            loading="lazy">
-                        </iframe>
-                    </div>
+                <div style="padding: 12px; background: rgba(139, 92, 246, 0.15); border-radius: 8px 8px 0 0; border: 1px solid rgba(139, 92, 246, 0.3); border-bottom: none; margin-top: 20px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">NOW PLAYING</div>
+                    <div style="font-size: 14px; font-weight: 600; color: #fff;">${title}</div>
+                </div>
+                <div class="video-container" style="border-radius: 0 0 12px 12px; margin-top: 0;">
+                    <iframe 
+                        src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen
+                        loading="lazy">
+                    </iframe>
                 </div>
             `;
             
@@ -1827,7 +1802,7 @@
             document.getElementById('musicWrapper').innerHTML = '';
         }
 
-        // Spotify Search Functions
+        // Spotify Search Functions (with backend guardrails)
         let spotifySearchType = 'track';
         
         function setSpotifySearchType(type, btn) {
@@ -1838,16 +1813,11 @@
         
         async function searchSpotify() {
             const query = document.getElementById('spotifySearchQuery').value.trim();
-            const errorMsg = document.getElementById('spotifySearchError');
             const resultsContainer = document.getElementById('spotifySearchResults');
             const btn = document.getElementById('spotifySearchBtn');
             
-            errorMsg.classList.remove('show');
-            errorMsg.textContent = '';
-            
             if (!query) {
-                errorMsg.textContent = '❌ Please enter a search query';
-                errorMsg.classList.add('show');
+                showToast('❌ Please enter a search query', 'error');
                 return;
             }
             
@@ -1862,6 +1832,7 @@
             
             try {
                 const response = await fetch(`/media-player/spotify-search?q=${encodeURIComponent(query)}&type=${spotifySearchType}&limit=20`);
+                if (!response.ok) throw new Error(`Server returned ${response.status}`);
                 const data = await response.json();
                 
                 setButtonLoading(btn, false);
@@ -1886,8 +1857,7 @@
                 console.error('Spotify search error:', error);
                 setButtonLoading(btn, false);
                 resultsContainer.innerHTML = '';
-                errorMsg.textContent = '❌ ' + (error.message || 'Failed to search Spotify');
-                errorMsg.classList.add('show');
+                showToast('❌ Spotify search unavailable. Server may be offline.', 'error');
             }
         }
         
@@ -1960,25 +1930,17 @@
 
         function playYouTube() {
             const link = document.getElementById('youtubeLink').value.trim();
-            const errorMsg = document.getElementById('youtubeError');
             const videoWrapper = document.getElementById('youtubeWrapper');
-            const btn = document.getElementById('ytPlayBtn');
-            
-            // Clear previous error
-            errorMsg.classList.remove('show');
-            errorMsg.textContent = '';
             
             if (!link) {
-                errorMsg.textContent = '❌ Please enter a YouTube link';
-                errorMsg.classList.add('show');
+                showToast('❌ Please enter a YouTube link', 'error');
                 return;
             }
             
             const videoId = extractYouTubeVideoId(link);
             
             if (!videoId) {
-                errorMsg.textContent = '❌ Invalid YouTube link. Please check and try again.';
-                errorMsg.classList.add('show');
+                showToast('❌ Invalid YouTube link. Please check and try again.', 'error');
                 return;
             }
             
@@ -1996,7 +1958,7 @@
             `;
             
             // Show success feedback
-            showSuccessToast('✓ Video loaded successfully!');
+            showToast('✓ Video loaded successfully!', 'success');
         }
 
         // YouTube Music Functions
@@ -2007,16 +1969,10 @@
 
         async function playYouTubeMusic() {
             const link = document.getElementById('youtubeMusicLink').value.trim();
-            const errorMsg = document.getElementById('youtubeMusicError');
             const musicWrapper = document.getElementById('musicWrapper');
             
-            // Clear previous error
-            errorMsg.classList.remove('show');
-            errorMsg.textContent = '';
-            
             if (!link) {
-                errorMsg.textContent = '❌ Please enter a YouTube Music link or search query';
-                errorMsg.classList.add('show');
+                showToast('❌ Please enter a YouTube Music link or search query', 'error');
                 return;
             }
             
@@ -2036,13 +1992,12 @@
                 try {
                     // Search YouTube via server endpoint
                     const response = await fetch(`/media-player/youtube-search?query=${encodeURIComponent(link)}`);
+                    if (!response.ok) throw new Error(`Server returned ${response.status}`);
                     const data = await response.json();
                     
                     if (data.type === 'youtube_video' && data.videoId) {
                         videoId = data.videoId;
-                        // Continue to embed the video below
                     } else if (data.searchUrl) {
-                        // Fallback: show search results link
                         musicWrapper.innerHTML = `
                             <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
                                 <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
@@ -2058,16 +2013,14 @@
                     }
                 } catch (searchError) {
                     console.error('YouTube search error:', searchError);
-                    errorMsg.textContent = '❌ Failed to search YouTube. Please enter a direct YouTube URL.';
-                    errorMsg.classList.add('show');
+                    showToast('❌ YouTube search unavailable. Please enter a direct YouTube URL.', 'error');
                     musicWrapper.innerHTML = '';
                     return;
                 }
             }
             
             if (!videoId) {
-                errorMsg.textContent = '❌ Invalid YouTube Music link. Please check and try again.';
-                errorMsg.classList.add('show');
+                showToast('❌ Invalid YouTube Music link. Please check and try again.', 'error');
                 return;
             }
             
@@ -2106,24 +2059,17 @@
 
         async function playSpotify() {
             const link = document.getElementById('spotifyLink').value.trim();
-            const errorMsg = document.getElementById('spotifyError');
             const musicWrapper = document.getElementById('musicWrapper');
             
-            // Clear previous error
-            errorMsg.classList.remove('show');
-            errorMsg.textContent = '';
-            
             if (!link) {
-                errorMsg.textContent = '❌ Please enter a Spotify link';
-                errorMsg.classList.add('show');
+                showToast('❌ Please enter a Spotify link', 'error');
                 return;
             }
             
             const spotifyData = extractSpotifyId(link);
             
             if (!spotifyData) {
-                errorMsg.textContent = '❌ Invalid Spotify link. Please check and try again.';
-                errorMsg.classList.add('show');
+                showToast('❌ Invalid Spotify link. Please check and try again.', 'error');
                 return;
             }
             
@@ -2139,15 +2085,14 @@
             try {
                 // Check what type of content this is and how to handle it
                 const response = await fetch(`/media-player/spotify-to-youtube?spotifyUrl=${encodeURIComponent(link)}`);
+                if (!response.ok) throw new Error(`Server returned ${response.status}`);
                 const data = await response.json();
                 
                 if (data.type === 'youtube_playlist_conversion') {
-                    // Playlists/albums are being converted to YouTube - search for each track
                     await convertPlaylistToYouTube(data.tracks, spotifyData, link);
                     return;
                     
                 } else if (data.type === 'youtube_playlist_search') {
-                    // Playlists/albums fallback - search for YouTube playlist version
                     musicWrapper.innerHTML = `
                         <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.7);">
                             <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
@@ -2156,15 +2101,14 @@
                         </div>
                     `;
                     
-                    // Search YouTube for the playlist
                     const playlistQuery = data.query + ' playlist full album';
                     
                     try {
                         const searchResponse = await fetch(`/media-player/youtube-search?query=${encodeURIComponent(playlistQuery)}&type=playlist`);
+                        if (!searchResponse.ok) throw new Error(`Server returned ${searchResponse.status}`);
                         const searchData = await searchResponse.json();
                         
                         if (searchData.type === 'youtube_playlist' && searchData.playlistId) {
-                            // Found a YouTube playlist - embed it
                             const playlistEmbedUrl = `https://www.youtube.com/embed/videoseries?list=${searchData.playlistId}`;
                             musicWrapper.innerHTML = `
                                 <div class="video-container">
@@ -2176,18 +2120,9 @@
                                     </iframe>
                                 </div>
                             `;
-                            
-                            // Save to history
                             saveToHistory(link, playlistEmbedUrl, spotifyData.type, 0);
-                            
-                            errorMsg.textContent = `✅ Found YouTube playlist: "${searchData.title || data.query}". Full playback available!`;
-                            errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
-                            errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-                            errorMsg.style.color = '#10b981';
-                            errorMsg.classList.add('show');
-                            setTimeout(() => errorMsg.classList.remove('show'), 8000);
+                            showToast(`✅ Found YouTube playlist: "${searchData.title || data.query}"`, 'success');
                         } else if (searchData.type === 'youtube_video' && searchData.videoId) {
-                            // Found a video (might be a full playlist mix)
                             const videoEmbedUrl = `https://www.youtube.com/embed/${searchData.videoId}`;
                             musicWrapper.innerHTML = `
                                 <div class="video-container">
@@ -2199,18 +2134,9 @@
                                     </iframe>
                                 </div>
                             `;
-                            
-                            // Save to history
                             saveToHistory(link, videoEmbedUrl, spotifyData.type, 0);
-                            
-                            errorMsg.textContent = `✅ Found YouTube result for "${data.query}". Full playback available!`;
-                            errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
-                            errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-                            errorMsg.style.color = '#10b981';
-                            errorMsg.classList.add('show');
-                            setTimeout(() => errorMsg.classList.remove('show'), 8000);
+                            showToast(`✅ Found YouTube result for "${data.query}"`, 'success');
                         } else {
-                            // Fallback: show search link
                             musicWrapper.innerHTML = `
                                 <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.8);">
                                     <div style="font-size: 32px; margin-bottom: 15px;">🔍</div>
@@ -2227,7 +2153,6 @@
                         }
                     } catch (searchError) {
                         console.error('YouTube playlist search error:', searchError);
-                        // Fallback: show manual search option
                         musicWrapper.innerHTML = `
                             <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.8);">
                                 <div style="font-size: 32px; margin-bottom: 15px;">🔍</div>
@@ -2242,7 +2167,6 @@
                     return;
                     
                 } else if (data.type === 'conversion_failed') {
-                    // Conversion failed - show helpful message
                     musicWrapper.innerHTML = `
                         <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.8);">
                             <div style="font-size: 32px; margin-bottom: 15px;">⚠️</div>
@@ -2261,24 +2185,13 @@
                             </div>
                         </div>
                     `;
-                    errorMsg.textContent = '⚠️ ' + data.message;
-                    errorMsg.style.background = 'rgba(245, 158, 11, 0.1)';
-                    errorMsg.style.borderColor = 'rgba(245, 158, 11, 0.3)';
-                    errorMsg.style.color = '#f59e0b';
-                    errorMsg.classList.add('show');
+                    showToast('⚠️ ' + data.message, 'warning');
                     
                 } else if (data.type === 'spotify_embed_full') {
-                    // Fallback to Spotify embed (shouldn't happen with new implementation)
                     createSpotifyEmbed(link, spotifyData, 'full');
-                    errorMsg.textContent = `✅ ${spotifyData.type === 'playlist' ? 'Playlist' : 'Album'} loaded in Spotify embed.`;
-                    errorMsg.style.background = 'rgba(29, 185, 84, 0.1)';
-                    errorMsg.style.borderColor = 'rgba(29, 185, 84, 0.3)';
-                    errorMsg.style.color = '#1db954';
-                    errorMsg.classList.add('show');
-                    setTimeout(() => errorMsg.classList.remove('show'), 8000);
+                    showToast(`✅ ${spotifyData.type === 'playlist' ? 'Playlist' : 'Album'} loaded in Spotify embed.`, 'success');
                     
                 } else if (data.type === 'youtube_search') {
-                    // Tracks/playlists get converted to YouTube
                     const isPlaylistSearch = data.playlistSearch || spotifyData.type === 'playlist' || spotifyData.type === 'album';
                     
                     musicWrapper.innerHTML = `
@@ -2291,48 +2204,35 @@
                         </div>
                     `;
                     
-                    // Use the search query from the server response
                     const searchQuery = data.query || await extractSpotifyTrackName(link);
                     
                     if (searchQuery) {
-                        // Switch to YouTube Music tab and search for the content
                         switchMusicSource('youtube-music');
                         document.getElementById('youtubeMusicLink').value = searchQuery;
                         await playYouTubeMusic();
                         
-                        // Show success message
                         if (isPlaylistSearch) {
-                            errorMsg.textContent = `✅ Found YouTube result for: "${searchQuery}". You can play this or search for more results.`;
-                            errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
-                            errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-                            errorMsg.style.color = '#10b981';
-                            errorMsg.classList.add('show');
-                            setTimeout(() => errorMsg.classList.remove('show'), 8000);
+                            showToast(`✅ Found YouTube result for: "${searchQuery}"`, 'success');
                         }
                         return;
                     }
                     
-                    // Fallback if search query is not available
-                    errorMsg.textContent = '⚠️ Could not extract search query. Please search YouTube manually.';
-                    errorMsg.classList.add('show');
+                    showToast('⚠️ Could not extract search query. Please search YouTube manually.', 'warning');
                     
                 } else {
-                    // Unexpected response type
                     createSpotifyEmbed(link, spotifyData, 'preview');
-                    errorMsg.textContent = '⚠️ Using Spotify embed. Log in to Spotify for full playback.';
-                    errorMsg.classList.add('show');
+                    showToast('⚠️ Using Spotify embed. Log in to Spotify for full playback.', 'warning');
                 }
                 
             } catch (error) {
                 console.error('Spotify conversion error:', error);
-                errorMsg.textContent = '❌ Error processing Spotify link. Please try again.';
-                errorMsg.classList.add('show');
+                showToast('❌ Spotify conversion unavailable. Server may be offline.', 'error');
+                musicWrapper.innerHTML = '';
             }
         }
 
         async function convertPlaylistToYouTube(tracks, spotifyData, spotifyUrl) {
             const musicWrapper = document.getElementById('musicWrapper');
-            const errorMsg = document.getElementById('spotifyError');
             
             // Show conversion progress
             musicWrapper.innerHTML = `
@@ -2448,12 +2348,7 @@
                             foundTracks: foundTracks
                         });
                         
-                        errorMsg.textContent = `✅ Successfully loaded ${foundTracks.length} tracks with custom controls!`;
-                        errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
-                        errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-                        errorMsg.style.color = '#10b981';
-                        errorMsg.classList.add('show');
-                        setTimeout(() => errorMsg.classList.remove('show'), 5000);
+                        showToast(`✅ Successfully loaded ${foundTracks.length} tracks with custom controls!`, 'success');
                     }, 1000);
                 } else {
                     throw new Error('No tracks found on YouTube');
@@ -2467,8 +2362,7 @@
                         <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">Try using YouTube Music search directly</div>
                     </div>
                 `;
-                errorMsg.textContent = '❌ Playlist conversion failed. Please try YouTube Music search.';
-                errorMsg.classList.add('show');
+                showToast('❌ Playlist conversion failed. Please try YouTube Music search.', 'error');
             }
         }
         
@@ -2988,7 +2882,6 @@
 
         function createSpotifyEmbed(link, spotifyData, mode = 'preview') {
             const musicWrapper = document.getElementById('musicWrapper');
-            const errorMsg = document.getElementById('spotifyError');
             
             // Debug logging
             console.log('Creating Spotify embed:', { link, spotifyData, mode });
@@ -2999,21 +2892,17 @@
             
             switch (spotifyData.type) {
                 case 'track':
-                    // Tracks always use preview mode
                     embedUrl = `https://open.spotify.com/embed/track/${spotifyData.id}?utm_source=oembed&theme=0`;
                     break;
                 case 'playlist':
-                    // Try different embed approaches for playlists
                     embedUrl = `https://open.spotify.com/embed/playlist/${spotifyData.id}?utm_source=oembed&theme=0`;
-                    height = '520'; // Taller for playlists
+                    height = '520';
                     break;
                 case 'album':
-                    // Albums with full playback
                     embedUrl = `https://open.spotify.com/embed/album/${spotifyData.id}?utm_source=oembed&theme=0`;
                     height = '520';
                     break;
                 case 'artist':
-                    // Artist pages with full playback
                     embedUrl = `https://open.spotify.com/embed/artist/${spotifyData.id}?utm_source=oembed&theme=0`;
                     height = '520';
                     break;
@@ -3042,39 +2931,19 @@
                 ` : ''}
             `;
             
-            // Show appropriate message based on mode and content type
+            // Show appropriate toast based on mode and content type
             if (mode === 'full') {
-                // Full playback for playlists, albums (requires login)
                 if (spotifyData.type === 'playlist' || spotifyData.type === 'album') {
-                    errorMsg.textContent = `✅ ${spotifyData.type === 'playlist' ? 'Playlist' : 'Album'} loaded! Log in to Spotify in the player above for full playback.`;
-                    errorMsg.style.background = 'rgba(29, 185, 84, 0.1)';
-                    errorMsg.style.borderColor = 'rgba(29, 185, 84, 0.3)';
-                    errorMsg.style.color = '#1db954';
+                    showToast(`✅ ${spotifyData.type === 'playlist' ? 'Playlist' : 'Album'} loaded! Log in to Spotify for full playback.`, 'success');
                 } else {
-                    errorMsg.textContent = '✅ Content loaded in Spotify embed!';
-                    errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
-                    errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-                    errorMsg.style.color = '#10b981';
+                    showToast('✅ Content loaded in Spotify embed!', 'success');
                 }
             } else if (mode === 'preview') {
-                // Preview mode for tracks
                 if (spotifyData.type === 'track') {
-                    errorMsg.textContent = '⚠️ Track preview (30 seconds). Try YouTube Music tab for full song.';
+                    showToast('⚠️ Track preview (30s). Try YouTube Music tab for full song.', 'warning');
                 } else {
-                    errorMsg.textContent = '⚠️ Limited playback. Try YouTube Music for full tracks.';
+                    showToast('⚠️ Limited playback. Try YouTube Music for full tracks.', 'warning');
                 }
-                errorMsg.style.background = 'rgba(245, 158, 11, 0.1)';
-                errorMsg.style.borderColor = 'rgba(245, 158, 11, 0.3)';
-                errorMsg.style.color = '#f59e0b';
-            }
-            
-            errorMsg.classList.add('show');
-            
-            // Auto-hide success messages after 8 seconds
-            if (mode === 'full') {
-                setTimeout(() => {
-                    errorMsg.classList.remove('show');
-                }, 8000);
             }
         }
 
@@ -3092,24 +2961,17 @@
 
         function playSoundCloud() {
             const link = document.getElementById('soundcloudLink').value.trim();
-            const errorMsg = document.getElementById('soundcloudError');
             const musicWrapper = document.getElementById('musicWrapper');
             
-            // Clear previous error
-            errorMsg.classList.remove('show');
-            errorMsg.textContent = '';
-            
             if (!link) {
-                errorMsg.textContent = '❌ Please enter a SoundCloud link';
-                errorMsg.classList.add('show');
+                showToast('❌ Please enter a SoundCloud link', 'error');
                 return;
             }
             
             const soundcloudPath = extractSoundCloudId(link);
             
             if (!soundcloudPath) {
-                errorMsg.textContent = '❌ Invalid SoundCloud link. Please check and try again.';
-                errorMsg.classList.add('show');
+                showToast('❌ Invalid SoundCloud link. Please check and try again.', 'error');
                 return;
             }
             
@@ -3186,6 +3048,34 @@
             loadHistory();
         });
         
+        // Header Search Functionality
+        document.getElementById('headerSearch').addEventListener('keypress', async function(event) {
+            if (event.key === 'Enter') {
+                const query = this.value.trim();
+                if (!query) return;
+                
+                // Determine if it's a URL or just a query
+                if (query.includes('spotify.com')) {
+                    switchMusicSource('spotify');
+                    document.getElementById('spotifyLink').value = query;
+                    await playSpotify();
+                } else if (query.includes('soundcloud.com')) {
+                    switchMusicSource('soundcloud');
+                    document.getElementById('soundcloudLink').value = query;
+                    playSoundCloud();
+                } else if (query.startsWith('http') && (query.includes('youtube.com') || query.includes('youtu.be'))) {
+                    switchMusicSource('youtube');
+                    document.getElementById('youtubeLink').value = query;
+                    await playYouTube();
+                } else {
+                    // Default to YouTube Search
+                    switchMusicSource('youtube-search');
+                    document.getElementById('youtubeSearchQuery').value = query;
+                    await searchYouTube();
+                }
+            }
+        });
+
         // ===== HISTORY FUNCTIONS =====
         
         // Save conversion to history
@@ -3356,13 +3246,7 @@
                 musicWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 
                 // Show success message
-                const errorMsg = document.getElementById('spotifyError');
-                errorMsg.textContent = `✅ Loaded ${successCount} tracks from history with custom controls!`;
-                errorMsg.style.background = 'rgba(16, 185, 129, 0.1)';
-                errorMsg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-                errorMsg.style.color = '#10b981';
-                errorMsg.classList.add('show');
-                setTimeout(() => errorMsg.classList.remove('show'), 3000);
+                showToast(`✅ Loaded ${successCount} tracks from history with custom controls!`, 'success');
             } else {
                 // Fallback: load the YouTube embed URL
                 const url = entry.youtubeUrl;

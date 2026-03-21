@@ -604,6 +604,11 @@
       };
       state.remote = mapOnlineSnapshotToView(state.onlineGame);
       render();
+      if (!state.onlineGame.active && state.onlineGame.winner) {
+        setText('statusText', state.onlineGame.winner === state.localSeat ? 'You win the match.' : 'Opponent wins the match.');
+        setText('statusSubtext', 'Start another room or return to local mode.');
+        addFeed('Round over', state.onlineGame.winner === state.localSeat ? 'You won the room match.' : 'You lost the room match.');
+      }
     }
 
     function handleRoomChat(message) {
@@ -754,6 +759,91 @@
       setText('actionText', `${actor === 'player' ? 'You' : 'Bot'} played ${formatCard(card)}.`);
     }
 
+    function onlinePlay(seat, index, chosenColor) {
+      const game = state.onlineGame;
+      if (!game || !game.active || game.currentSeat !== seat) return;
+      const hand = seat === 'host' ? game.hostHand : game.guestHand;
+      const card = hand[index];
+      const top = game.discardPile[game.discardPile.length - 1];
+      if (!isPlayable(card, top, game.currentColor)) return;
+
+      hand.splice(index, 1);
+      game.discardPile.push(card);
+      game.currentColor = card.color === 'wild' ? (chosenColor || COLORS[Math.floor(Math.random() * COLORS.length)]) : card.color;
+      applyOnlineEffect(game, card, seat);
+
+      if (hand.length === 0) {
+        game.active = false;
+        game.winner = seat;
+        state.remote = mapOnlineSnapshotToView(game);
+        broadcastOnlineSnapshot('win');
+        setText('statusText', seat === state.localSeat ? 'You win the match.' : 'Opponent wins the match.');
+        setText('statusSubtext', 'Start another room or return to local mode.');
+        addFeed('Round over', seat === state.localSeat ? 'You won the room match.' : 'You lost the room match.');
+        render();
+        return;
+      }
+
+      state.remote = mapOnlineSnapshotToView(game);
+      broadcastOnlineSnapshot('play');
+      render();
+    }
+
+    function onlineDraw(seat) {
+      const game = state.onlineGame;
+      if (!game || !game.active || game.currentSeat !== seat) return;
+      if (!game.deck.length) recycleOnlineDeck();
+      const card = game.deck.pop();
+      if (card) {
+        if (seat === 'host') game.hostHand.push(card);
+        else game.guestHand.push(card);
+      }
+      game.currentSeat = seat === 'host' ? 'guest' : 'host';
+      state.remote = mapOnlineSnapshotToView(game);
+      broadcastOnlineSnapshot('draw');
+      render();
+    }
+
+    function applyOnlineEffect(game, card, seat) {
+      const targetSeat = seat === 'host' ? 'guest' : 'host';
+      const targetHand = targetSeat === 'host' ? game.hostHand : game.guestHand;
+      let nextSeat = targetSeat;
+
+      if (card.value === 'skip' || card.value === 'reverse') {
+        nextSeat = seat;
+      }
+      if (card.value === 'draw2') {
+        drawIntoOnline(targetHand, game);
+        drawIntoOnline(targetHand, game);
+        nextSeat = seat;
+      }
+      if (card.value === 'wild4') {
+        for (let i = 0; i < 4; i++) drawIntoOnline(targetHand, game);
+        nextSeat = seat;
+      }
+
+      game.currentSeat = nextSeat;
+      setText('actionText', `${seat === state.localSeat ? 'You' : 'Opponent'} played ${formatCard(card)}.`);
+    }
+
+    function drawIntoOnline(hand, game) {
+      if (!game.deck.length) recycleOnlineDeck();
+      const card = game.deck.pop();
+      if (card) hand.push(card);
+    }
+
+    function recycleOnlineDeck() {
+      const game = state.onlineGame;
+      if (!game || game.discardPile.length <= 1) return;
+      const top = game.discardPile.pop();
+      game.deck = shuffle(game.discardPile);
+      game.discardPile = [top];
+    }
+
+    function cloneCard(card) {
+      return card ? { color: card.color, value: card.value } : null;
+    }
+
     function finishLocalRound(playerWon) {
       state.local.active = false;
       setText('statusText', playerWon ? 'You win the round.' : 'Bot wins the round.');
@@ -766,11 +856,30 @@
     }
 
     function render() {
-      if (state.mode === 'online' && state.remote) {
-        renderOnline();
+      if (state.mode === 'online') {
+        if (state.remote) {
+          renderOnline();
+        } else {
+          renderOnlineWaiting();
+        }
         return;
       }
       renderLocal();
+    }
+
+    function renderOnlineWaiting() {
+      setText('modeLabel', 'Online');
+      setText('turnLabel', 'Waiting');
+      setText('colorLabel', 'None');
+      setText('statusText', 'Waiting for room state');
+      setText('statusSubtext', 'The host will broadcast the first snapshot when the match starts.');
+      setText('yourCount', '0');
+      setText('opponentCount', '0');
+      setText('tableState', 'Waiting');
+      setText('footerText', state.roomId ? `UNO room ${state.roomId} syncing...` : 'UNO online mode waiting...');
+      document.getElementById('discardPile').innerHTML = '';
+      renderOpponentBacks(0);
+      renderPlayerCards([], false, null, null);
     }
 
     function renderLocal() {

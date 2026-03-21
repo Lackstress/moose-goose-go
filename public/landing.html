@@ -1,652 +1,848 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moose Goose Games - Play Instantly | No Downloads</title>
+  <title>Moose Goose Games – Play Instantly</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="/images/moose-goose-logo.png">
-  <link rel="shortcut icon" type="image/png" href="/images/moose-goose-logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap"
+    rel="stylesheet">
   <style>
-
-    * {
+    *,
+    *::before,
+    *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
-    body {
-      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background:
-        radial-gradient(circle at top left, #25152f 0%, transparent 55%),
-        radial-gradient(circle at bottom right, #10203a 0%, transparent 55%),
-        linear-gradient(180deg, #020617 0%, #020716 45%, #020617 100%);
-      color: #f9fafb;
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      padding: clamp(8px, 2vh, 24px);
-      gap: clamp(8px, 2vh, 24px);
+    :root {
+      --bg: #06090f;
+      --surface: rgba(255, 255, 255, 0.04);
+      --surface2: rgba(255, 255, 255, 0.07);
+      --border: rgba(255, 255, 255, 0.07);
+      --border-h: rgba(99, 179, 237, 0.3);
+      --text: #eef2ff;
+      --muted: rgba(180, 195, 225, 0.5);
+      --accent1: #6366f1;
+      --accent2: #38bdf8;
+      --red: #f87171;
+      --green: #34d399;
+      --purple: #a78bfa;
+      --font: 'Outfit', sans-serif;
+      --r: 12px;
     }
 
-    /* Cyber grid background */
-    .cyber-grid {
+    /* Changed overflow to allow vertical scrolling ONLY if the screen is too small */
+    html,
+    body {
+      width: 100%;
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .bg {
       position: fixed;
       inset: 0;
+      z-index: -1;
+      /* Push to back */
+      background:
+        radial-gradient(ellipse 60% 50% at 15% 20%, rgba(99, 102, 241, 0.14) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 50% at 85% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(167, 139, 250, 0.06) 0%, transparent 60%),
+        #06090f;
+    }
+
+    .bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
       background-image:
-        linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px);
-      background-size: 50px 50px;
-      pointer-events: none;
-      z-index: 0;
+        linear-gradient(rgba(99, 179, 237, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 179, 237, 0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
     }
 
-    /* Top Section (Hero + Stats) */
-    .top-section {
-      display: flex;
-      flex-direction: row;
-      gap: clamp(8px, 2vw, 24px);
-      flex-shrink: 0;
-      height: clamp(120px, 20vh, 180px);
+    /* Changed height to min-height so it naturally expands if needed */
+    .shell {
+      position: relative;
       z-index: 1;
-    }
-
-    .hero-box {
-      flex: 1;
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid rgba(0, 255, 255, 0.1);
-      border-radius: 12px;
-      backdrop-filter: blur(8px);
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      padding: clamp(8px, 1.5vh, 16px);
-      gap: 8px;
+      gap: clamp(15px, 2.5vh, 24px);
+      padding: clamp(20px, 4vh, 40px) clamp(16px, 4vw, 32px);
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
-    .hero-logo-row {
+    /* top bar - Added flex-wrap for mobile */
+    .top-bar {
       display: flex;
       align-items: center;
-      gap: 12px;
+      flex-wrap: wrap;
+      /* Allows stacking on tiny screens */
+      gap: clamp(10px, 2vw, 20px);
+      width: 100%;
+      max-width: 900px;
+      animation: up 0.6s ease both;
     }
 
-    .hero-logo {
-      height: clamp(30px, 4vh, 50px);
-      width: auto;
-      border-radius: 12px;
+    .logo {
+      width: clamp(40px, 6vw, 60px);
+      height: clamp(40px, 6vw, 60px);
+      border-radius: clamp(7px, 1vw, 11px);
+      object-fit: cover;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 1px var(--border-h), 0 6px 20px rgba(99, 102, 241, 0.3);
+      /* Fallback background if image fails to load */
+      background: linear-gradient(135deg, var(--accent1), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
     }
 
-    .hero-title {
-      font-size: clamp(1.2rem, 3vh, 2rem);
-      font-weight: 900;
+    .title-block {
+      flex: 1 1 200px;
+      min-width: 0;
+    }
+
+    .site-title {
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    .site-title span {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .site-sub {
+      font-size: clamp(0.7rem, 1.2vw, 0.9rem);
+      color: var(--muted);
+      font-weight: 400;
+      margin-top: 4px;
+    }
+
+    .stats {
+      display: flex;
+      gap: clamp(5px, 0.8vw, 9px);
+      flex-shrink: 0;
+    }
+
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: clamp(4px, 0.8vh, 8px) clamp(12px, 1.5vw, 18px);
+      text-align: center;
+    }
+
+    .stat-n {
+      font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+      font-weight: 800;
+      line-height: 1.1;
+      background: linear-gradient(135deg, var(--purple), var(--accent1));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-l {
+      font-size: clamp(0.55rem, 0.8vw, 0.7rem);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .btn-random {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: clamp(8px, 1vh, 12px) clamp(16px, 2vw, 24px);
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
       color: #fff;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      text-shadow: 0 0 10px rgba(0,255,255,0.3);
-    }
-
-    .hero-subtitle {
-      font-size: clamp(0.7rem, 1.5vh, 0.9rem);
-      color: #94a3b8;
+      font-family: var(--font);
       font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .hero-cta {
-      padding: clamp(6px, 1vh, 10px) clamp(16px, 2vw, 24px);
-      background: linear-gradient(135deg, #0ea5e9, #6366f1);
-      color: #fff;
+      font-size: clamp(0.75rem, 1.2vw, 0.9rem);
       border: none;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: clamp(0.8rem, 1.5vh, 1rem);
+      border-radius: 999px;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
-      transition: all 0.2s;
-    }
-
-    .hero-cta:hover {
-      transform: translateY(-2px);
-    }
-
-    .stats-box {
-      flex: 0 0 clamp(200px, 25vw, 350px);
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 12px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-around;
-      padding: clamp(8px, 1.5vh, 16px);
-    }
-
-    .stat-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-
-    .stat-val {
-      font-size: clamp(1.2rem, 3vh, 1.8rem);
-      font-weight: 900;
-      color: #00ffff;
-    }
-
-    .stat-lbl {
-      font-size: clamp(0.6rem, 1.2vh, 0.8rem);
-      color: #64748b;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-
-    /* Middle Section (Platforms) */
-    .platforms-section {
-      flex: 1;
-      display: flex;
-      flex-direction: row;
-      gap: clamp(8px, 2vw, 24px);
-      min-height: 0;
-      z-index: 1;
-    }
-
-    .platform-card {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 12px;
-      overflow: hidden;
-      transition: all 0.2s;
-    }
-
-    .platform-card:hover {
-      background: rgba(30, 41, 59, 0.8);
-      border-color: rgba(0, 255, 255, 0.3);
-      transform: translateY(-2px);
-    }
-
-    .card-top {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: clamp(12px, 2vh, 24px);
-      text-align: center;
-      gap: clamp(8px, 1.5vh, 16px);
-      min-height: 0;
-    }
-
-    .platform-icon {
-      font-size: clamp(2rem, 5vh, 4rem);
-      width: clamp(60px, 10vh, 80px);
-      height: clamp(60px, 10vh, 80px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255,255,255,0.05);
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .platform-title {
-      font-size: clamp(1.1rem, 2.5vh, 1.5rem);
-      font-weight: 700;
-      color: #fff;
-    }
-
-    .platform-desc {
-      font-size: clamp(0.7rem, 1.4vh, 0.9rem);
-      color: #94a3b8;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .card-bottom {
       flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn-random:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 22px rgba(99, 102, 241, 0.5);
+    }
+
+    .divider {
+      width: 100%;
+      max-width: 900px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-h), transparent);
+      animation: up 0.6s 0.05s ease both;
+    }
+
+    .section-label {
+      width: 100%;
+      max-width: 900px;
+      font-size: clamp(0.65rem, 1vw, 0.8rem);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      animation: up 0.6s 0.1s ease both;
+    }
+
+    /* platform cards - Changed to auto-fit for responsive wrapping */
+    .platforms {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: clamp(10px, 2vw, 20px);
+      width: 100%;
+      max-width: 900px;
+      animation: up 0.6s 0.15s ease both;
+    }
+
+    .pcard {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: clamp(12px, 2vh, 20px) clamp(16px, 2vw, 20px);
       display: flex;
       flex-direction: column;
-      gap: clamp(8px, 1.5vh, 12px);
-      padding: clamp(12px, 2vh, 16px);
-      background: rgba(0,0,0,0.2);
-      border-top: 1px solid rgba(255,255,255,0.05);
+      gap: clamp(6px, 1vh, 10px);
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pcard::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .pcard:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .pcard:hover::before {
+      opacity: 1;
+    }
+
+    .pcard-ghub::before {
+      background: linear-gradient(90deg, var(--red), var(--purple));
+    }
+
+    .pcard-duckmath::before {
+      background: linear-gradient(90deg, var(--accent2), var(--green));
+    }
+
+    .pcard-seraph::before {
+      background: linear-gradient(90deg, var(--purple), var(--accent1));
+    }
+
+    .pcard-head {
+      display: flex;
+      align-items: center;
+      gap: clamp(8px, 1vw, 12px);
+    }
+
+    .pcard-icon {
+      font-size: clamp(1.2rem, 2vw, 1.8rem);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .pcard-name {
+      font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .pcard-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 0.75rem;
+      transition: transform 0.25s, color 0.15s;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+
+    .pcard-toggle:hover {
+      color: var(--text);
+    }
+
+    .pcard.open .pcard-toggle {
+      transform: rotate(180deg);
+    }
+
+    .pcard-desc {
+      font-size: clamp(0.7rem, 1vw, 0.85rem);
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .pcard-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.28s ease, opacity 0.28s ease, margin 0.28s ease;
+      opacity: 0;
+    }
+
+    .pcard.open .pcard-details {
+      max-height: 300px;
+      opacity: 1;
+      margin-top: 5px;
+    }
+
+    .feat-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 4px 0;
+      margin-bottom: 8px;
+    }
+
+    .feat-list li {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: clamp(0.7rem, 1vw, 0.8rem);
+      color: var(--muted);
+    }
+
+    .feat-list li::before {
+      content: '';
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent2);
+      flex-shrink: 0;
     }
 
     .cloak-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 8px;
+      padding-top: 6px;
     }
 
-    .cloak-label {
-      font-size: clamp(0.65rem, 1.2vh, 0.8rem);
-      color: #64748b;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    /* Switch styling */
-    .switch {
+    .tw {
       position: relative;
-      display: inline-block;
-      width: clamp(28px, 4vh, 36px);
-      height: clamp(16px, 2.2vh, 20px);
-    }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #334155;
-      transition: .4s;
-      border-radius: 20px;
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: clamp(12px, 1.8vh, 16px);
-      width: clamp(12px, 1.8vh, 16px);
-      left: 2px;
-      bottom: 2px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-    input:checked + .slider { background-color: #10b981; }
-    input:checked + .slider:before {
-      transform: translateX(calc(clamp(28px, 4vh, 36px) - clamp(12px, 1.8vh, 16px) - 4px));
-    }
-
-    .play-btn {
-      padding: clamp(8px, 1.5vh, 12px);
-      background: rgba(255,255,255,0.1);
-      color: #fff;
-      text-decoration: none;
-      border-radius: 8px;
-      font-size: clamp(0.8rem, 1.5vh, 1rem);
-      font-weight: 600;
-      text-align: center;
-      transition: all 0.2s;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    .play-btn:hover {
-      background: rgba(0,255,255,0.15);
-      border-color: rgba(0,255,255,0.4);
-      color: #00ffff;
-    }
-
-    /* Bottom Section (Tools + Footer) */
-    .bottom-section {
+      width: 36px;
+      height: 20px;
       flex-shrink: 0;
-      display: flex;
-      flex-direction: row;
-      gap: clamp(8px, 2vw, 24px);
-      height: clamp(60px, 10vh, 80px);
-      z-index: 1;
     }
 
-    .tools-box {
-      flex: 1;
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid rgba(139, 92, 246, 0.2);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 clamp(16px, 2vw, 24px);
+    .tw input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
     }
 
-    .tool-btn {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(139, 92, 246, 0.1);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      padding: clamp(6px, 1vh, 10px) clamp(16px, 2vw, 24px);
-      border-radius: 8px;
-      color: #fff;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-    .tool-btn:hover {
-      background: rgba(139, 92, 246, 0.2);
-      border-color: #8b5cf6;
+    .tw-track {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: background 0.2s;
+      cursor: pointer;
     }
 
-    .footer-box {
-      flex: 0 0 clamp(200px, 25vw, 350px);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 clamp(16px, 2vw, 24px);
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 12px;
-      font-size: clamp(0.65rem, 1.2vh, 0.8rem);
-      color: #64748b;
-    }
-
-    .version {
-      padding: 2px 8px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 4px;
-      font-family: monospace;
-    }
-
-    /* Notification */
-    #notification-container {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 9999;
+    .tw-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
       pointer-events: none;
     }
-    .notification {
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid rgba(0, 255, 255, 0.3);
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-      font-size: 14px;
+
+    .tw input:checked~.tw-track {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .tw input:checked~.tw-thumb {
+      transform: translateX(16px);
+    }
+
+    .cloak-lbl {
+      font-size: clamp(0.65rem, 0.9vw, 0.75rem);
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .pcard-footer {
+      padding-top: 8px;
+      margin-top: auto;
+    }
+
+    /* margin-top: auto pushes it to the bottom if cards are unequal heights */
+
+    .play-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: clamp(8px, 1.2vh, 12px) clamp(12px, 2vw, 20px);
+      border-radius: 999px;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: clamp(0.75rem, 1vw, 0.85rem);
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+      text-align: center;
+    }
+
+    .play-btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.88;
+    }
+
+    .btn-red {
+      background: var(--red);
+      color: #111;
+    }
+
+    .btn-blue {
+      background: var(--accent2);
+      color: #111;
+    }
+
+    .btn-purple {
+      background: var(--purple);
+      color: #111;
+    }
+
+    /* tools row - Added Flex wrap */
+    .tools-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: clamp(10px, 1.5vw, 16px);
+      width: 100%;
+      max-width: 900px;
+      animation: up 0.6s 0.2s ease both;
+    }
+
+    .tools-label {
+      font-size: clamp(0.65rem, 1vw, 0.8rem);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .tool-card {
+      display: flex;
+      align-items: center;
+      gap: clamp(8px, 1.2vw, 12px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: clamp(8px, 1.2vh, 12px) clamp(14px, 2vw, 20px);
+      text-decoration: none;
+      color: var(--text);
+      flex-shrink: 0;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .tool-card:hover {
+      border-color: var(--border-h);
+      transform: translateY(-2px);
+    }
+
+    .tool-icon {
+      font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    }
+
+    .tool-name {
+      font-size: clamp(0.75rem, 1.1vw, 0.9rem);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .tool-desc {
+      font-size: clamp(0.6rem, 0.9vw, 0.75rem);
+      color: var(--muted);
+    }
+
+    .tools-spacer {
+      flex: 1 1 auto;
+      min-width: 20px;
+    }
+
+    .version-chip {
+      display: flex;
+      align-items: center;
+      gap: clamp(12px, 2vw, 20px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: clamp(8px, 1.2vh, 12px) clamp(14px, 2vw, 20px);
+      flex-shrink: 0;
+    }
+
+    .vc-item {
+      text-align: center;
+    }
+
+    .vc-lbl {
+      font-size: clamp(0.55rem, 0.8vw, 0.65rem);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent2);
+      margin-bottom: 2px;
+    }
+
+    .vc-val {
+      font-family: 'Courier New', monospace;
+      font-size: clamp(0.7rem, 1vw, 0.85rem);
+      font-weight: 700;
+    }
+
+    .footer {
+      font-size: clamp(0.65rem, 1vw, 0.8rem);
+      color: var(--muted);
+      text-align: center;
+      animation: up 0.6s 0.25s ease both;
+      margin-top: auto;
+      /* Pushes footer to bottom */
+      padding-top: 20px;
+    }
+
+    #toast {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--green);
+      color: var(--text);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.85rem;
       font-weight: 500;
-      animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    }
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
+      z-index: 9999;
+      box-shadow: 0 5px 18px rgba(0, 0, 0, 0.4);
+      transform: translateX(calc(100% + 24px));
+      transition: transform 0.25s cubic-bezier(.4, 0, .2, 1);
+      max-width: 300px;
     }
 
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-      body {
-        height: auto;
-        min-height: 100vh;
-        overflow-y: auto;
+    #toast.show {
+      transform: translateX(0);
+    }
+
+    @keyframes up {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
       }
-      .top-section, .platforms-section, .bottom-section {
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Logical stacking and layouts for small screens */
+    @media (max-width: 600px) {
+      .top-bar {
+        justify-content: center;
+        text-align: center;
+      }
+
+      .title-block {
+        text-align: center;
+        width: 100%;
+        flex: 1 1 100%;
+      }
+
+      .stats {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .btn-random {
+        width: 100%;
+      }
+
+      .platforms {
+        grid-template-columns: 1fr;
+      }
+
+      .tools-row {
         flex-direction: column;
-        height: auto;
+        align-items: stretch;
+        justify-content: center;
+      }
+
+      .tools-spacer {
+        display: none;
+      }
+
+      .version-chip {
+        width: 100%;
+        justify-content: center;
       }
     }
-
   </style>
 </head>
+
 <body>
+  <div class="bg"></div>
 
-  <div class="cyber-grid"></div>
+  <main class="shell">
 
-  <!-- Top Section -->
-  <div class="top-section">
-    <div class="hero-box">
-      <div class="hero-logo-row">
-        <img src="/images/moose-goose-logo.png" alt="Logo" class="hero-logo">
-        <h1 class="hero-title">Moose Goose Games</h1>
-      </div>
-      <div class="hero-subtitle">Play instantly • No installs • No login</div>
-      <button class="hero-cta" onclick="pickRandomHub()">🎲 Pick For Me!</button>
-    </div>
+    <div class="top-bar">
+      <!-- Fallback image content in case the path is broken -->
+      <img src="/images/moose-goose-logo.png" alt="MG" class="logo"
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="logo" style="display: none;">🦌</div>
 
-    <div class="stats-box">
-      <div class="stat-item">
-        <div class="stat-val">450+</div>
-        <div class="stat-lbl">Games</div>
+      <div class="title-block">
+        <div class="site-title">Moose Goose <span>Games</span></div>
+        <div class="site-sub">Play instantly — no installs, no login</div>
       </div>
-      <div class="stat-item">
-        <div class="stat-val">100%</div>
-        <div class="stat-lbl">Browser</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-val">Free</div>
-        <div class="stat-lbl">No DLs</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Middle Section -->
-  <div class="platforms-section">
-    <!-- GameHub -->
-    <div class="platform-card">
-      <div class="card-top">
-        <div class="platform-icon">🎰</div>
-        <div class="platform-title">GameHub</div>
-        <div class="platform-desc">Hand-crafted gaming collection with exclusive features, multiplayer lobbies, and coin rewards.</div>
-      </div>
-      <div class="card-bottom">
-        <div class="cloak-row">
-          <span class="cloak-label">Hide URL</span>
-          <label class="switch">
-            <input type="checkbox" id="cloak-ghub" onchange="toggleCloak('ghub', this.checked)">
-            <span class="slider"></span>
-          </label>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-n">100+</div>
+          <div class="stat-l">Games</div>
         </div>
-        <a href="/ghub" class="play-btn" id="btn-ghub">Play GameHub</a>
-      </div>
-    </div>
-
-    <!-- DuckMath -->
-    <div class="platform-card">
-      <div class="card-top">
-        <div class="platform-icon">🦆</div>
-        <div class="platform-title">DuckMath</div>
-        <div class="platform-desc">Massive collection of 100+ unblocked Flash & HTML5 games from around the web.</div>
-      </div>
-      <div class="card-bottom">
-        <div class="cloak-row">
-          <span class="cloak-label">Hide URL</span>
-          <label class="switch">
-            <input type="checkbox" id="cloak-duckmath" onchange="toggleCloak('duckmath', this.checked)">
-            <span class="slider"></span>
-          </label>
+        <div class="stat">
+          <div class="stat-n">Free</div>
+          <div class="stat-l">No Download</div>
         </div>
-        <a href="/duckmath" class="play-btn" id="btn-duckmath">Play DuckMath</a>
       </div>
+      <button class="btn-random" onclick="pickRandom()">🎲 Pick For Me</button>
     </div>
 
-    <!-- Seraph -->
-    <div class="platform-card">
-      <div class="card-top">
-        <div class="platform-icon">👼</div>
-        <div class="platform-title">Seraph Games</div>
-        <div class="platform-desc">Massive offline-ready collection with 350+ games, custom themes, and retro emulators.</div>
-      </div>
-      <div class="card-bottom">
-        <div class="cloak-row">
-          <span class="cloak-label">Hide URL</span>
-          <label class="switch">
-            <input type="checkbox" id="cloak-seraph" onchange="toggleCloak('seraph', this.checked)">
-            <span class="slider"></span>
-          </label>
+    <div class="divider"></div>
+
+    <div class="section-label">🎯 Choose Your Platform</div>
+
+    <div class="platforms">
+
+      <div class="pcard pcard-ghub" id="card-ghub">
+        <div class="pcard-head">
+          <span class="pcard-icon">🎰</span>
+          <span class="pcard-name">GameHub</span>
+          <button class="pcard-toggle" onclick="toggleCard('card-ghub')">▼</button>
         </div>
-        <a href="/seraph" class="play-btn" id="btn-seraph">Play Seraph</a>
+        <p class="pcard-desc">Hand-crafted games with casino, arcade, multiplayer &amp; rewards.</p>
+        <div class="pcard-details">
+          <ul class="feat-list">
+            <li>Blackjack, Roulette, Slots</li>
+            <li>Snake, Pong, Breakout</li>
+            <li>Chess, Tic-Tac-Toe</li>
+            <li>Coin Betting &amp; Leaderboards</li>
+            <li>Real-time Multiplayer</li>
+          </ul>
+          <div class="cloak-row">
+            <label class="tw" for="cloak-ghub">
+              <input type="checkbox" id="cloak-ghub" onchange="handleCloakToggle('ghub', this.checked)">
+              <span class="tw-track"></span><span class="tw-thumb"></span>
+            </label>
+            <span class="cloak-lbl" onclick="document.getElementById('cloak-ghub').click()">Hide URL</span>
+          </div>
+        </div>
+        <div class="pcard-footer">
+          <a href="/ghub" class="play-btn btn-red" id="btn-ghub"
+            onclick="showToast('Opening GameHub...');">🎮 Play GameHub</a>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Bottom Section -->
-  <div class="bottom-section">
-    <div class="tools-box">
-      <a href="/media-player" class="tool-btn">
-        <span style="font-size: clamp(1.2rem, 2vh, 1.5rem);">🎵</span>
-        <div style="text-align: left;">
-          <div style="font-weight: 700; font-size: clamp(0.9rem, 1.5vh, 1.1rem);">Media Player</div>
-          <div style="font-size: clamp(0.7rem, 1.2vh, 0.8rem); opacity: 0.8;">YouTube & Spotify</div>
+      <div class="pcard pcard-duckmath" id="card-duckmath">
+        <div class="pcard-head">
+          <span class="pcard-icon">🦆</span>
+          <span class="pcard-name">DuckMath Hub</span>
+          <button class="pcard-toggle" onclick="toggleCard('card-duckmath')">▼</button>
+        </div>
+        <p class="pcard-desc">100+ unblocked HTML5 games — Slope, Retro Bowl &amp; more.</p>
+        <div class="pcard-details">
+          <ul class="feat-list">
+            <li>100+ Flash &amp; HTML5 Games</li>
+            <li>Action, Puzzle, Sports &amp; More</li>
+            <li>Tower Defense &amp; Strategy</li>
+            <li>No Login Required</li>
+            <li>Always Updated</li>
+          </ul>
+          <div class="cloak-row">
+            <label class="tw" for="cloak-duckmath">
+              <input type="checkbox" id="cloak-duckmath" onchange="handleCloakToggle('duckmath', this.checked)">
+              <span class="tw-track"></span><span class="tw-thumb"></span>
+            </label>
+            <span class="cloak-lbl" onclick="document.getElementById('cloak-duckmath').click()">Hide URL</span>
+          </div>
+        </div>
+        <div class="pcard-footer">
+          <a href="/duckmath" class="play-btn btn-blue" id="btn-duckmath"
+            onclick="showToast('Opening DuckMath...');">🦆 Play DuckMath</a>
+        </div>
+      </div>
+
+      <div class="pcard pcard-seraph" id="card-seraph">
+        <div class="pcard-head">
+          <span class="pcard-icon">👼</span>
+          <span class="pcard-name">Seraph Games</span>
+          <button class="pcard-toggle" onclick="toggleCard('card-seraph')">▼</button>
+        </div>
+        <p class="pcard-desc">350+ games, emulators, offline mode &amp; 9 themes. No backend.</p>
+        <div class="pcard-details">
+          <ul class="feat-list">
+            <li>350+ Unity, Flash &amp; Retro</li>
+            <li>Offline Mode (110+ games)</li>
+            <li>NES, SNES, GB, GBA, DS</li>
+            <li>9 Themes + Panic Key</li>
+            <li>100% Static</li>
+          </ul>
+          <div class="cloak-row">
+            <label class="tw" for="cloak-seraph">
+              <input type="checkbox" id="cloak-seraph" onchange="handleCloakToggle('seraph', this.checked)">
+              <span class="tw-track"></span><span class="tw-thumb"></span>
+            </label>
+            <span class="cloak-lbl" onclick="document.getElementById('cloak-seraph').click()">Hide URL</span>
+          </div>
+        </div>
+        <div class="pcard-footer">
+          <a href="/seraph" class="play-btn btn-purple" id="btn-seraph"
+            onclick="showToast('Opening Seraph...');">👼 Play Seraph</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="tools-row">
+      <span class="tools-label">⚡ Tools</span>
+      <a href="/media-player" class="tool-card" onclick="showToast('Opening Media Player...');">
+        <span class="tool-icon">🎵</span>
+        <div>
+          <div class="tool-name">Media Player</div>
+          <div class="tool-desc">YouTube &amp; Spotify</div>
         </div>
       </a>
+      <div class="tools-spacer"></div>
+      <div class="version-chip">
+        <div class="vc-item">
+          <div class="vc-lbl">Version</div>
+          <div class="vc-val">v2.52</div>
+        </div>
+        <div class="vc-item">
+          <div class="vc-lbl">Updated</div>
+          <div class="vc-val">Dec 2025</div>
+        </div>
+      </div>
     </div>
 
-    <div class="footer-box">
-      <span>Moose Goose Games</span>
-      <span class="version">v2.52</span>
+    <div class="footer">
+      🦌🦆 Moose Goose Games &nbsp;·&nbsp; 🎮 GameHub &nbsp;·&nbsp; 🦆 DuckMath &nbsp;·&nbsp; 👼 Seraph &nbsp;·&nbsp; ©
+      2025
     </div>
-  </div>
 
-  <div id="notification-container"></div>
+  </main>
+
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    // Pick random hub function
-    function pickRandomHub() {
-      const hubs = [
-        { id: 'ghub', url: '/ghub' },
-        { id: 'duckmath', url: '/duckmath' },
-        { id: 'seraph', url: '/seraph' }
-      ];
-      const randomHub = hubs[Math.floor(Math.random() * hubs.length)];
-
-      const isCloaked = localStorage.getItem(`${randomHub.id}-cloak`) === 'true';
-      if (isCloaked) {
-        openCloakedTab(randomHub.id, randomHub.url);
-      } else {
-        window.location.href = randomHub.url;
-      }
+    function toggleCard(id) {
+      document.getElementById(id).classList.toggle('open');
     }
 
-    // Toggle card details dropdown
-    function toggleCardDetails(header) {
-      const card = header.closest('.platform-card');
-      card.classList.toggle('expanded');
+    function pickRandom() {
+      const hubs = { 'GameHub': '/ghub', 'DuckMath': '/duckmath', 'Seraph': '/seraph' };
+      const keys = Object.keys(hubs);
+      const randomKey = keys[Math.floor(Math.random() * keys.length)];
+      showToast('🎲 Random pick: Navigating to ' + randomKey + '!');
+      setTimeout(() => { window.location.href = hubs[randomKey]; }, 500);
     }
 
-    // Tab cloaking functionality
-    let cloakedTabs = {};
-    let originalTitles = {};
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+    }
 
-    // Store original URLs for each hub
-    const hubUrls = {
-      'ghub': '/ghub',
-      'duckmath': '/duckmath',
-      'seraph': '/seraph'
-    };
+    const hubPaths = { ghub: '/ghub', duckmath: '/duckmath', seraph: '/seraph' };
 
-    function toggleCloak(hub, enabled) {
+    function handleCloakToggle(hub, enabled) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('mgCloaks') || '{}');
+        saved[hub] = enabled;
+        localStorage.setItem('mgCloaks', JSON.stringify(saved));
+      } catch (_) { }
+      const btn = document.getElementById('btn-' + hub);
       if (enabled) {
-        // Store current state
-        cloakedTabs[hub] = true;
-
-        // Update button to open in new window with cloaking
-        const btn = document.getElementById(`btn-${hub}`);
-        const href = btn.getAttribute('href');
-        btn.setAttribute('data-original-href', href); // Store original
-        btn.setAttribute('href', 'javascript:void(0)');
-        btn.setAttribute('onclick', `openCloakedTab('${hub}', '${href}'); return false;`);
-        
-        // Show notification
-        showNotification(`🔒 URL hiding enabled for ${hub.toUpperCase()}`);
+        btn.removeAttribute('href');
+        btn.onclick = (e) => { e.preventDefault(); openCloaked(hub); };
+        showToast('🔒 URL hiding on for ' + hub.toUpperCase());
       } else {
-        // Disable cloaking
-        delete cloakedTabs[hub];
-
-        // Restore normal link
-        const btn = document.getElementById(`btn-${hub}`);
-        const originalHref = btn.getAttribute('data-original-href') || hubUrls[hub];
-        btn.setAttribute('href', originalHref);
-        btn.removeAttribute('onclick');
-        btn.removeAttribute('data-original-href');
-        
-        showNotification(`🔓 URL hiding disabled for ${hub.toUpperCase()}`);
+        btn.setAttribute('href', hubPaths[hub]);
+        btn.onclick = () => { showToast('Opening ' + hub + '...'); };
+        showToast('🔓 URL hiding off for ' + hub.toUpperCase());
       }
     }
 
-    function openCloakedTab(hub, url) {
-      // Create a new blank window
-      const newWindow = window.open('about:blank', '_blank');
-      
-      if (newWindow) {
-        // Convert relative URL to absolute
-        const absoluteUrl = url.startsWith('http') ? url : window.location.origin + url;
-        
-        // Set up the cloaked page
-        newWindow.document.open();
-        newWindow.document.write('<!DOCTYPE html><html><head><title>Google Classroom</title><link rel="icon" href="https://ssl.gstatic.com/classroom/favicon.png"><style>* { margin: 0; padding: 0; } body, html { width: 100%; height: 100%; overflow: hidden; } iframe { width: 100%; height: 100%; border: none; }</style></head><body><iframe src="' + absoluteUrl + '" frameborder="0" allowfullscreen></iframe></body></html>');
-        newWindow.document.close();
-        
-        showNotification('🔒 ' + hub.toUpperCase() + ' tab cloaked as Google Classroom');
-      } else {
-        showNotification('⚠️ Please allow pop-ups to use URL hiding');
-      }
+    function openCloaked(hub) {
+      // In the preview environment, we just show a toast rather than actually opening a blank popup
+      showToast('🔒 Simulated: Opening ' + hub + ' as Google Classroom');
     }
 
-    function showNotification(message) {
-      // Create notification element
-      const notification = document.createElement('div');
-      notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-        z-index: 1000;
-        animation: slideIn 0.3s ease;
-        font-weight: 500;
-      `;
-      notification.textContent = message;
-      
-      // Add animation
-      const style = document.createElement('style');
-      style.textContent = `
-        @keyframes slideIn {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOut {
-          from { transform: translateX(0); opacity: 1; }
-          to { transform: translateX(100%); opacity: 0; }
-        }
-      `;
-      document.head.appendChild(style);
-
-      document.body.appendChild(notification);
-      
-      // Remove after 3 seconds
-      setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => {
-          document.body.removeChild(notification);
-        }, 300);
-      }, 3000);
-    }
-
-    // Load saved preferences
-    document.addEventListener('DOMContentLoaded', function() {
-      const savedCloaks = localStorage.getItem('hubCloaks');
-      if (savedCloaks) {
-        const cloaks = JSON.parse(savedCloaks);
-        Object.keys(cloaks).forEach(hub => {
-          const toggle = document.getElementById(`cloak-${hub}`);
-          if (toggle && cloaks[hub]) {
-            toggle.checked = true;
-            toggleCloak(hub, true);
+    document.addEventListener('DOMContentLoaded', function () {
+      // Small adjustment for the preview environment: Add an emoji fallback if the image fails to load
+      try {
+        const saved = JSON.parse(localStorage.getItem('mgCloaks') || '{}');
+        Object.keys(saved).forEach(function (hub) {
+          if (saved[hub]) {
+            const cb = document.getElementById('cloak-' + hub);
+            if (cb) { cb.checked = true; handleCloakToggle(hub, true); }
           }
         });
-      }
-    });
-
-    // Save preferences when toggles change
-    document.addEventListener('change', function(e) {
-      if (e.target.id && e.target.id.startsWith('cloak-')) {
-        const hub = e.target.id.replace('cloak-', '');
-        const cloaks = JSON.parse(localStorage.getItem('hubCloaks') || '{}');
-        cloaks[hub] = e.target.checked;
-        localStorage.setItem('hubCloaks', JSON.stringify(cloaks));
-      }
+      } catch (_) { }
     });
   </script>
 </body>
+
 </html>

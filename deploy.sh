@@ -168,13 +168,24 @@ timeout 300 npm install || {
 }
 
 ##############################################
-# Step 7/10: Create/Update .env
+# Step 7/10: Create/Update .env (Preserving existing)
 ##############################################
-echo -e "${GREEN}📝 Step 7/10: Creating environment file...${NC}"
-cat > .env << EOL
+echo -e "${GREEN}📝 Step 7/10: Configuring environment file...${NC}"
+if [ ! -f ".env" ]; then
+    echo -e "${YELLOW}   Creating new .env file...${NC}"
+    cat > .env << EOL
 PORT=3000
 NODE_ENV=production
+# SPOTIFY_CLIENT_ID=
+# SPOTIFY_CLIENT_SECRET=
 EOL
+else
+    echo -e "${GREEN}   ✅ Existing .env found, preserving content${NC}"
+fi
+
+# Set strict permissions (Read/Write only for owner)
+chmod 600 .env
+echo -e "${GREEN}   ✅ .env file permissions set to 600 (Private)${NC}"
 
 ##############################################
 # Step 8/10: Configure Nginx

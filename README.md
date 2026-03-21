@@ -1,56 +1,38 @@
-# 🎮 Gaming Hub Platform
+## 🚀 Easy Deployment
 
-A unified gaming platform hosting three major game hubs with 200+ games total.
+### 1. 🏁 Windows (Personal PC)
+Best for local play or a Windows-based server.
+```powershell
+# In PowerShell, run this first:
+.\setup-windows.ps1
 
-## 📊 Current Status
-
-> **Note:** After setup, check [SETUP-STATUS.md](./SETUP-STATUS.md) for detailed status of all components.
-
-| Component | Status | Details |
-|-----------|--------|---------|
-| **GameHub** | ✅ **FULLY WORKING** | All 16 custom games functional |
-| **DuckMath** | ✅ Working | Educational games hub |
-| **Seraph** | ✅ Working | 350+ offline games |
-
-**Quick Summary:**
-- ✅ **16 custom games ready to play** at `/ghub`
-- ✅ DuckMath educational games at `/duckmath`
-- ✅ Seraph with 350+ games at `/seraph`
-
-## 🚀 Quick Start (Localhost)
-
-### Prerequisites
-- **Node.js** (v14+)
-- **npm**
-- **Git**
-
-### Setup & Start
-
-Run the universal setup script (works on Windows & Linux):
-
-```bash
-# Automated setup with all repositories
-node setup-localhost.js --start
-
-# Or setup without auto-start
-node setup-localhost.js
-```
-
-This will:
-- ✅ Install all dependencies
-- ✅ Setup DuckMath and Seraph hubs
-- ✅ Build all required projects
-- ✅ Start the server on http://localhost:3000
-
-### Manual Start
-
-If you've already run setup:
-
-```bash
+# Then start the hub:
 npm start
 ```
 
-Access at: **http://localhost:3000**
+### 2. 🐧 Linux / Universal (Cloud VPS/Server)
+Best for any Ubuntu, Debian, or other Linux server.
+```bash
+# Automated install for Nginx, SSL, and Hub:
+bash deploy.sh
+```
+
+### 3. 🖥️ Console-Only VM (Quickly Setup .env)
+If you are on a terminal-only server and need to quickly create your config file:
+```bash
+# Copy the template and edit with nano:
+cp .env.example .env && nano .env
+
+# OR use this one-liner to fill it directly:
+cat > .env << EOL
+PORT=3000
+NODE_ENV=production
+SPOTIFY_CLIENT_ID=your_id
+SPOTIFY_CLIENT_SECRET=your_secret
+EOL
+```
+
+Access at: **http://localhost:3000** (or your domain if on a server).
 
 ---
 
@@ -62,65 +44,29 @@ Access at: **http://localhost:3000**
 **Features:**
 - 16 custom-built games
 - Casino games (Blackjack, Roulette, Slots)
-- Classic arcade (Snake, Pong, Breakout)
+- Classic arcade (Snake, Pong)
 - Multiplayer games (Chess, Tic-Tac-Toe)
 - Coin betting & rewards system
 - User accounts & leaderboards
-- Real-time multiplayer lobbies
-
-**Credits:** Original development by Lackstress
 
 ---
 
 ### 2. **DuckMath Hub**
 **Route:** `/duckmath`
 
-**Features:**
-- 100+ Flash & HTML5 games
-- Action, puzzle, sports & more
-- Popular titles: Slope, Retro Bowl, Cookie Clicker
-- Tower defense & strategy games
-- No login required
-
-**Credits:** [DuckMath Games](https://github.com/DuckMathGames/duckmath)
-
 ---
 
 ### 3. **Seraph Games**
 **Route:** `/seraph`
 
-**Features:**
-- 350+ offline-ready games
-- Emulators for classic consoles
-- No ads or tracking
-- Works offline
+---
 
-**Credits:** [Seraph](https://github.com/Lackstress/seraph)
+## 📝 Configuration
+
+- **Port:** Default is 3000. Change it in your `.env` file.
+- **Secrets:** Keep your Spotify and session keys in `.env`. These are never served to the web.
+- **Database:** Local SQLite database is stored in `database/games.db`.
 
 ---
 
-## 🌐 Production Deployment
-
-For domain deployment, use the existing script:
-
-```bash
-./quick-deploy.sh
-```
-
-This handles:
-- Nginx configuration
-- SSL/TLS setup
-- Domain routing
-- Production optimizations
-
----
-
-## 📝 Notes
-
-- **Localhost only:** Use `setup-localhost.js` for local development
-- **Production:** Use `quick-deploy.sh` for domain deployment
-- **Port:** Default is 3000, change with `PORT=8080 npm start`
-
----
-
-**Enjoy gaming! 🎉**
+**Enjoy gaming! 🎉**
