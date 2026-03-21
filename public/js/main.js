@@ -90,6 +90,11 @@ function showLoginModal() {
   const modal = document.getElementById('authModal');
   const content = document.getElementById('modalContent');
 
+  if (!modal || !content) {
+    showNotification('Login dialog is unavailable on this page.', 'error');
+    return;
+  }
+
   content.innerHTML = `
     <div class="auth-form">
       <h2>Login</h2>
@@ -99,6 +104,7 @@ function showLoginModal() {
         <button type="submit" class="btn">Login</button>
       </form>
       <button onclick="showRegisterModal()" class="btn secondary">Create Account</button>
+      <button onclick="loginAsGuest(); closeModal();" class="btn secondary">Play as Guest</button>
       <button onclick="closeModal()" class="btn secondary">Close</button>
     </div>
   `;
@@ -112,6 +118,11 @@ function showRegisterModal() {
   const modal = document.getElementById('authModal');
   const content = document.getElementById('modalContent');
 
+  if (!modal || !content) {
+    showNotification('Registration dialog is unavailable on this page.', 'error');
+    return;
+  }
+
   content.innerHTML = `
     <div class="auth-form">
       <h2>Create Account</h2>
@@ -121,7 +132,8 @@ function showRegisterModal() {
         <input type="password" id="regConfirm" placeholder="Confirm Password" required />
         <button type="submit" class="btn">Register</button>
       </form>
-      <button onclick="showLoginModal()" class="btn secondary">Already have account?</button>
+      <button onclick="showLoginModal()" class="btn secondary">Login Instead</button>
+      <button onclick="loginAsGuest(); closeModal();" class="btn secondary">Play as Guest</button>
       <button onclick="closeModal()" class="btn secondary">Close</button>
     </div>
   `;
@@ -326,12 +338,15 @@ function updateUI() {
 
 // Modal management
 function closeModal() {
-  document.getElementById('authModal').style.display = 'none';
+  const modal = document.getElementById('authModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
 }
 
 window.addEventListener('click', (event) => {
   const modal = document.getElementById('authModal');
-  if (event.target === modal) {
+  if (modal && event.target === modal) {
     closeModal();
   }
 });

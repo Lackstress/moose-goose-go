@@ -34,6 +34,17 @@
     }
     .hero { padding: 1.2rem; margin-bottom: 1rem; }
     .hero-top { display: flex; gap: 1rem; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .hero-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end; }
+    .auth-strip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 0.55rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+    }
     h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.4rem); letter-spacing: -0.04em; }
     .subtitle { margin: 0.4rem 0 0; color: var(--muted); line-height: 1.6; max-width: 70ch; }
     .pills { display: flex; gap: 0.6rem; flex-wrap: wrap; }
@@ -100,10 +111,13 @@
           <h1>Tic Tac Toe</h1>
           <p class="subtitle">Local hot-seat play plus real room and matchmaking support over the repo's existing socket flow.</p>
         </div>
-        <div class="pills">
-          <div class="pill">Mode: <strong id="modeLabel">Local</strong></div>
-          <div class="pill">Turn: <strong id="turnLabel">X</strong></div>
-          <div class="pill">Room: <strong id="roomLabel">None</strong></div>
+        <div class="hero-actions">
+          <div id="authSection" class="auth-strip"></div>
+          <div class="pills">
+            <div class="pill">Mode: <strong id="modeLabel">Local</strong></div>
+            <div class="pill">Turn: <strong id="turnLabel">X</strong></div>
+            <div class="pill">Room: <strong id="roomLabel">None</strong></div>
+          </div>
         </div>
       </div>
     </header>
@@ -268,8 +282,15 @@
       const authSection = document.getElementById('authSection');
       if (!authSection) return;
       authSection.innerHTML = currentUser
-        ? `<div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>`
-        : '<button onclick="showLoginModal()" class="btn">Login</button>';
+        ? `
+          <div class="user-info"><span>👤 ${currentUser.username}</span><span class="coins">💰 ${userCoins}</span></div>
+          <button onclick="logout(); setTimeout(updateAuthUI, 0);" class="btn secondary">Logout</button>
+        `
+        : `
+          <button onclick="showLoginModal()" class="btn">Login</button>
+          <button onclick="showRegisterModal()" class="btn secondary">Register</button>
+          <button onclick="loginAsGuest(); updateAuthUI();" class="btn secondary">Guest</button>
+        `;
     }
 
     function startLocalGame(silent = false) {
@@ -355,8 +376,8 @@
     }
 
     function ensureLoggedIn() {
-      if (currentUser) return true;
-      showNotification('Login is required for rooms and matchmaking.', 'error');
+      if (currentUser && !isGuest) return true;
+      showNotification(isGuest ? 'Guest accounts cannot use multiplayer. Log in or register first.' : 'Login is required for rooms and matchmaking.', 'error');
       showLoginModal();
       return false;
     }

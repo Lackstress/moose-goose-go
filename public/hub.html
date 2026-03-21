@@ -596,12 +596,15 @@
         authSection.innerHTML = `
           <span class="user-chip">👤 ${currentUser.username}</span>
           <span class="coin-chip">💰 ${typeof userCoins !== 'undefined' ? userCoins : 0}</span>
+          <button class="filter-chip" type="button" onclick="logout(); setTimeout(syncAuthUI, 0)">Logout</button>
         `;
         return;
       }
 
       authSection.innerHTML = `
         <button class="filter-chip active" type="button" onclick="showLoginModal()">Login</button>
+        <button class="filter-chip" type="button" onclick="showRegisterModal()">Register</button>
+        <button class="filter-chip" type="button" onclick="loginAsGuest(); setTimeout(syncAuthUI, 0)">Guest</button>
       `;
     }
 
