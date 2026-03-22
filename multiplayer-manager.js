@@ -299,6 +299,8 @@ class MultiplayerManager {
     delete player2.matchmaking;
     player1.roomId = roomId;
     player2.roomId = roomId;
+    this.players.set(player1.socketId, { ...this.players.get(player1.socketId), ...player1, matchmaking: false, roomId });
+    this.players.set(player2.socketId, { ...this.players.get(player2.socketId), ...player2, matchmaking: false, roomId });
 
     // Join sockets to room
     this.io.sockets.sockets.get(player1.socketId)?.join(roomId);
@@ -306,8 +308,8 @@ class MultiplayerManager {
 
     // Notify players
     const sanitizedRoom = this.sanitizeRoomForClient(room);
-    this.io.to(player1.socketId).emit('match-found', { room: sanitizedRoom, opponent: player2 });
-    this.io.to(player2.socketId).emit('match-found', { room: sanitizedRoom, opponent: player1 });
+    this.io.to(player1.socketId).emit('match-found', { room: sanitizedRoom, roomId, opponent: player2 });
+    this.io.to(player2.socketId).emit('match-found', { room: sanitizedRoom, roomId, opponent: player1 });
 
     // Start the game
     this.startGame(roomId);

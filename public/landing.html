@@ -19,17 +19,17 @@
     }
 
     :root {
-      --bg: #06090f;
-      --surface: rgba(255, 255, 255, 0.04);
-      --surface2: rgba(255, 255, 255, 0.07);
-      --border: rgba(255, 255, 255, 0.07);
-      --border-h: rgba(99, 179, 237, 0.3);
+      --bg: #050816;
+      --surface: rgba(15, 23, 42, 0.64);
+      --surface2: rgba(30, 41, 59, 0.82);
+      --border: rgba(148, 163, 184, 0.12);
+      --border-h: rgba(96, 165, 250, 0.42);
       --text: #eef2ff;
-      --muted: rgba(180, 195, 225, 0.5);
-      --accent1: #6366f1;
+      --muted: rgba(191, 219, 254, 0.6);
+      --accent1: #7c3aed;
       --accent2: #38bdf8;
-      --red: #f87171;
-      --green: #34d399;
+      --red: #fb7185;
+      --green: #22c55e;
       --purple: #a78bfa;
       --font: 'Outfit', sans-serif;
       --r: 12px;
@@ -52,10 +52,10 @@
       z-index: -1;
       /* Push to back */
       background:
-        radial-gradient(ellipse 60% 50% at 15% 20%, rgba(99, 102, 241, 0.14) 0%, transparent 65%),
-        radial-gradient(ellipse 50% 50% at 85% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 65%),
-        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(167, 139, 250, 0.06) 0%, transparent 60%),
-        #06090f;
+        radial-gradient(ellipse 60% 50% at 15% 20%, rgba(124, 58, 237, 0.18) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 50% at 85% 80%, rgba(56, 189, 248, 0.16) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(34, 197, 94, 0.08) 0%, transparent 60%),
+        linear-gradient(180deg, #030712 0%, #050816 100%);
     }
 
     .bg::before {
@@ -826,8 +826,43 @@
     }
 
     function openCloaked(hub) {
-      // In the preview environment, we just show a toast rather than actually opening a blank popup
-      showToast('🔒 Simulated: Opening ' + hub + ' as Google Classroom');
+      const targetPath = hubPaths[hub];
+      if (!targetPath) return;
+
+      const popup = window.open('about:blank', '_blank');
+      if (!popup) {
+        showToast('Popup blocked. Opening ' + hub.toUpperCase() + ' normally.');
+        window.location.href = targetPath;
+        return;
+      }
+
+      const cloakProfiles = {
+        ghub: { title: 'Classes', icon: 'https://ssl.gstatic.com/classroom/favicon.png' },
+        duckmath: { title: 'Assignments', icon: 'https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png' },
+        seraph: { title: 'Google Drive', icon: 'https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png' }
+      };
+      const profile = cloakProfiles[hub] || cloakProfiles.ghub;
+      const escapedTitle = profile.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const targetUrl = new URL(targetPath, window.location.origin).toString();
+
+      popup.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapedTitle}</title>
+  <link rel="icon" href="${profile.icon}">
+  <style>
+    html, body { margin: 0; height: 100%; background: #0f172a; }
+    iframe { width: 100%; height: 100%; border: 0; display: block; background: #0f172a; }
+  </style>
+</head>
+<body>
+  <iframe src="${targetUrl}" allowfullscreen referrerpolicy="no-referrer"></iframe>
+</body>
+</html>`);
+      popup.document.close();
+      showToast('🔒 URL hiding on for ' + hub.toUpperCase());
     }
 
     document.addEventListener('DOMContentLoaded', function () {
