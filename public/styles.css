@@ -678,11 +678,13 @@ main {
 }
 
 .btn.secondary {
-  background: #6b7280;
+  background: linear-gradient(135deg, rgba(51, 65, 85, 0.96), rgba(71, 85, 105, 0.96));
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.32);
 }
 
 .btn.secondary:hover {
-  background: #4b5563;
+  background: linear-gradient(135deg, rgba(71, 85, 105, 1), rgba(51, 65, 85, 1));
 }
 
 .btn.small {
@@ -708,12 +710,16 @@ main {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(5px);
+  background:
+    radial-gradient(circle at top, rgba(99, 102, 241, 0.18), transparent 30%),
+    rgba(2, 6, 23, 0.82);
+  backdrop-filter: blur(10px);
 }
 
 .modal-content {
-  background-color: white;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.94));
+  color: #e5eefc;
   margin: 3% auto;
   padding: 2rem;
   border-radius: 16px;
@@ -724,6 +730,7 @@ main {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   animation: slideIn 0.3s ease-out;
   position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.22);
 }
 
 /* Larger modal for create server */
@@ -753,33 +760,65 @@ main {
 
 .close:hover,
 .close:focus {
-  color: #000;
+  color: #fff;
 }
 
 /* Auth Form */
+.auth-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-form-header {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.auth-kicker {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #93c5fd;
+  font-weight: 700;
+}
+
 .auth-form h2 {
-  margin-bottom: 1.5rem;
-  color: var(--primary);
+  margin-bottom: 0;
+  color: #f8fafc;
+  font-size: clamp(1.8rem, 3vw, 2.2rem);
+}
+
+.auth-form-header p {
+  color: #94a3b8;
+  line-height: 1.6;
 }
 
 .auth-form form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-bottom: 1rem;
+}
+
+.auth-form label {
+  color: #cbd5e1;
+  font-weight: 600;
+  font-size: 0.92rem;
 }
 
 .auth-form input {
   padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 12px;
   font-size: 1rem;
   transition: border-color 0.3s;
+  background: rgba(15, 23, 42, 0.9);
+  color: #f8fafc;
 }
 
 .auth-form input:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
 }
 
 .auth-form button {
@@ -787,24 +826,56 @@ main {
   margin-bottom: 0.5rem;
 }
 
+.auth-form button.loading,
+.auth-form button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+  transform: none;
+}
+
+.auth-feedback {
+  display: none;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.auth-feedback.show {
+  display: block;
+}
+
+.auth-feedback.error {
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+
+.auth-feedback.success {
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  color: #bbf7d0;
+}
+
 /* Notifications */
 .notification-container {
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 9999;
+  z-index: 11000;
   max-width: 400px;
   pointer-events: none;
 }
 
 .notification {
-  background: white;
-  color: #1f2937;
+  background: rgba(15, 23, 42, 0.96);
+  color: #f8fafc;
   padding: 1rem 1.5rem;
   border-radius: 12px;
   margin-bottom: 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   border-left: 4px solid var(--primary);
+  border: 1px solid rgba(148, 163, 184, 0.18);
   animation: slideInRight 0.3s ease-out;
   font-weight: 500;
   font-size: 0.95rem;
@@ -814,26 +885,26 @@ main {
 
 .notification.success {
   border-left-color: var(--success);
-  background: #f0fdf4;
-  color: #166534;
+  background: rgba(6, 78, 59, 0.95);
+  color: #d1fae5;
 }
 
 .notification.error {
   border-left-color: var(--danger);
-  background: #fef2f2;
-  color: #991b1b;
+  background: rgba(127, 29, 29, 0.95);
+  color: #fee2e2;
 }
 
 .notification.warning {
   border-left-color: var(--warning);
-  background: #fffbeb;
-  color: #92400e;
+  background: rgba(120, 53, 15, 0.95);
+  color: #fef3c7;
 }
 
 .notification.info {
   border-left-color: var(--accent-blue);
-  background: #eff6ff;
-  color: #1e40af;
+  background: rgba(30, 41, 59, 0.95);
+  color: #dbeafe;
 }
 
 .notification.fade-out {
@@ -1509,4 +1580,3 @@ html {
     height: 90vh;
   }
 }
-

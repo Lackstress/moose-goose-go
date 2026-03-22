@@ -6,6 +6,16 @@ let socket = null;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
 
+function emitAuthStateChanged() {
+  document.dispatchEvent(new CustomEvent('auth-state-changed', {
+    detail: {
+      currentUser,
+      userCoins,
+      isGuest
+    }
+  }));
+}
+
 // Initialize socket connection with reconnection logic
 function initializeSocket() {
   try {
@@ -97,9 +107,16 @@ function showLoginModal() {
 
   content.innerHTML = `
     <div class="auth-form">
-      <h2>Login</h2>
+      <div class="auth-form-header">
+        <span class="auth-kicker">Account access</span>
+        <h2>Login</h2>
+        <p>Jump back into multiplayer, saved coins, and your last session.</p>
+      </div>
+      <div id="authFeedback" class="auth-feedback" aria-live="polite"></div>
       <form id="loginForm">
+        <label for="loginUsername">Username</label>
         <input type="text" id="loginUsername" placeholder="Username" required />
+        <label for="loginPassword">Password</label>
         <input type="password" id="loginPassword" placeholder="Password" required />
         <button type="submit" class="btn">Login</button>
       </form>
@@ -125,10 +142,18 @@ function showRegisterModal() {
 
   content.innerHTML = `
     <div class="auth-form">
-      <h2>Create Account</h2>
+      <div class="auth-form-header">
+        <span class="auth-kicker">New player</span>
+        <h2>Create Account</h2>
+        <p>Keep your balance, unlock multiplayer, and sync your progress across games.</p>
+      </div>
+      <div id="authFeedback" class="auth-feedback" aria-live="polite"></div>
       <form id="registerForm">
+        <label for="regUsername">Username</label>
         <input type="text" id="regUsername" placeholder="Username" required />
+        <label for="regPassword">Password</label>
         <input type="password" id="regPassword" placeholder="Password (min 6 chars)" minlength="6" required />
+        <label for="regConfirm">Confirm Password</label>
         <input type="password" id="regConfirm" placeholder="Confirm Password" required />
         <button type="submit" class="btn">Register</button>
       </form>
@@ -142,6 +167,27 @@ function showRegisterModal() {
   document.getElementById('registerForm').addEventListener('submit', handleRegister);
 }
 
+function setAuthFeedback(message, type = 'error') {
+  const feedback = document.getElementById('authFeedback');
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.className = `auth-feedback ${type} show`;
+  }
+}
+
+function setAuthLoading(formId, isLoading, label) {
+  const form = document.getElementById(formId);
+  if (!form) return;
+  const submitButton = form.querySelector('button[type="submit"]');
+  if (!submitButton) return;
+  if (!submitButton.dataset.defaultLabel) {
+    submitButton.dataset.defaultLabel = submitButton.textContent;
+  }
+  submitButton.disabled = isLoading;
+  submitButton.classList.toggle('loading', isLoading);
+  submitButton.textContent = isLoading ? label : submitButton.dataset.defaultLabel;
+}
+
 // Handle login
 async function handleLogin(e) {
   e.preventDefault();
@@ -150,6 +196,7 @@ async function handleLogin(e) {
   const password = document.getElementById('loginPassword').value;
 
   try {
+    setAuthLoading('loginForm', true, 'Signing in...');
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -164,13 +211,18 @@ async function handleLogin(e) {
       isGuest = false;
       saveUserToStorage();
       updateUI();
+      emitAuthStateChanged();
       closeModal();
       showNotification(`Welcome back, ${data.username}!`);
     } else {
+      setAuthFeedback(data.error || 'Unable to log in right now.', 'error');
       showNotification(data.error, 'error');
     }
   } catch (err) {
+    setAuthFeedback('Login failed. Please try again in a moment.', 'error');
     showNotification('Login failed', 'error');
+  } finally {
+    setAuthLoading('loginForm', false, 'Login');
   }
 }
 
@@ -183,11 +235,13 @@ async function handleRegister(e) {
   const confirm = document.getElementById('regConfirm').value;
 
   if (password !== confirm) {
+    setAuthFeedback('Passwords do not match', 'error');
     showNotification('Passwords do not match', 'error');
     return;
   }
 
   try {
+    setAuthLoading('registerForm', true, 'Creating account...');
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -202,13 +256,18 @@ async function handleRegister(e) {
       isGuest = false;
       saveUserToStorage();
       updateUI();
+      emitAuthStateChanged();
       closeModal();
       showNotification(`Account created! Welcome, ${data.username}!`);
     } else {
+      setAuthFeedback(data.error || 'Unable to create your account right now.', 'error');
       showNotification(data.error, 'error');
     }
   } catch (err) {
+    setAuthFeedback('Registration failed. Please try again in a moment.', 'error');
     showNotification('Registration failed', 'error');
+  } finally {
+    setAuthLoading('registerForm', false, 'Register');
   }
 }
 
@@ -222,6 +281,7 @@ function loginAsGuest() {
   isGuest = true;
   saveUserToStorage();
   updateUI();
+  emitAuthStateChanged();
   showNotification('Logged in as Guest (progress not saved)');
 }
 
@@ -233,6 +293,7 @@ function logout() {
     isGuest = false;
     localStorage.removeItem('gameUser');
     updateUI();
+    emitAuthStateChanged();
     showNotification('Logged out');
   }
 }
@@ -251,6 +312,7 @@ function resetCoins() {
           userCoins = 1000;
           saveUserToStorage(); // Update localStorage with new balance
           updateUI();
+          emitAuthStateChanged();
           showNotification('Coins reset to 1000');
         }
       });
@@ -272,6 +334,7 @@ async function updateCoins(amount, gameId, type = 'bet') {
     if (data.success) {
       userCoins = data.coins;
       updateUI();
+      emitAuthStateChanged();
       // Persist updated coins so other pages reflect the new balance
       try { saveUserToStorage(); } catch (_) {}
     }
@@ -365,7 +428,7 @@ function showNotification(message, type = 'info') {
     container.style.position = 'fixed';
     container.style.top = '20px';
     container.style.right = '20px';
-    container.style.zIndex = '9999';
+    container.style.zIndex = '11000';
     document.body.appendChild(container);
   }
   container.appendChild(notification);
@@ -404,6 +467,7 @@ async function loadUserFromStorage() {
     }
   }
   updateUI();
+  emitAuthStateChanged();
 }
 
 // Join multiplayer lobby
@@ -421,12 +485,6 @@ function joinMultiplayerGame(gameId) {
   }
 
   try {
-    socket.emit('join-lobby', {
-      gameId,
-      userId: currentUser.id,
-      username: currentUser.username,
-    });
-
     window.location.href = `/games/${gameId}`;
   } catch (error) {
     console.error('Failed to join multiplayer game:', error);
